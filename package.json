@@ -1,0 +1,27 @@
+{
+  "name": "fault-end",
+  "version": "0.1.0",
+  "description": "Lightweight proxy tool for testing application resilience",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "proxy",
+    "testing",
+    "mock",
+    "resilience"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^5.1.0",
+    "http-proxy-middleware": "2.0.9",
+    "raw-body": "^3.0.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.11"
+  }
+}

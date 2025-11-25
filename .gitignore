@@ -1,0 +1,6 @@
+node_modules/
+data/traffic.json
+data/rules.json
+*.log
+.env
+.DS_Store
