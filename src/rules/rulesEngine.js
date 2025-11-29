@@ -1,6 +1,7 @@
 /**
- * Rules Engine - Phase 4
+ * Rules Engine - Phase 4-6
  * Manages routing rules for proxy and mock actions
+ * Phase 6: Enhanced latency, template variables, conditions, header manipulation
  */
 
 // In-memory rules storage (sorted by priority, high to low)
@@ -53,11 +54,65 @@ function validateRule(ruleData) {
     errors.push('action must be either "mock" or "proxy"');
   }
 
+  // Phase 6: Validate conditions array
+  if (ruleData.conditions !== undefined) {
+    if (!Array.isArray(ruleData.conditions)) {
+      errors.push('conditions must be an array');
+    } else {
+      ruleData.conditions.forEach((condition, index) => {
+        if (!condition.type || !['header', 'query', 'body', 'cookie'].includes(condition.type)) {
+          errors.push(`conditions[${index}].type must be one of: header, query, body, cookie`);
+        }
+        if (!condition.key || typeof condition.key !== 'string') {
+          errors.push(`conditions[${index}].key is required and must be a string`);
+        }
+        if (!condition.operator || !['equals', 'notEquals', 'contains', 'startsWith', 'endsWith', 'exists', 'notExists', 'matches'].includes(condition.operator)) {
+          errors.push(`conditions[${index}].operator must be one of: equals, notEquals, contains, startsWith, endsWith, exists, notExists, matches`);
+        }
+        // Value required for all operators except exists/notExists
+        if (!['exists', 'notExists'].includes(condition.operator) && condition.value === undefined) {
+          errors.push(`conditions[${index}].value is required for operator "${condition.operator}"`);
+        }
+        // Validate regex for matches operator
+        if (condition.operator === 'matches' && condition.value) {
+          try {
+            new RegExp(condition.value);
+          } catch (e) {
+            errors.push(`conditions[${index}].value is not a valid regex: ${e.message}`);
+          }
+        }
+      });
+    }
+  }
+
   // Action-specific validation
   if (ruleData.action === 'proxy') {
     if (!ruleData.target || typeof ruleData.target !== 'string') {
       errors.push('target is required for proxy action and must be a non-empty string');
     }
+    
+    // Phase 6: Validate modifyRequestHeaders
+    if (ruleData.modifyRequestHeaders !== undefined) {
+      if (typeof ruleData.modifyRequestHeaders !== 'object') {
+        errors.push('modifyRequestHeaders must be an object');
+      } else {
+        const { add, set, remove } = ruleData.modifyRequestHeaders;
+        if (add !== undefined && typeof add !== 'object') {
+          errors.push('modifyRequestHeaders.add must be an object');
+        }
+        if (set !== undefined && typeof set !== 'object') {
+          errors.push('modifyRequestHeaders.set must be an object');
+        }
+        if (remove !== undefined && !Array.isArray(remove)) {
+          errors.push('modifyRequestHeaders.remove must be an array');
+        }
+      }
+    }
+  }
+  
+  // Phase 6: Ensure modifyRequestHeaders only on proxy rules
+  if (ruleData.action === 'mock' && ruleData.modifyRequestHeaders !== undefined) {
+    errors.push('modifyRequestHeaders is only allowed for proxy rules');
   }
 
   if (ruleData.action === 'mock') {
@@ -70,9 +125,33 @@ function validateRule(ruleData) {
       if (ruleData.mockResponse.body === undefined) {
         errors.push('mockResponse.body is required');
       }
+      // Phase 6: Enhanced latency validation (number OR object)
       if (ruleData.mockResponse.latency !== undefined) {
-        if (typeof ruleData.mockResponse.latency !== 'number' || ruleData.mockResponse.latency < 0) {
-          errors.push('mockResponse.latency must be a non-negative number');
+        if (typeof ruleData.mockResponse.latency === 'number') {
+          if (ruleData.mockResponse.latency < 0) {
+            errors.push('mockResponse.latency must be a non-negative number');
+          }
+        } else if (typeof ruleData.mockResponse.latency === 'object') {
+          const { type, value, min, max } = ruleData.mockResponse.latency;
+          if (!['fixed', 'range'].includes(type)) {
+            errors.push('mockResponse.latency.type must be "fixed" or "range"');
+          }
+          if (type === 'fixed' && (typeof value !== 'number' || value < 0)) {
+            errors.push('mockResponse.latency.value must be a non-negative number for fixed type');
+          }
+          if (type === 'range') {
+            if (typeof min !== 'number' || min < 0) {
+              errors.push('mockResponse.latency.min must be a non-negative number for range type');
+            }
+            if (typeof max !== 'number' || max < 0) {
+              errors.push('mockResponse.latency.max must be a non-negative number for range type');
+            }
+            if (typeof min === 'number' && typeof max === 'number' && min > max) {
+              errors.push('mockResponse.latency.min must be less than or equal to max');
+            }
+          }
+        } else {
+          errors.push('mockResponse.latency must be a number or object');
         }
       }
     }
@@ -101,7 +180,13 @@ function addRule(ruleData) {
     method: ruleData.method,
     pathRegex: ruleData.pathRegex,
     action: ruleData.action,
-    ...(ruleData.action === 'proxy' && { target: ruleData.target }),
+    // Phase 6: Add conditions if present
+    ...(ruleData.conditions && { conditions: ruleData.conditions }),
+    ...(ruleData.action === 'proxy' && { 
+      target: ruleData.target,
+      // Phase 6: Add modifyRequestHeaders if present
+      ...(ruleData.modifyRequestHeaders && { modifyRequestHeaders: ruleData.modifyRequestHeaders })
+    }),
     ...(ruleData.action === 'mock' && { 
       mockResponse: {
         statusCode: ruleData.mockResponse.statusCode,
@@ -250,8 +335,107 @@ function clearRules() {
 }
 
 /**
+ * Phase 6: Get value from request based on condition type
+ * @param {Object} request - Request object with req field
+ * @param {Object} condition - Condition definition
+ * @returns {*} - Value from request or undefined
+ */
+function getConditionValue(request, condition) {
+  const { type, key, path } = condition;
+  
+  switch (type) {
+    case 'header':
+      return request.req.headers[key.toLowerCase()];
+    case 'query':
+      return request.req.query[key];
+    case 'body':
+      // Support nested paths with dot notation
+      if (path) {
+        const keys = path.split('.');
+        let value = request.req.body;
+        for (const k of keys) {
+          if (value === null || value === undefined) return undefined;
+          value = value[k];
+        }
+        return value;
+      }
+      return request.req.body[key];
+    case 'cookie':
+      // Parse cookies if available
+      const cookieHeader = request.req.headers.cookie;
+      if (!cookieHeader) return undefined;
+      const cookies = cookieHeader.split(';').reduce((acc, cookie) => {
+        const [name, value] = cookie.trim().split('=');
+        acc[name] = value;
+        return acc;
+      }, {});
+      return cookies[key];
+    default:
+      return undefined;
+  }
+}
+
+/**
+ * Phase 6: Evaluate a single condition
+ * @param {Object} condition - Condition definition
+ * @param {Object} request - Request object with req field
+ * @returns {Boolean} - True if condition matches
+ */
+function evaluateCondition(condition, request) {
+  const { operator, value: expectedValue } = condition;
+  const actualValue = getConditionValue(request, condition);
+  
+  switch (operator) {
+    case 'exists':
+      return actualValue !== undefined && actualValue !== null;
+    case 'notExists':
+      return actualValue === undefined || actualValue === null;
+    case 'equals':
+      return actualValue === expectedValue;
+    case 'notEquals':
+      return actualValue !== expectedValue;
+    case 'contains':
+      return actualValue && String(actualValue).includes(String(expectedValue));
+    case 'startsWith':
+      return actualValue && String(actualValue).startsWith(String(expectedValue));
+    case 'endsWith':
+      return actualValue && String(actualValue).endsWith(String(expectedValue));
+    case 'matches':
+      try {
+        const regex = new RegExp(expectedValue);
+        return actualValue && regex.test(String(actualValue));
+      } catch (e) {
+        console.error(`[CONDITION] Invalid regex in condition: ${e.message}`);
+        return false;
+      }
+    default:
+      return false;
+  }
+}
+
+/**
+ * Phase 6: Check if all conditions match (AND logic)
+ * @param {Array} conditions - Array of conditions
+ * @param {Object} request - Request object with req field
+ * @returns {Boolean} - True if all conditions match
+ */
+function matchesConditions(conditions, request) {
+  if (!conditions || conditions.length === 0) {
+    return true; // No conditions = always match
+  }
+  
+  for (const condition of conditions) {
+    if (!evaluateCondition(condition, request)) {
+      return false; // One failed condition = rule doesn't match
+    }
+  }
+  
+  return true; // All conditions matched
+}
+
+/**
  * Find the first matching rule for a request
- * @param {Object} request - { method, path }
+ * @param {Object} request - { method, path, req } (req = Express request object)
  * @returns {Object|null} - Matching rule or null
  */
 function findMatchingRule(request) {
@@ -274,6 +458,12 @@ function findMatchingRule(request) {
       const pathMatches = regex.test(request.path);
       
       if (pathMatches) {
+        // Phase 6: Check conditions if present
+        if (rule.conditions && !matchesConditions(rule.conditions, request)) {
+          console.log(`[RULES ENGINE] Rule ${rule.name} matched path but failed conditions`);
+          continue;
+        }
+        
         console.log(`[RULES ENGINE] Matched rule: ${rule.name} (priority: ${rule.priority}, action: ${rule.action})`);
         return rule;
       }
@@ -296,14 +486,34 @@ function findMatchingRule(request) {
 async function executeMockRule(rule, req, res) {
   const { statusCode, body, headers, latency } = rule.mockResponse;
 
-  console.log(`[MOCK] Executing mock rule: ${rule.name} (${statusCode}, latency: ${latency}ms)`);
-
   const startTime = Date.now();
 
-  // Apply artificial latency if specified
-  if (latency > 0) {
-    await new Promise(resolve => setTimeout(resolve, latency));
+  // Phase 6: Calculate actual latency (enhanced - supports fixed/range)
+  let actualLatency = 0;
+  if (latency) {
+    if (typeof latency === 'number') {
+      // Backward compatible: number = fixed latency
+      actualLatency = latency;
+    } else if (typeof latency === 'object') {
+      if (latency.type === 'fixed') {
+        actualLatency = latency.value;
+      } else if (latency.type === 'range') {
+        // Random value between min and max
+        actualLatency = Math.floor(Math.random() * (latency.max - latency.min + 1)) + latency.min;
+      }
+    }
   }
+
+  console.log(`[MOCK] Executing mock rule: ${rule.name} (${statusCode}, latency: ${actualLatency}ms)`);
+
+  // Apply artificial latency if specified
+  if (actualLatency > 0) {
+    await new Promise(resolve => setTimeout(resolve, actualLatency));
+  }
+
+  // Phase 6: Render template variables in response body
+  const { renderTemplate } = require('./templateEngine');
+  const renderedBody = renderTemplate(body, req);
 
   // Set custom headers if provided
   if (headers) {
@@ -312,8 +522,8 @@ async function executeMockRule(rule, req, res) {
     });
   }
 
-  // Send response
-  res.status(statusCode).json(body);
+  // Send response with rendered body
+  res.status(statusCode).json(renderedBody);
 
   // Log the mock transaction
   const { logTransaction } = require('../traffic/trafficLogger');
@@ -335,8 +545,8 @@ async function executeMockRule(rule, req, res) {
       statusCode: statusCode,
       statusMessage: res.statusMessage,
       headers: headers || {},
-      body: body,
-      bodySize: Buffer.byteLength(JSON.stringify(body)),
+      body: renderedBody,
+      bodySize: Buffer.byteLength(JSON.stringify(renderedBody)),
       contentType: 'application/json'
     },
     duration: duration,
@@ -363,12 +573,14 @@ function executeProxyRule(rule, req, res, next) {
   // Import here to avoid circular dependency
   const { executeProxy } = require('../proxy/proxyHandler');
   
-  // Store rule info for logging
+  // Phase 6: Store full rule info including header modifications
   req.matchedRule = {
     id: rule.id,
     name: rule.name,
     action: rule.action,
-    priority: rule.priority
+    priority: rule.priority,
+    // Include header modifications if present
+    ...(rule.modifyRequestHeaders && { modifyRequestHeaders: rule.modifyRequestHeaders })
   };
   
   // Execute proxy with rule's target

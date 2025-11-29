@@ -22,10 +22,11 @@ router.use(express.json({
  * Evaluates rules and executes matched rule (mock or proxy)
  */
 router.use('/', (req, res, next) => {
-  // Extract method and path for rule matching
+  // Phase 6: Pass full Express request for condition matching
   const request = {
     method: req.method,
-    path: req.path
+    path: req.path,
+    req: req  // Include Express request for condition evaluation
   };
   
   console.log(`[PROXY ROUTER] Evaluating rules for ${req.method} ${req.path}`);

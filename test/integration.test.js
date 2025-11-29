@@ -1,5 +1,5 @@
 /**
- * Fault-end Integration Tests - Phase 4 & 5
+ * Fault-end Integration Tests - Phase 4-6
  * Run with: npm test
  * 
  * Comprehensive test suite covering:
@@ -7,6 +7,7 @@
  * - Traffic logging with rule metadata
  * - Mock and proxy rules in action
  * - End-to-end request routing scenarios
+ * - Phase 6: Template variables, enhanced latency, conditions
  */
 
 const http = require('http');
@@ -107,7 +108,7 @@ function wait(ms) {
 // Main test suite
 async function runTests() {
   console.log('='.repeat(70));
-  console.log('Fault-end Integration Tests - Phase 4 & 5');
+  console.log('Fault-end Integration Tests - Phase 4-6');
   console.log('='.repeat(70));
   console.log('');
 
@@ -597,6 +598,210 @@ async function runTests() {
       mockResponse: { statusCode: 200, body: {} }
     });
     assertEqual(res.status, 404, 'Should return 404 Not Found');
+  });
+
+  console.log('');
+
+  // ===========================================
+  // Phase 6: Template Variables Tests
+  // ===========================================
+  console.log('--- Phase 6: Template Variables ---');
+
+  await test('Template variables render in mock responses', async () => {
+    // Create rule with template variables
+    const createRes = await request('POST', '/api/rules', {
+      priority: 100,
+      name: 'Template Test',
+      method: 'GET',
+      pathRegex: '^/template/.*',
+      action: 'mock',
+      mockResponse: {
+        statusCode: 200,
+        body: {
+          path: '{{request.path}}',
+          method: '{{request.method}}',
+          timestamp: '{{timestamp()}}'
+        }
+      }
+    });
+    assertEqual(createRes.status, 201, 'Rule should be created');
+
+    // Make request to trigger template rendering
+    const res = await request('GET', '/proxy/template/test');
+    assertEqual(res.status, 200, 'Should return 200');
+    assertEqual(res.body.path, '/template/test', 'Path should be rendered');
+    assertEqual(res.body.method, 'GET', 'Method should be rendered');
+    assertExists(res.body.timestamp, 'Timestamp should exist');
+    assertTrue(res.body.timestamp.includes('T'), 'Timestamp should be ISO format');
+  });
+
+  await test('Template variables handle query parameters', async () => {
+    const createRes = await request('POST', '/api/rules', {
+      priority: 99,
+      name: 'Query Template',
+      method: 'GET',
+      pathRegex: '^/query-test$',
+      action: 'mock',
+      mockResponse: {
+        statusCode: 200,
+        body: {
+          userId: '{{request.query.userId}}',
+          name: '{{request.query.name}}'
+        }
+      }
+    });
+    assertEqual(createRes.status, 201, 'Rule should be created');
+
+    // Make request with query params
+    const res = await request('GET', '/proxy/query-test?userId=123&name=John');
+    assertEqual(res.status, 200, 'Should return 200');
+    assertEqual(res.body.userId, '123', 'Query param should be rendered');
+    assertEqual(res.body.name, 'John', 'Query param should be rendered');
+  });
+
+  console.log('');
+
+  // ===========================================
+  // Phase 6: Enhanced Latency Tests
+  // ===========================================
+  console.log('--- Phase 6: Enhanced Latency ---');
+
+  await test('Fixed latency object works', async () => {
+    const createRes = await request('POST', '/api/rules', {
+      priority: 98,
+      name: 'Fixed Latency',
+      method: 'GET',
+      pathRegex: '^/fixed-latency$',
+      action: 'mock',
+      mockResponse: {
+        statusCode: 200,
+        body: { test: true },
+        latency: {
+          type: 'fixed',
+          value: 100
+        }
+      }
+    });
+    assertEqual(createRes.status, 201, 'Rule should be created');
+
+    // Make request and check latency
+    const start = Date.now();
+    const res = await request('GET', '/proxy/fixed-latency');
+    const duration = Date.now() - start;
+    
+    assertEqual(res.status, 200, 'Should return 200');
+    assertTrue(duration >= 100, `Duration should be at least 100ms (was ${duration}ms)`);
+  });
+
+  await test('Range latency produces variable delays', async () => {
+    const createRes = await request('POST', '/api/rules', {
+      priority: 97,
+      name: 'Range Latency',
+      method: 'GET',
+      pathRegex: '^/range-latency$',
+      action: 'mock',
+      mockResponse: {
+        statusCode: 200,
+        body: { test: true },
+        latency: {
+          type: 'range',
+          min: 50,
+          max: 150
+        }
+      }
+    });
+    assertEqual(createRes.status, 201, 'Rule should be created');
+
+    // Make multiple requests to test range
+    let allInRange = true;
+    for (let i = 0; i < 3; i++) {
+      const start = Date.now();
+      const res = await request('GET', '/proxy/range-latency');
+      const duration = Date.now() - start;
+      
+      assertEqual(res.status, 200, 'Should return 200');
+      if (duration < 50 || duration > 200) { // Allow some tolerance
+        allInRange = false;
+      }
+    }
+    assertTrue(allInRange, 'All requests should have latency in range');
+  });
+
+  console.log('');
+
+  // ===========================================
+  // Phase 6: Conditions Tests
+  // ===========================================
+  console.log('--- Phase 6: Conditions ---');
+
+  await test('Header condition matches correctly', async () => {
+    // Delete default proxy rule to ensure 502 for non-matching requests
+    const rulesRes = await request('GET', '/api/rules');
+    const defaultRule = rulesRes.body.rules.find(r => r.name === 'Test Default Proxy');
+    if (defaultRule) {
+      await request('DELETE', `/api/rules/${defaultRule.id}`);
+    }
+
+    // Create rule with header condition
+    const createRes = await request('POST', '/api/rules', {
+      priority: 96,
+      name: 'Admin Only',
+      method: 'GET',
+      pathRegex: '^/admin$',
+      action: 'mock',
+      conditions: [
+        {
+          type: 'header',
+          key: 'x-user-role',
+          operator: 'equals',
+          value: 'admin'
+        }
+      ],
+      mockResponse: {
+        statusCode: 200,
+        body: { access: 'granted' }
+      }
+    });
+    assertEqual(createRes.status, 201, 'Rule should be created');
+
+    // Request with correct header should match
+    const res1 = await request('GET', '/proxy/admin', null, { 'X-User-Role': 'admin' });
+    assertEqual(res1.status, 200, 'Should return 200 with correct header');
+    assertEqual(res1.body.access, 'granted', 'Should return mock response');
+
+    // Request without header should not match (502)
+    const res2 = await request('GET', '/proxy/admin');
+    assertEqual(res2.status, 502, 'Should return 502 without header');
+  });
+
+  await test('Query parameter condition works', async () => {
+    const createRes = await request('POST', '/api/rules', {
+      priority: 95,
+      name: 'Debug Mode',
+      method: 'GET',
+      pathRegex: '^/debug-endpoint$',
+      action: 'mock',
+      conditions: [
+        {
+          type: 'query',
+          key: 'debug',
+          operator: 'exists'
+        }
+      ],
+      mockResponse: {
+        statusCode: 200,
+        body: { debug: true }
+      }
+    });
+    assertEqual(createRes.status, 201, 'Rule should be created');
+
+    // With query param should match
+    const res1 = await request('GET', '/proxy/debug-endpoint?debug=true');
+    assertEqual(res1.status, 200, 'Should return 200 with debug param');
+
+    // Without query param should not match
+    const res2 = await request('GET', '/proxy/debug-endpoint');
+    assertEqual(res2.status, 502, 'Should return 502 without debug param');
   });
 
   console.log('');

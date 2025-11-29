@@ -1,7 +1,7 @@
 # Fault-end Development Context
 
 **Last Updated:** November 29, 2025  
-**Current Phase:** Phase 5 - Complete ✓
+**Current Phase:** Phase 6 - Complete ✓
 
 ---
 
@@ -19,6 +19,10 @@ By routing REST + JSON traffic through Fault-end, you can inspect real requests 
 - **Multi-backend support**: Different rules can proxy to different services
 - Path regex matching for flexible rule definitions
 - Priority-ordered rule evaluation (higher priority first)
+- **Enhanced latency control**: Fixed or range-based delays
+- **Template variables in mock responses**: Dynamic data generation
+- **Conditional rule matching**: Match on headers, query params, body fields
+- **Request header manipulation**: Modify headers before proxying
 - Custom response status, body, and latency injection
 - Enable/disable rules on the fly
 - **Export/import rule configurations** as JSON files
@@ -141,6 +145,7 @@ fault-end/
 ├── phase3.md                   # Detailed Phase 3 implementation guide
 ├── phase4.md                   # Detailed Phase 4 implementation guide ✓
 ├── phase5.md                   # Detailed Phase 5 implementation guide ✓
+├── phase6.md                   # Detailed Phase 6 implementation guide ✓
 ├── agents.md                   # This file - dev agent context
 │
 ├── src/
@@ -148,12 +153,13 @@ fault-end/
 │   ├── server.js               # Express server setup ✓
 │   ├── proxy/                  # Proxy logic
 │   │   ├── config.js           # Proxy configuration (no hardcoded backend) ✓
-│   │   ├── proxyHandler.js     # HTTP proxy handler with dynamic targets ✓
+│   │   ├── proxyHandler.js     # HTTP proxy handler with header manipulation ✓
 │   │   └── router.js           # Rules-based routing ✓
 │   ├── traffic/                # Traffic logging
 │   │   └── trafficLogger.js    # Traffic logging with rule metadata ✓
 │   ├── rules/                  # Rules engine
-│   │   ├── rulesEngine.js      # Rules matching and execution ✓
+│   │   ├── rulesEngine.js      # Rules matching, execution, conditions ✓
+│   │   ├── templateEngine.js   # Template variable rendering ✓
 │   │   └── rulesManager.js     # Placeholder for future enhancements
 │   ├── api/                    # API routes
 │   │   ├── traffic.js          # Traffic API endpoints ✓
@@ -169,7 +175,7 @@ fault-end/
 │       └── app.js              # Frontend JavaScript ✓
 │
 ├── test/                       # Test files
-│   ├── integration.test.js     # Integration tests for Phase 3 ✓
+│   ├── integration.test.js     # Integration tests (Phase 3-6) ✓
 │   ├── phase4.test.js          # Unit tests for Phase 4 rules engine ✓
 │   └── phase4-integration.test.js  # Integration helper for Phase 4 ✓
 │
@@ -734,9 +740,100 @@ const {
 
 ---
 
+### ✅ Phase 6: Backend - Response Customization (COMPLETE)
+
+**Completed Tasks:**
+1. ✅ Created template engine module (`src/rules/templateEngine.js`)
+2. ✅ Implemented template variables with predefined functions
+3. ✅ Enhanced latency control (fixed/range)
+4. ✅ Request condition matching (headers, query, body, cookies)
+5. ✅ Request header manipulation for proxy rules
+6. ✅ Created comprehensive unit tests (31 tests, all passing)
+7. ✅ Updated integration tests (40 tests, all passing)
+8. ✅ Validated all functionality
+
+**Current Functionality:**
+- **Template Variables in Mock Responses:**
+  - Dynamic functions: `{{timestamp()}}`, `{{uuid()}}`, `{{random(min, max)}}`, etc.
+  - Request data access: `{{request.path}}`, `{{request.query.param}}`, `{{request.header.name}}`
+  - Nested object paths: `{{request.body.user.id}}`
+  - Recursively processes objects and arrays
+  
+- **Enhanced Latency Control:**
+  - Fixed latency: `{ "type": "fixed", "value": 500 }`
+  - Range latency: `{ "type": "range", "min": 100, "max": 500 }`
+  - Backward compatible with simple number: `500`
+  
+- **Request Condition Matching:**
+  - Condition types: header, query, body, cookie
+  - Operators: equals, notEquals, contains, startsWith, endsWith, exists, notExists, matches (regex)
+  - AND logic: all conditions must match
+  - Rules only match when both path AND conditions are satisfied
+  
+- **Request Header Manipulation (Proxy Rules):**
+  - Add headers (only if not exists)
+  - Set headers (overwrite existing)
+  - Remove headers
+  - Execution order: remove → set → add
+
+**Template Functions:**
+| Function | Description | Example |
+|----------|-------------|---------|
+| `timestamp()` | Current ISO timestamp | `2025-11-29T12:34:56.789Z` |
+| `timestampMs()` | Unix timestamp (ms) | `1732887296789` |
+| `uuid()` | Random UUID v4 | `550e8400-e29b...` |
+| `random(min, max)` | Random integer | `{{random(1, 100)}}` |
+| `randomFloat(min, max, decimals)` | Random float | `{{randomFloat(0, 1, 2)}}` |
+| `randomString(length)` | Alphanumeric string | `{{randomString(8)}}` |
+| `randomEmail()` | Random email | `user-xyz@example.com` |
+
+**Example Enhanced Rule:**
+```json
+{
+  "priority": 100,
+  "name": "Dynamic User Mock",
+  "method": "GET",
+  "pathRegex": "^/users/[0-9]+$",
+  "conditions": [
+    {
+      "type": "header",
+      "key": "x-api-version",
+      "operator": "equals",
+      "value": "2.0"
+    }
+  ],
+  "action": "mock",
+  "mockResponse": {
+    "statusCode": 200,
+    "body": {
+      "id": "{{request.path}}",
+      "email": "{{randomEmail()}}",
+      "createdAt": "{{timestamp()}}",
+      "sessionId": "{{uuid()}}",
+      "score": "{{random(0, 100)}}"
+    },
+    "latency": {
+      "type": "range",
+      "min": 100,
+      "max": 500
+    }
+  }
+}
+```
+
+**Testing:**
+- Integration tests: `npm test` (40 tests, all passing)
+- Tests cover: template rendering, latency variants, all condition types/operators, header manipulation, end-to-end scenarios
+
+**Known Limitations:**
+- No partial response modification (proxy + transform) - skipped for simplicity
+- No frontend UI yet (Phase 7-10)
+- No persistent storage - rules/traffic lost on restart (Phase 11)
+
+---
+
 ### 📋 Upcoming Phases
 
-- **Phase 6:** Backend - Response Customization (enhanced mock features)
 - **Phase 7:** Frontend - Project Setup and UI Framework
 - **Phase 8:** Frontend - Real-time Traffic Viewer
 - **Phase 9:** Frontend - Rule Creator Interface (mock OR proxy)
@@ -827,7 +924,7 @@ curl -X POST http://localhost:3000/api/rules/export > config.json
 open http://localhost:3000
 ```
 
-**Expected Output (Phase 5):**
+**Expected Output (Phase 6):**
 - Server starts on port 3000
 - Starts with zero rules configured
 - Unmatched requests return 502 Bad Gateway with helpful error
@@ -843,7 +940,12 @@ open http://localhost:3000
   - `/api/rules/export` - Export configuration
   - `/api/rules/import` - Import configuration
   - `/proxy/*` - Proxy with rules
-- Integration tests: 33/33 passing
+- Phase 6 unit tests: `node test/phase6.test.js` (31/31 passing)
+- Integration tests: `npm test` (40/40 passing)
+- Template variables render in mock responses
+- Enhanced latency (fixed/range) works correctly
+- Condition matching filters requests properly
+- Header manipulation modifies proxy requests
 - Traffic logs include `matchedRule` field with rule metadata
 - UI shows "Fault-end is ready. Waiting for implementation..."
 
@@ -851,16 +953,15 @@ open http://localhost:3000
 
 ## Next Steps for Development Agent
 
-When implementing Phase 6:
+When implementing Phase 7:
 
-1. Read `phase6.md` for detailed implementation tasks (to be created)
-2. Enhance mock response capabilities
-3. Add request condition matching (query params, headers)
-4. Implement template variables in mock responses
-5. Add partial response modification features
-6. Implement advanced header manipulation
+1. Read `phase7.md` for detailed implementation tasks
+2. Set up frontend build process (or continue with vanilla JS)
+3. Create UI framework and layout
+4. Implement navigation and routing (if needed)
+5. Design component structure for traffic viewer and rule management
 
-**Phase 6 Complete When:** Enhanced mock features implemented and tested
+**Phase 7 Complete When:** Frontend foundation is established and ready for feature implementation
 
 ---
 

@@ -26,6 +26,37 @@ function createFaultendProxy(targetUrl) {
       req.proxyStartTime = Date.now();
       req.proxyTarget = target;
       
+      // Phase 6: Apply header modifications if present in rule
+      if (req.matchedRule && req.matchedRule.modifyRequestHeaders) {
+        const modifications = req.matchedRule.modifyRequestHeaders;
+        
+        // Remove headers (first)
+        if (modifications.remove && Array.isArray(modifications.remove)) {
+          modifications.remove.forEach(header => {
+            proxyReq.removeHeader(header);
+            console.log(`[PROXY] Removed header: ${header}`);
+          });
+        }
+        
+        // Set headers (overwrite existing, second)
+        if (modifications.set && typeof modifications.set === 'object') {
+          Object.entries(modifications.set).forEach(([key, value]) => {
+            proxyReq.setHeader(key, value);
+            console.log(`[PROXY] Set header: ${key} = ${value}`);
+          });
+        }
+        
+        // Add headers (only if not exists, last)
+        if (modifications.add && typeof modifications.add === 'object') {
+          Object.entries(modifications.add).forEach(([key, value]) => {
+            if (!proxyReq.getHeader(key)) {
+              proxyReq.setHeader(key, value);
+              console.log(`[PROXY] Added header: ${key} = ${value}`);
+            }
+          });
+        }
+      }
+      
       // If we have a parsed body from express.json(), write it to the proxy request
       if (req.body && Object.keys(req.body).length > 0 && ['POST', 'PUT', 'PATCH'].includes(req.method)) {
         const bodyData = JSON.stringify(req.body);
