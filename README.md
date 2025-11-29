@@ -75,11 +75,15 @@ The user experience is the priority, keeping the workflow intuitive and friction
 
 ```mermaid
 flowchart LR
-    A[Mobile / Web App] -->|1. Request| B[Fault-end Server]
-    B -->|2a. Mock Rule Match| A
-    B -->|2b. Proxy Rule Match| C[Real Backend]
-    C -->|3. Response| B
-    B -->|4. Response| A
+    A[Mobile / Web App] -->|request A| M
+    A -->|request B| P
+    
+    subgraph B[Fault-end Server]
+        M[Mocks]
+        P[Proxy]
+    end
+    
+    P --> C[Real Backend]
 ```
 
 ### Deployment Model
