@@ -75,12 +75,12 @@ The user experience is the priority, keeping the workflow intuitive and friction
 
 ```mermaid
 flowchart LR
-    A[Mobile / Web App] -->|request A| M
-    A -->|request B| P
-    
+    A -->|request A| P
+    A[Mobile / Web App] -->|request B| M
+
     subgraph B[Fault-end Server]
-        M[Mocks]
         P[Proxy]
+        M[Mocks]
     end
     
     P --> C[Real Backend]
