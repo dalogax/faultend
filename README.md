@@ -75,18 +75,11 @@ The user experience is the priority, keeping the workflow intuitive and friction
 
 ```mermaid
 flowchart LR
-    A[Mobile / Web App] -->|HTTP JSON| B[Fault-end Proxy]
-    B -->|Check rules by priority| C{Rule Match?}
-    C -->|Yes - Mock Action| D[Mocked Response<br/>Status + JSON + Latency]
-    C -->|Yes - Proxy Action| E[Forward to Configured Backend]
-    C -->|No Match| F[No Default Rule<br/>Return 502]
-    E --> G[Backend Response]
-    G --> B
-    D --> B
-    F --> B
-    B -->|Return Response| A
-    B -->|Log Traffic| H[Traffic & Rules Store]
-    I[Frontend UI] -->|View Logs / Manage Rules<br/>Export/Import Config| H
+    A[Mobile / Web App] -->|1. Request| B[Fault-end Server]
+    B -->|2a. Mock Rule Match| A
+    B -->|2b. Proxy Rule Match| C[Real Backend]
+    C -->|3. Response| B
+    B -->|4. Response| A
 ```
 
 ### Deployment Model
