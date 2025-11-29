@@ -1,7 +1,7 @@
 const express = require('express');
 const path = require('path');
 const proxyRouter = require('./proxy/router');
-const debugRouter = require('./api/debug');
+const trafficRouter = require('./api/traffic');
 
 const app = express();
 
@@ -18,8 +18,8 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Debug endpoints (temporary for Phase 2 testing)
-app.use('/debug', debugRouter);
+// Traffic API endpoints
+app.use('/api/traffic', trafficRouter);
 
 // Proxy routes - must be last to catch all unmatched routes
 // Note: Body parsing happens inside proxy router to preserve stream
@@ -32,7 +32,7 @@ app.use((req, res) => {
     return res.status(404).json({
       error: 'Not Found',
       message: 'Route not found. Use /proxy/* for proxied requests.',
-      availableRoutes: ['/health', '/debug/intercepted', '/proxy/*']
+      availableRoutes: ['/health', '/api/traffic', '/api/traffic/stats', '/proxy/*']
     });
   }
   

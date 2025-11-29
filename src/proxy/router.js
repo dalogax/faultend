@@ -5,6 +5,20 @@ const config = require('./config');
 const router = express.Router();
 
 /**
+ * Body parser for POST/PUT/PATCH - captures body for logging
+ */
+router.use(express.json({ 
+  limit: '10mb',
+  verify: (req, res, buf, encoding) => {
+    // Store raw body for logging
+    if (buf && buf.length) {
+      req.rawBody = JSON.parse(buf.toString(encoding || 'utf8'));
+      req.rawBodySize = buf.length;
+    }
+  }
+}));
+
+/**
  * Main proxy route - catches all requests to /proxy/*
  * Strips /proxy prefix and forwards to target backend
  */

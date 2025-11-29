@@ -17,20 +17,33 @@ The goal is to make **resilience testing accessible, fast, and practical**.
 A typical workflow with Fault-end looks like this:
 
 1. Launch Fault-end and open the UI.
-2. Configure your mobile/web app to use Fault-end’s base URL instead of the real backend.
-3. Interact with your app normally. Fault-end proxies all REST + JSON calls to the real backend.
-4. Each request/response appears live in the UI.
-5. Click a logged request to **convert it into a mock**.
-6. Edit the auto-filled form:
-   - Method  
-   - Path regex  
-   - Response status  
-   - JSON response body  
-   - Optional artificial latency  
-7. Save the rule. Future matching requests will return your mock instantly.
-8. Observe how your app behaves under controlled failure scenarios.
+2. Configure your mobile/web app to use Fault-end's base URL (e.g., `faultend.myapp.com`).
+3. Set up proxy rules to define which backends to forward traffic to (e.g., `api.myapp.com`, `auth.myapp.com`).
+4. Interact with your app normally. Fault-end routes requests based on your rules.
+5. Each request/response appears live in the UI.
+6. Click a logged request to **convert it into a mock or proxy rule**.
+7. Edit the auto-filled form:
+   - Method and path regex pattern
+   - Action: Mock (custom response) OR Proxy (forward to backend)
+   - For mocks: status code, JSON body, optional latency
+   - For proxies: target backend URL
+   - Rule priority (higher priority rules evaluated first)
+8. Save the rule. Future matching requests follow your rule.
+9. Observe how your app behaves under controlled failure scenarios.
+10. Export your complete rule configuration as JSON for easy replication across environments.
 
 No scripts. No DSLs. No environment gymnastics.
+
+## ✨ Key Features
+
+- **Flexible Routing**: Define rules to mock responses OR proxy to multiple backend services
+- **Multi-Backend Support**: Route different endpoints to different backends (microservices-friendly)
+- **Priority-Based Rules**: Control rule evaluation order for precise request handling
+- **One-Click Mock Creation**: Convert any logged request into a mock with auto-filled data
+- **Export/Import Configuration**: Save and share your entire rule setup as JSON
+- **Real-time Traffic Inspection**: See all requests and responses with full body capture
+- **Artificial Failure Injection**: Simulate slow responses, errors, and edge cases
+- **Zero Configuration Proxy**: Start with a simple catch-all proxy rule, add mocks as needed
 
 ## 🛠 Technical Overview
 
@@ -38,19 +51,23 @@ Fault-end is composed of two main parts:
 
 ### Backend  
 A small reverse proxy optimized strictly for REST + JSON:
-- Forwards requests to the real backend unless a matching rule exists  
-- Applies mock rules on the fly (status, body, latency)  
-- Stores traffic logs and rule definitions  
+- Routes requests based on configurable rules (priority-ordered)
+- Rules can mock responses OR proxy to specified backends
+- Supports multiple backend targets for microservice architectures
+- Applies mock rules on the fly (status, body, latency)
+- Stores traffic logs and rule definitions
+- Export/import rule configurations as JSON
 - Exposes a simple API for the frontend  
 
 The backend is intentionally minimal and focused to support a clean UX.
 
 ### Frontend  
-A new UI built for clarity and speed:
-- Real-time traffic viewer  
-- One-click creation of mock rules  
-- Simple rule editor  
-- Rule list with enable/disable controls  
+A UI built for clarity and speed:
+- Real-time traffic viewer with filtering
+- One-click creation of mock OR proxy rules from logged requests
+- Rule editor with action selection (mock vs proxy)
+- Rule list with priority management and enable/disable controls
+- Export/import functionality for rule configurations
 
 The user experience is the priority, keeping the workflow intuitive and frictionless.
 
@@ -59,11 +76,23 @@ The user experience is the priority, keeping the workflow intuitive and friction
 ```mermaid
 flowchart LR
     A[Mobile / Web App] -->|HTTP JSON| B[Fault-end Proxy]
-    B -->|Check mock rules| C{Rule Match?}
-    C -->|Yes| D[Mocked Response<br/>Status + JSON + Latency]
-    C -->|No| E[Forward to Real Backend]
-    E --> F[Backend Response]
+    B -->|Check rules by priority| C{Rule Match?}
+    C -->|Yes - Mock Action| D[Mocked Response<br/>Status + JSON + Latency]
+    C -->|Yes - Proxy Action| E[Forward to Configured Backend]
+    C -->|No Match| F[No Default Rule<br/>Return 502]
+    E --> G[Backend Response]
+    G --> B
+    D --> B
     F --> B
     B -->|Return Response| A
-    B -->|Log Traffic| G[Traffic & Rules Store]
-    H[Frontend UI] -->|View Logs / Manage Rules| G
+    B -->|Log Traffic| H[Traffic & Rules Store]
+    I[Frontend UI] -->|View Logs / Manage Rules<br/>Export/Import Config| H
+```
+
+### Deployment Model
+
+- **One Fault-end instance = One app/tester**
+- Deploy at a custom domain (e.g., `faultend.myapp.com`)
+- Configure rules for your specific testing needs
+- Data and rules are isolated per instance
+- Export configurations to replicate setups across environments
