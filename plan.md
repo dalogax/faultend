@@ -60,8 +60,8 @@ Create the traffic logging system to capture and store all proxied requests and 
 - For `proxy` action: forward to rule-specified `target` URL
 - For `mock` action: return custom response (status, body, latency)
 - Remove `BACKEND_URL` environment variable and hardcoded defaults
-- Create initial default catch-all proxy rule on first startup
 - Handle unmatched requests (no matching rule = 502 error)
+- Server starts with zero rules configured
 
 ### Deliverables:
 - `src/rules/rulesEngine.js` - Rule matching and evaluation logic
@@ -69,7 +69,7 @@ Create the traffic logging system to capture and store all proxied requests and 
 - Integration with proxy handler to use rules instead of hardcoded target
 - Tests for rule matching, priority ordering, and both actions
 
-**Phase complete when:** Server cannot start/route without at least one rule configured. No hardcoded backend URLs remain.
+**Phase complete when:** Server starts with zero rules. All routing is explicit via configured rules. Unmatched requests return 502. No hardcoded backend URLs remain.
 
 ## Phase 5: Backend - Rules Management API
 

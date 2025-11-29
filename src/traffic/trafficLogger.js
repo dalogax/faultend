@@ -35,6 +35,9 @@ class Transaction {
     this.duration = data.duration || 0;
     this.target = data.target;
     this.error = data.error || null;
+    
+    // Phase 4: Include matched rule information
+    this.matchedRule = data.matchedRule || null;
   }
 }
 

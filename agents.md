@@ -1,7 +1,7 @@
 # Fault-end Development Context
 
 **Last Updated:** November 29, 2025  
-**Current Phase:** Phase 3 - Complete ✓
+**Current Phase:** Phase 5 - Complete ✓
 
 ---
 
@@ -139,23 +139,25 @@ fault-end/
 ├── phase1.md                   # Detailed Phase 1 implementation guide
 ├── phase2.md                   # Detailed Phase 2 implementation guide
 ├── phase3.md                   # Detailed Phase 3 implementation guide
+├── phase4.md                   # Detailed Phase 4 implementation guide ✓
+├── phase5.md                   # Detailed Phase 5 implementation guide ✓
 ├── agents.md                   # This file - dev agent context
 │
 ├── src/
-│   ├── index.js                # Main entry point ✓
+│   ├── index.js                # Main entry point with rule initialization ✓
 │   ├── server.js               # Express server setup ✓
 │   ├── proxy/                  # Proxy logic
-│   │   ├── config.js           # Proxy configuration ✓
-│   │   ├── proxyHandler.js     # HTTP proxy handler with body capture ✓
-│   │   └── router.js           # Proxy routing with express.json() ✓
+│   │   ├── config.js           # Proxy configuration (no hardcoded backend) ✓
+│   │   ├── proxyHandler.js     # HTTP proxy handler with dynamic targets ✓
+│   │   └── router.js           # Rules-based routing ✓
 │   ├── traffic/                # Traffic logging
-│   │   └── trafficLogger.js    # Traffic logging with filtering ✓
-│   ├── rules/                  # Mock rules engine
-│   │   ├── rulesEngine.js      # Placeholder for Phase 4
-│   │   └── rulesManager.js     # Placeholder for Phase 5
+│   │   └── trafficLogger.js    # Traffic logging with rule metadata ✓
+│   ├── rules/                  # Rules engine
+│   │   ├── rulesEngine.js      # Rules matching and execution ✓
+│   │   └── rulesManager.js     # Placeholder for future enhancements
 │   ├── api/                    # API routes
 │   │   ├── traffic.js          # Traffic API endpoints ✓
-│   │   └── routes.js           # Placeholder for Phase 5
+│   │   └── rules.js            # Rules management API ✓
 │   └── storage/                # Data persistence
 │       └── storage.js          # Placeholder for Phase 11
 │
@@ -167,7 +169,9 @@ fault-end/
 │       └── app.js              # Frontend JavaScript ✓
 │
 ├── test/                       # Test files
-│   └── integration.test.js     # Integration tests for Phase 3 ✓
+│   ├── integration.test.js     # Integration tests for Phase 3 ✓
+│   ├── phase4.test.js          # Unit tests for Phase 4 rules engine ✓
+│   └── phase4-integration.test.js  # Integration helper for Phase 4 ✓
 │
 └── data/                       # Runtime data storage
     ├── traffic.json            # Will store logged traffic (Phase 11)
@@ -390,15 +394,348 @@ curl -X DELETE http://localhost:3000/api/traffic
 - No persistent storage (data lost on restart - Phase 11)
 - In-memory storage limited to 1000 transactions
 - No WebSocket support (HTTP only)
-- No mock rules engine yet (Phase 4)
 - No frontend UI for viewing traffic (Phase 8)
+
+---
+
+### ✅ Phase 4: Backend - Rules Engine with Proxy-as-Rule (COMPLETE)
+
+**Completed Tasks:**
+1. ✅ Implemented rules engine core (`src/rules/rulesEngine.js`)
+2. ✅ Updated proxy router to use rules engine
+3. ✅ Removed hardcoded backend from config.js
+4. ✅ Updated proxyHandler for dynamic targets
+5. ✅ Added rule initialization to server.js
+6. ✅ Updated traffic logger to include rule metadata
+7. ✅ Created comprehensive unit tests (15 tests, all passing)
+8. ✅ Validated all functionality
+
+**Current Functionality:**
+- **Rules-based routing:** All requests evaluated against priority-ordered rules
+- **Dual-action rules:** Each rule specifies either `mock` or `proxy` action
+- **No hardcoded backend:** Removed `BACKEND_URL` fallback and `X-Fault-End-Target` header
+- **Priority-based evaluation:** Rules sorted and evaluated by priority (higher first)
+- **Path regex matching:** Flexible pattern matching with regex
+- **Method filtering:** Rules can target specific HTTP methods or use wildcard (`*`)
+- **Multi-backend support:** Different proxy rules can target different backends
+- **Mock response features:**
+  - Custom status codes and JSON bodies
+  - Artificial latency injection
+  - Custom response headers
+- **Unmatched request handling:** Returns 502 when no rule matches
+- **Rule validation:** Comprehensive validation for required fields and regex syntax
+- **Traffic logging:** Includes matched rule metadata (id, name, action, priority)
+
+**Rule Data Model:**
+```javascript
+{
+  id: "rule-1732627800000-abc123",
+  priority: 100,                    // Higher = evaluated first
+  enabled: true,                    // Can be toggled on/off
+  name: "Default API Proxy",        // Human-readable name
+  method: "*",                      // HTTP method or "*" for all
+  pathRegex: ".*",                  // Regex pattern for path matching
+  
+  action: "proxy",                  // "mock" or "proxy"
+  
+  // For proxy action
+  target: "https://api.example.com",
+  
+  // For mock action
+  mockResponse: {
+    statusCode: 200,
+    body: { message: "Mocked response" },
+    headers: {},                    // Optional custom headers
+    latency: 0                      // Artificial delay in ms
+  }
+}
+```
+
+**Rules Engine API:**
+```javascript
+// Add a rule
+const { addRule } = require('./src/rules/rulesEngine');
+addRule({
+  priority: 100,
+  name: 'Mock User 123',
+  method: 'GET',
+  pathRegex: '^/users/123$',
+  action: 'mock',
+  mockResponse: {
+    statusCode: 200,
+    body: { id: 123, name: 'Test User' },
+    latency: 500
+  }
+});
+
+// Find matching rule
+const { findMatchingRule } = require('./src/rules/rulesEngine');
+const rule = findMatchingRule({ method: 'GET', path: '/users/123' });
+
+// Get all rules
+const { getAllRules } = require('./src/rules/rulesEngine');
+const rules = getAllRules(); // Sorted by priority
+```
+
+**Example Usage:**
+```bash
+# Start server - NO default rules created
+npm start
+# Output: [INIT] No rules configured
+#         [INIT] Unmatched requests will return 502 Bad Gateway
+
+# Create your first proxy rule
+curl -X POST http://localhost:3000/api/rules \
+  -H "Content-Type: application/json" \
+  -d '{
+    "priority": 100,
+    "name": "API Proxy",
+    "method": "*",
+    "pathRegex": ".*",
+    "action": "proxy",
+    "target": "https://jsonplaceholder.typicode.com"
+  }'
+
+# Now requests will be proxied
+curl http://localhost:3000/proxy/posts/1
+
+# Unmatched request (no rule configured)
+curl http://localhost:3000/proxy/admin/stats
+# Returns: 502 No matching rule
+```
+
+**Transaction Data Model (Updated):**
+```javascript
+{
+  id: "1764414722814-fdpza1d0n",
+  timestamp: "2025-11-29T17:12:02.814Z",
+  request: { /* ... */ },
+  response: { /* ... */ },
+  duration: 293,
+  target: "https://api.example.com",  // or "MOCK" for mocked responses
+  matchedRule: {                       // NEW in Phase 4
+    id: "rule-1732627800000-abc123",
+    name: "Test Mock Rule",
+    action: "mock",
+    priority: 100
+  },
+  error: null
+}
+```
+
+**Testing:**
+- Unit tests: `node test/phase4.test.js` (15 tests, all passing)
+- Tests cover: rule matching, priority ordering, validation, both actions
+
+**Breaking Changes from Phase 3:**
+- No more `BACKEND_URL` environment variable
+- No more `X-Fault-End-Target` header support
+- Server starts with zero rules (no automatic default rule creation)
+- Unmatched requests return 502 Bad Gateway
+- Must explicitly create proxy rules via API for routing
+
+**Migration Path:**
+- On first startup: checks for `BACKEND_URL` env var
+- If set: creates default catch-all proxy rule with that target
+- If not set: creates rule pointing to jsonplaceholder.typicode.com (for testing)
+
+**Known Limitations:**
+- No HTTP API for rule management yet (Phase 5)
+- No persistent storage - rules lost on restart (Phase 11)
+- No frontend UI for rule management (Phase 9-10)
+- In-memory storage limited to 1000 transactions
+
+---
+
+### ✅ Phase 5: Backend - Rules Management API (COMPLETE)
+
+**Completed Tasks:**
+1. ✅ Enhanced rules engine with CRUD operations (`src/rules/rulesEngine.js`)
+2. ✅ Implemented Rules Management API router (`src/api/rules.js`)
+3. ✅ Added updateRule, deleteRule, toggleRule functions to rules engine
+4. ✅ Implemented import/export functionality with merge/replace modes
+5. ✅ Integrated rules API in server.js
+6. ✅ Created comprehensive integration tests (31 tests, all passing)
+7. ✅ Validated all functionality end-to-end
+
+**Current Functionality:**
+- **Complete CRUD Operations:** Create, read, update, delete rules via HTTP API
+- **Rule Management:** Enable/disable rules without deletion via toggle endpoint
+- **Export/Import:** Save and load complete rule configurations as JSON
+- **Validation:** All rule operations validate data before applying changes
+- **Atomic Updates:** Validation happens before persisting to prevent invalid states
+- **Merge/Replace Modes:** Import can merge new rules or replace all existing rules
+- **Comprehensive API:** 8 endpoints covering all rule management needs
+
+**API Endpoints:**
+```bash
+# List all rules
+GET /api/rules
+
+# Get specific rule by ID
+GET /api/rules/:id
+
+# Create new rule
+POST /api/rules
+Content-Type: application/json
+{
+  "priority": 100,
+  "name": "Mock User 123",
+  "method": "GET",
+  "pathRegex": "^/users/123$",
+  "action": "mock",
+  "mockResponse": {
+    "statusCode": 200,
+    "body": { "id": 123, "name": "Test User" },
+    "latency": 500
+  }
+}
+
+# Update existing rule
+PUT /api/rules/:id
+
+# Delete rule
+DELETE /api/rules/:id
+
+# Toggle rule enabled/disabled
+PATCH /api/rules/:id/toggle
+
+# Export all rules
+POST /api/rules/export
+
+# Import rules (merge or replace mode)
+POST /api/rules/import
+Content-Type: application/json
+{
+  "mode": "merge",
+  "rules": [...]
+}
+```
+
+**Export Data Format:**
+```json
+{
+  "version": "1.0",
+  "exportedAt": "2025-11-29T12:00:00.000Z",
+  "rules": [
+    {
+      "id": "rule-1732627800000-abc123",
+      "priority": 100,
+      "enabled": true,
+      "name": "Default API Proxy",
+      "method": "*",
+      "pathRegex": ".*",
+      "action": "proxy",
+      "target": "https://api.example.com"
+    }
+  ],
+  "count": 1
+}
+```
+
+**Example Usage:**
+```bash
+# List all rules
+curl http://localhost:3000/api/rules
+
+# Create a mock rule
+curl -X POST http://localhost:3000/api/rules \
+  -H "Content-Type: application/json" \
+  -d '{
+    "priority": 100,
+    "name": "Mock Slow Response",
+    "method": "GET",
+    "pathRegex": "^/slow$",
+    "action": "mock",
+    "mockResponse": {
+      "statusCode": 200,
+      "body": {"slow": true},
+      "latency": 2000
+    }
+  }'
+
+# Create a proxy rule
+curl -X POST http://localhost:3000/api/rules \
+  -H "Content-Type: application/json" \
+  -d '{
+    "priority": 90,
+    "name": "Auth Service Proxy",
+    "method": "*",
+    "pathRegex": "^/auth/.*",
+    "action": "proxy",
+    "target": "https://auth.myapp.com"
+  }'
+
+# Update a rule
+curl -X PUT http://localhost:3000/api/rules/rule-123 \
+  -H "Content-Type: application/json" \
+  -d '{
+    "priority": 95,
+    "name": "Updated Mock",
+    "method": "GET",
+    "pathRegex": "^/slow$",
+    "action": "mock",
+    "enabled": true,
+    "mockResponse": {
+      "statusCode": 503,
+      "body": {"error": "Service Unavailable"},
+      "latency": 0
+    }
+  }'
+
+# Toggle rule
+curl -X PATCH http://localhost:3000/api/rules/rule-123/toggle
+
+# Delete rule
+curl -X DELETE http://localhost:3000/api/rules/rule-123
+
+# Export rules
+curl -X POST http://localhost:3000/api/rules/export > my-config.json
+
+# Import rules (merge mode)
+curl -X POST http://localhost:3000/api/rules/import \
+  -H "Content-Type: application/json" \
+  -d @my-config.json
+
+# Import rules (replace mode)
+curl -X POST http://localhost:3000/api/rules/import \
+  -H "Content-Type: application/json" \
+  -d '{"mode":"replace","rules":[...]}'
+```
+
+**Testing:**
+- Integration tests: `npm test` (33 tests, all passing)
+- Tests cover:
+  - All CRUD operations
+  - Rule validation (invalid regex, missing fields, etc.)
+  - Export/import in both merge and replace modes
+  - End-to-end request routing with mock and proxy rules
+  - Traffic logging with rule metadata
+  - Rule enable/disable functionality
+
+**Enhanced Rules Engine Functions:**
+```javascript
+// New functions added in Phase 5
+const {
+  updateRule,   // Update existing rule by ID
+  deleteRule,   // Delete rule by ID
+  toggleRule,   // Toggle enabled state
+  importRules,  // Import array of rules (merge/replace)
+  exportRules   // Export all rules with metadata
+} = require('./src/rules/rulesEngine');
+```
+
+**Known Limitations:**
+- No persistent storage - rules lost on restart (Phase 11)
+- No frontend UI for rule management (Phase 9-10)
+- No authentication/authorization on API endpoints
+- No rate limiting on rule creation
+- Import doesn't preserve original rule IDs (generates new ones)
 
 ---
 
 ### 📋 Upcoming Phases
 
-- **Phase 4:** Backend - Rules Engine with Proxy-as-Rule (remove hardcoded backend, implement dual-action rules)
-- **Phase 5:** Backend - Rules Management API (CRUD endpoints, export/import)
 - **Phase 6:** Backend - Response Customization (enhanced mock features)
 - **Phase 7:** Frontend - Project Setup and UI Framework
 - **Phase 8:** Frontend - Real-time Traffic Viewer
@@ -426,7 +763,7 @@ curl -X DELETE http://localhost:3000/api/traffic
 
 ### Environment Configuration
 - Default port: 3000 (configurable via `PORT` env var)
-- Default backend target: will be configurable via `BACKEND_URL` env var
+- Default backend target: Optional `BACKEND_URL` env var for initial default rule
 - Log level: configurable for debugging
 
 ### Git Practices
@@ -444,6 +781,7 @@ curl -X DELETE http://localhost:3000/api/traffic
 4. **In-Memory First:** Initial implementation stores data in memory, persistence added in Phase 11
 5. **JSON-Focused:** Optimized specifically for REST + JSON APIs
 6. **Minimal Dependencies:** Only essential packages to keep it lightweight
+7. **Rules-Based Routing:** All proxy/mock behavior configured via rules (Phase 4+)
 
 ---
 
@@ -453,23 +791,19 @@ curl -X DELETE http://localhost:3000/api/traffic
 # Install dependencies (already done)
 npm install
 
-# Start server
+# Start server (creates default proxy rule on first run)
 npm start
 
 # Or with auto-restart during development
 npm run dev
 
-# Run integration tests
+# Run integration tests (Phase 4-5)
 npm test
 
-# Test proxy endpoints
+# Test proxy with default rule
 curl http://localhost:3000/proxy/posts/1
 
-curl -X POST http://localhost:3000/proxy/posts \
-  -H "Content-Type: application/json" \
-  -d '{"title":"Test","body":"Content","userId":1}'
-
-# View traffic logs
+# View traffic logs (includes matchedRule metadata)
 curl http://localhost:3000/api/traffic
 
 # Get statistics
@@ -478,48 +812,67 @@ curl http://localhost:3000/api/traffic/stats
 # Clear logs
 curl -X DELETE http://localhost:3000/api/traffic
 
+# List all rules
+curl http://localhost:3000/api/rules
+
+# Create a mock rule
+curl -X POST http://localhost:3000/api/rules \
+  -H "Content-Type: application/json" \
+  -d '{"priority":100,"name":"Test Mock","method":"GET","pathRegex":"^/test$","action":"mock","mockResponse":{"statusCode":200,"body":{"test":true}}}'
+
+# Export rules
+curl -X POST http://localhost:3000/api/rules/export > config.json
+
 # View UI
 open http://localhost:3000
 ```
 
-**Expected Output:**
+**Expected Output (Phase 5):**
 - Server starts on port 3000
+- Starts with zero rules configured
+- Unmatched requests return 502 Bad Gateway with helpful error
 - Health endpoint returns `{"status":"ok","service":"fault-end"}`
-- Proxy endpoints forward requests and capture bodies
-- Traffic API returns logged transactions with full request/response data
-- Tests run and pass (14/15 consistently)
+- All API endpoints functional:
+  - `/health` - Health check
+  - `/api/traffic` - Traffic logs with filtering
+  - `/api/traffic/stats` - Statistics
+  - `/api/rules` - List rules
+  - `/api/rules` (POST) - Create rule
+  - `/api/rules/:id` - Get/Update/Delete rule
+  - `/api/rules/:id/toggle` - Enable/disable
+  - `/api/rules/export` - Export configuration
+  - `/api/rules/import` - Import configuration
+  - `/proxy/*` - Proxy with rules
+- Integration tests: 33/33 passing
+- Traffic logs include `matchedRule` field with rule metadata
 - UI shows "Fault-end is ready. Waiting for implementation..."
 
 ---
 
 ## Next Steps for Development Agent
 
-When implementing Phase 4:
+When implementing Phase 6:
 
-1. Read `phase4.md` for detailed implementation tasks (to be created)
-2. Design rule data model with `action`, `target`, `mockResponse` fields
-3. Remove hardcoded `BACKEND_URL` from config.js
-4. Implement priority-based rule matching engine
-5. Support both `mock` and `proxy` actions
-6. Add path regex pattern matching
-7. Create initial default catch-all proxy rule on first startup
-8. Update proxy router to use rules engine instead of static target
-9. Handle unmatched requests (502 error)
-10. Test both mock and proxy actions with various rule priorities
+1. Read `phase6.md` for detailed implementation tasks (to be created)
+2. Enhance mock response capabilities
+3. Add request condition matching (query params, headers)
+4. Implement template variables in mock responses
+5. Add partial response modification features
+6. Implement advanced header manipulation
 
-**Phase 4 Complete When:** No hardcoded backend URLs exist, all routing happens via rules
+**Phase 6 Complete When:** Enhanced mock features implemented and tested
 
 ---
 
 ## Important Notes
 
-- **Backend URL:** Currently uses temporary hardcoded default (jsonplaceholder.typicode.com) - will be removed in Phase 4
-- **Rules-Based Routing:** Phase 4 will replace static backend with configurable proxy rules
+- **Backend URL:** No hardcoded backend URLs - all routing via rules
+- **Rules-Based Routing:** All proxy and mock behavior configured through prioritized rules
 - **Request Flow:** All proxied requests go to `/proxy/*` path
 - **Data Limit:** Initial in-memory storage limited to 1000 transactions
 - **Content Type:** Focus on JSON; other content types supported but not optimized
 - **CORS:** May need to handle CORS headers for web client testing
-- **Export/Import:** Rule configuration export/import will be implemented in Phase 5 (API) and Phase 10 (UI)
+- **Export/Import:** Rule configuration export/import implemented in Phase 5 (API) and Phase 10 (UI)
 
 ---
 
@@ -530,9 +883,6 @@ When implementing Phase 4:
 3. How should rule priorities be handled when multiple rules match?
 4. Should we support request body transformation in rules?
 5. Do we need authentication/authorization for the UI?
-6. **Export/Import format:** Should exported configs include traffic logs or just rules?
-7. **Import behavior:** Merge with existing rules or replace entirely? Both options?
-8. **Rule validation:** How strict should regex validation be? Allow testing patterns?
 
 ---
 

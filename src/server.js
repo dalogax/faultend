@@ -2,6 +2,7 @@ const express = require('express');
 const path = require('path');
 const proxyRouter = require('./proxy/router');
 const trafficRouter = require('./api/traffic');
+const rulesRouter = require('./api/rules');
 
 const app = express();
 
@@ -18,8 +19,9 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Traffic API endpoints
+// API endpoints
 app.use('/api/traffic', trafficRouter);
+app.use('/api/rules', rulesRouter);
 
 // Proxy routes - must be last to catch all unmatched routes
 // Note: Body parsing happens inside proxy router to preserve stream

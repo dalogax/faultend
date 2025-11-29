@@ -104,7 +104,8 @@ function createFaultendProxy(targetUrl) {
             contentType: contentType
           },
           duration: duration,
-          target: req.proxyTarget
+          target: req.proxyTarget,
+          matchedRule: req.matchedRule || null
         });
       });
     },
@@ -135,7 +136,8 @@ function createFaultendProxy(targetUrl) {
           contentType: 'application/json'
         },
         duration: duration,
-        target: req.proxyTarget || config.defaultTarget,
+        target: req.proxyTarget || 'unknown',
+        matchedRule: req.matchedRule || null,
         error: {
           message: err.message,
           code: err.code,
@@ -147,11 +149,24 @@ function createFaultendProxy(targetUrl) {
       res.status(502).json({
         error: 'Proxy Error',
         message: err.message,
-        target: req.proxyTarget || config.defaultTarget,
+        target: req.proxyTarget || 'unknown',
         timestamp: new Date().toISOString()
       });
     }
   });
+}
+
+/**
+ * Execute proxy for a specific target URL
+ * Used by rules engine to proxy requests dynamically
+ * @param {String} targetUrl - Backend URL to proxy to
+ * @param {Object} req - Express request
+ * @param {Object} res - Express response
+ * @param {Function} next - Express next middleware
+ */
+function executeProxy(targetUrl, req, res, next) {
+  const proxyMiddleware = createFaultendProxy(targetUrl);
+  proxyMiddleware(req, res, next);
 }
 
 /**
@@ -204,5 +219,6 @@ function bodyCaptureMiddleware(req, res, next) {
 }
 
 module.exports = {
-  createFaultendProxy
+  createFaultendProxy,
+  executeProxy
 };

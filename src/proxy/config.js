@@ -1,8 +1,5 @@
 // Proxy configuration settings
 module.exports = {
-  // Default target backend - can be overridden via environment variable
-  defaultTarget: process.env.BACKEND_URL || 'https://jsonplaceholder.typicode.com',
-  
   // Proxy options
   changeOrigin: true,
   logLevel: process.env.LOG_LEVEL || 'info',
