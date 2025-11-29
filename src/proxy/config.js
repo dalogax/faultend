@@ -1,4 +1,3 @@
-// Proxy configuration settings
 module.exports = {
   // Proxy options
   changeOrigin: true,

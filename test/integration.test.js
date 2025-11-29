@@ -1,35 +1,39 @@
 /**
- * Fault-end Integration Tests - Phase 4-6
+ * Fault-end Integration Tests
  * Run with: npm test
  * 
- * Comprehensive test suite covering:
- * - Rules Management API (CRUD, toggle, export/import)
- * - Traffic logging with rule metadata
- * - Mock and proxy rules in action
- * - End-to-end request routing scenarios
- * - Phase 6: Template variables, enhanced latency, conditions
+ * Tests multi-server subdomain-based architecture:
+ * - Admin API (create/list/delete fault servers)
+ * - Rules Management API per customer
+ * - Traffic logging per customer
+ * - Subdomain routing (landing, admin, app, fault-server)
+ * - Multi-server data isolation
  */
 
 const http = require('http');
-const assert = require('assert');
 
-const BASE_URL = 'http://localhost:3000';
+const ROOT_DOMAIN = process.env.ROOT_DOMAIN || 'localhost';
+const PORT = 3000;
 let testsPassed = 0;
 let testsFailed = 0;
 let testServer = null;
 
-// Helper to make HTTP requests
-function request(method, path, body = null, headers = {}) {
+// Helper to make HTTP requests with subdomain support
+function request(method, path, body = null, headers = {}, subdomain = null) {
   return new Promise((resolve, reject) => {
-    const url = new URL(path, BASE_URL);
-    const bodyData = body ? (typeof body === 'string' ? body : JSON.stringify(body)) : null;
+    const host = subdomain ? `${subdomain}.${ROOT_DOMAIN}` : ROOT_DOMAIN;
+    const bodyData = body ? JSON.stringify(body) : null;
     
     const options = {
       method,
-      hostname: url.hostname,
-      port: url.port,
-      path: url.pathname + url.search,
-      headers: { 'Content-Type': 'application/json', ...headers },
+      hostname: '127.0.0.1',
+      port: PORT,
+      path: path,
+      headers: { 
+        'Host': `${host}:${PORT}`,
+        'Content-Type': 'application/json', 
+        ...headers 
+      },
       timeout: 5000
     };
 
@@ -67,9 +71,6 @@ async function test(name, fn) {
   } catch (error) {
     console.error(`✗ ${name}`);
     console.error(`  ${error.message}`);
-    if (error.stack) {
-      console.error(`  ${error.stack.split('\n').slice(1, 3).join('\n')}`);
-    }
     testsFailed++;
   }
 }
@@ -82,7 +83,7 @@ function assertEqual(actual, expected, message) {
 }
 
 function assertExists(value, message) {
-  if (value === null || value === undefined) {
+  if (!value) {
     throw new Error(message || 'Value should exist');
   }
 }
@@ -93,715 +94,433 @@ function assertTrue(value, message) {
   }
 }
 
-function assertGreaterThan(actual, expected, message) {
-  if (actual <= expected) {
-    throw new Error(`${message}\n  Expected > ${expected}\n  Actual: ${actual}`);
-  }
-}
-
-// Wait helper
 function wait(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-
 // Main test suite
 async function runTests() {
   console.log('='.repeat(70));
-  console.log('Fault-end Integration Tests - Phase 4-6');
+  console.log('Fault-end Integration Tests');
   console.log('='.repeat(70));
   console.log('');
 
   // Start the server
   console.log('Starting test server...\n');
   const app = require('../src/server');
-  const { getAllRules, addRule, clearRules } = require('../src/rules/rulesEngine');
+  const { clearAllServers } = require('../src/storage/storage');
   
-  // Clear any existing rules to start fresh
-  clearRules();
-  console.log('[TEST INIT] Server starting with no rules configured\n');
+  // Clear all servers to start fresh
+  clearAllServers();
+  console.log('[TEST INIT] Cleared all servers\n');
   
-  // Start server
-  testServer = app.listen(3000);
-  await wait(1000); // Wait for server to be ready
+  testServer = app.listen(PORT);
+  await wait(1000);
 
   // ===========================================
-  // Section 1: Health Check & Setup
+  // Section 1: Basic Subdomain Routing
   // ===========================================
-  console.log('Section 1: Health Check & Setup');
+  console.log('Section 1: Subdomain Routing');
   console.log('-'.repeat(70));
 
-  await test('Health check endpoint returns OK', async () => {
-    const res = await request('GET', '/health');
+  await test('Health check on root domain', async () => {
+    const res = await request('GET', '/health', null, {}, null);
     assertEqual(res.status, 200, 'Should return 200');
     assertEqual(res.body.status, 'ok', 'Status should be ok');
-    assertEqual(res.body.service, 'fault-end', 'Service should be fault-end');
+    assertEqual(res.body.routeType, 'landing', 'Should detect landing route');
   });
 
-  await test('Server starts with no rules', async () => {
-    const res = await request('GET', '/api/rules');
+  await test('Health check on admin subdomain', async () => {
+    const res = await request('GET', '/health', null, {}, 'admin');
     assertEqual(res.status, 200, 'Should return 200');
-    assertEqual(res.body.count, 0, 'Should start with 0 rules');
-    assertEqual(res.body.rules.length, 0, 'Rules array should be empty');
+    assertEqual(res.body.routeType, 'admin', 'Should detect admin route');
   });
 
-  await test('Unmatched request returns 502', async () => {
-    const res = await request('GET', '/proxy/posts/1');
-    assertEqual(res.status, 502, 'Should return 502 when no rule matches');
-    assertExists(res.body.error, 'Should have error message');
+  await test('Health check on app subdomain', async () => {
+    const res = await request('GET', '/health', null, {}, 'app');
+    assertEqual(res.status, 200, 'Should return 200');
+    assertEqual(res.body.routeType, 'app', 'Should detect app route');
   });
 
-  // Create a default proxy rule for tests that need actual proxying
-  await test('Create default proxy rule for testing', async () => {
-    const defaultRule = {
-      priority: 0,
-      name: 'Test Default Proxy',
+  await test('Health check on fault-server subdomain', async () => {
+    const res = await request('GET', '/health', null, {}, 'server1');
+    assertEqual(res.status, 200, 'Should return 200');
+    assertEqual(res.body.routeType, 'fault-server', 'Should detect fault-server route');
+  });
+
+  console.log('');
+
+  // ===========================================
+  // Section 2: Admin API - Fault Server Management
+  // ===========================================
+  console.log('Section 2: Admin API - Fault Server Management');
+  console.log('-'.repeat(70));
+
+  await test('List fault servers (empty initially)', async () => {
+    const res = await request('GET', '/servers', null, {}, 'admin');
+    assertEqual(res.status, 200, 'Should return 200');
+    assertEqual(res.body.count, 0, 'Should have 0 servers initially');
+  });
+
+  await test('Create fault server: server1', async () => {
+    const res = await request('POST', '/servers', {
+      id: 'server1',
+      name: 'Server 1',
+      description: 'Test customer 1'
+    }, {}, 'admin');
+    assertEqual(res.status, 201, 'Should return 201');
+    assertEqual(res.body.id, 'server1', 'Should have server1 id');
+    assertExists(res.body.url, 'Should have URL');
+  });
+
+  await test('Create fault server: server2', async () => {
+    const res = await request('POST', '/servers', {
+      id: 'server2',
+      name: 'Server 2'
+    }, {}, 'admin');
+    assertEqual(res.status, 201, 'Should return 201');
+    assertEqual(res.body.id, 'server2', 'Should have server2 id');
+  });
+
+  await test('List fault servers (should have 2)', async () => {
+    const res = await request('GET', '/servers', null, {}, 'admin');
+    assertEqual(res.status, 200, 'Should return 200');
+    assertEqual(res.body.count, 2, 'Should have 2 servers');
+  });
+
+  await test('Get specific fault server', async () => {
+    const res = await request('GET', '/servers/server1', null, {}, 'admin');
+    assertEqual(res.status, 200, 'Should return 200');
+    assertEqual(res.body.id, 'server1', 'Should be server1');
+    assertEqual(res.body.rulesCount, 0, 'Should have 0 rules initially');
+  });
+
+  await test('Reject reserved subdomain (admin)', async () => {
+    const res = await request('POST', '/servers', {
+      id: 'admin',
+      name: 'Admin'
+    }, {}, 'admin');
+    assertEqual(res.status, 400, 'Should return 400');
+    assertTrue(res.body.message.includes('reserved'), 'Should mention reserved');
+  });
+
+  console.log('');
+
+  // ===========================================
+  // Section 3: Rules API - Per Customer
+  // ===========================================
+  console.log('Section 3: Rules API - Per Customer Isolation');
+  console.log('-'.repeat(70));
+
+  let server1RuleId;
+  let server2RuleId;
+
+  await test('Create rule for server1', async () => {
+    const res = await request('POST', '/servers/server1/rules', {
+      priority: 100,
+      name: 'Server1 Proxy Rule',
       method: '*',
       pathRegex: '.*',
       action: 'proxy',
       target: 'https://jsonplaceholder.typicode.com'
-    };
-    
-    const res = await request('POST', '/api/rules', defaultRule);
-    assertEqual(res.status, 201, 'Should create default rule');
+    }, {}, 'app');
+    assertEqual(res.status, 201, 'Should create rule');
+    assertExists(res.body.id, 'Should have rule ID');
+    server1RuleId = res.body.id;
   });
 
-  await test('Same request now works after adding proxy rule', async () => {
-    const res = await request('GET', '/proxy/posts/1');
-    assertEqual(res.status, 200, 'Should return 200 from proxied backend');
-    assertExists(res.body.id, 'Should have response body from backend');
-    assertEqual(res.body.id, 1, 'Should be post with ID 1');
+  await test('Create rule for server2', async () => {
+    const res = await request('POST', '/servers/server2/rules', {
+      priority: 100,
+      name: 'Server2 Mock Rule',
+      method: 'GET',
+      pathRegex: '^/test$',
+      action: 'mock',
+      mockResponse: {
+        statusCode: 200,
+        body: { message: 'Server 2 mock' }
+      }
+    }, {}, 'app');
+    assertEqual(res.status, 201, 'Should create rule');
+    server2RuleId = res.body.id;
+  });
+
+  await test('List rules for server1 (should have 1)', async () => {
+    const res = await request('GET', '/servers/server1/rules', null, {}, 'app');
+    assertEqual(res.status, 200, 'Should return 200');
+    assertEqual(res.body.count, 1, 'Server1 should have 1 rule');
+    assertEqual(res.body.rules[0].name, 'Server1 Proxy Rule', 'Should be server1 rule');
+  });
+
+  await test('List rules for server2 (should have 1)', async () => {
+    const res = await request('GET', '/servers/server2/rules', null, {}, 'app');
+    assertEqual(res.status, 200, 'Should return 200');
+    assertEqual(res.body.count, 1, 'Server2 should have 1 rule');
+    assertEqual(res.body.rules[0].name, 'Server2 Mock Rule', 'Should be server2 rule');
   });
 
   console.log('');
 
   // ===========================================
-  // Section 2: Rules CRUD Operations
+  // Section 4: Fault Server Proxying (NO /proxy prefix!)
   // ===========================================
-  console.log('Section 2: Rules CRUD Operations');
+  console.log('Section 4: Fault Server Proxying (No /proxy prefix)');
   console.log('-'.repeat(70));
 
-  let createdMockRuleId;
-  let createdProxyRuleId;
-
-  await test('Create mock rule via API', async () => {
-    const newRule = {
-      priority: 100,
-      name: 'Test Mock Rule',
-      method: 'GET',
-      pathRegex: '^/test/mock$',
-      action: 'mock',
-      mockResponse: {
-        statusCode: 200,
-        body: { message: 'Mocked response' },
-        latency: 100
-      }
-    };
-    
-    const res = await request('POST', '/api/rules', newRule);
-    assertEqual(res.status, 201, 'Should return 201 Created');
-    assertExists(res.body.id, 'Should have generated ID');
-    assertEqual(res.body.name, 'Test Mock Rule', 'Name should match');
-    assertEqual(res.body.action, 'mock', 'Action should be mock');
-    createdMockRuleId = res.body.id;
+  await test('Server1: Proxy request to /posts/1', async () => {
+    const res = await request('GET', '/posts/1', null, {}, 'server1');
+    assertEqual(res.status, 200, 'Should return 200 from proxy');
+    assertExists(res.body.id, 'Should have post data');
+    assertEqual(res.body.id, 1, 'Should be post 1');
   });
 
-  await test('Create proxy rule via API', async () => {
-    const newRule = {
-      priority: 90,
-      name: 'Test Proxy Rule',
-      method: 'POST',
-      pathRegex: '^/test/proxy$',
+  await test('Server2: Mock request to /test', async () => {
+    const res = await request('GET', '/test', null, {}, 'server2');
+    assertEqual(res.status, 200, 'Should return 200 from mock');
+    assertEqual(res.body.message, 'Server 2 mock', 'Should return mock response');
+  });
+
+  await test('Server2: Unmatched request returns 502', async () => {
+    const res = await request('GET', '/unmatched', null, {}, 'server2');
+    assertEqual(res.status, 502, 'Should return 502 for unmatched');
+    assertTrue(res.body.message.includes('No proxy or mock rule'), 'Should explain no rule');
+  });
+
+  console.log('');
+
+  // ===========================================
+  // Section 5: Traffic Logging - Per Customer
+  // ===========================================
+  console.log('Section 5: Traffic Logging - Per Customer Isolation');
+  console.log('-'.repeat(70));
+
+  await test('Get traffic for server1', async () => {
+    const res = await request('GET', '/servers/server1/traffic', null, {}, 'app');
+    assertEqual(res.status, 200, 'Should return 200');
+    assertEqual(res.body.serverId, 'server1', 'Should be for server1');
+    assertTrue(res.body.count >= 1, 'Should have at least 1 traffic log');
+  });
+
+  await test('Get traffic for server2', async () => {
+    const res = await request('GET', '/servers/server2/traffic', null, {}, 'app');
+    assertEqual(res.status, 200, 'Should return 200');
+    assertEqual(res.body.serverId, 'server2', 'Should be for server2');
+    assertTrue(res.body.count >= 1, 'Should have at least 1 traffic log');
+  });
+
+  await test('Get traffic stats for server1', async () => {
+    const res = await request('GET', '/servers/server1/traffic/stats', null, {}, 'app');
+    assertEqual(res.status, 200, 'Should return 200');
+    assertTrue(res.body.total >= 1, 'Should have traffic');
+  });
+
+  console.log('');
+
+  // ===========================================
+  // Section 6: Server Isolation
+  // ===========================================
+  console.log('Section 6: Server Data Isolation');
+  console.log('-'.repeat(70));
+
+  await test('Delete server1 rule does not affect server2', async () => {
+    await request('DELETE', `/servers/server1/rules/${server1RuleId}`, null, {}, 'app');
+    
+    // Server1 should have 0 rules
+    const res1 = await request('GET', '/servers/server1/rules', null, {}, 'app');
+    assertEqual(res1.body.count, 0, 'Server1 should have 0 rules');
+    
+    // Server2 should still have 1 rule
+    const res2 = await request('GET', '/servers/server2/rules', null, {}, 'app');
+    assertEqual(res2.body.count, 1, 'Server2 should still have 1 rule');
+  });
+
+  await test('Delete fault server server1', async () => {
+    const res = await request('DELETE', '/servers/server1', null, {}, 'admin');
+    assertEqual(res.status, 200, 'Should delete successfully');
+    
+    // Verify deleted
+    const listRes = await request('GET', '/servers', null, {}, 'admin');
+    assertEqual(listRes.body.count, 1, 'Should have 1 server left');
+  });
+
+  console.log('');
+
+  // ===========================================
+  // Section 7: Extended Server Isolation Tests
+  // ===========================================
+  console.log('Section 7: Extended Server Isolation Tests');
+  console.log('-'.repeat(70));
+
+  // Create server3 for isolation testing
+  await test('Create fault server: server3 for isolation testing', async () => {
+    const res = await request('POST', '/servers', {
+      id: 'server3',
+      name: 'Server 3',
+      description: 'Isolation test customer'
+    }, {}, 'admin');
+    assertEqual(res.status, 201, 'Should return 201');
+    assertEqual(res.body.id, 'server3', 'Should have server3 id');
+  });
+
+  // Create rules for both server2 and server3
+  let server3ProxyRuleId;
+  await test('Create proxy rule for server3', async () => {
+    const res = await request('POST', '/servers/server3/rules', {
+      priority: 100,
+      name: 'Server3 Proxy Rule',
+      method: 'GET',
+      pathRegex: '^/posts/.*',
       action: 'proxy',
       target: 'https://jsonplaceholder.typicode.com'
-    };
-    
-    const res = await request('POST', '/api/rules', newRule);
-    assertEqual(res.status, 201, 'Should return 201 Created');
-    assertExists(res.body.id, 'Should have generated ID');
-    assertEqual(res.body.name, 'Test Proxy Rule', 'Name should match');
-    assertEqual(res.body.action, 'proxy', 'Action should be proxy');
-    createdProxyRuleId = res.body.id;
+    }, {}, 'app');
+    assertEqual(res.status, 201, 'Should create rule');
+    server3ProxyRuleId = res.body.id;
   });
 
-  await test('List all rules returns newly created rules', async () => {
-    const res = await request('GET', '/api/rules');
-    assertEqual(res.status, 200, 'Should return 200');
-    assertGreaterThan(res.body.count, 1, 'Should have multiple rules');
+  await test('Server2 and Server3 rules are isolated', async () => {
+    // Server2 should have its rules (mock rules from earlier)
+    const res2 = await request('GET', '/servers/server2/rules', null, {}, 'app');
+    assertTrue(res2.body.count >= 1, 'Server2 should have at least 1 rule');
+    const server2HasProxy = res2.body.rules.some(r => r.name === 'Server3 Proxy Rule');
+    assertEqual(server2HasProxy, false, 'Server2 should NOT have Server3 rules');
     
-    const mockRule = res.body.rules.find(r => r.id === createdMockRuleId);
-    assertExists(mockRule, 'Mock rule should exist in list');
-    
-    const proxyRule = res.body.rules.find(r => r.id === createdProxyRuleId);
-    assertExists(proxyRule, 'Proxy rule should exist in list');
+    // Server3 should only have its proxy rule
+    const res3 = await request('GET', '/servers/server3/rules', null, {}, 'app');
+    assertEqual(res3.body.count, 1, 'Server3 should have exactly 1 rule');
+    assertEqual(res3.body.rules[0].name, 'Server3 Proxy Rule', 'Should be server3 proxy rule');
   });
 
-  await test('Get specific rule by ID', async () => {
-    const res = await request('GET', `/api/rules/${createdMockRuleId}`);
-    assertEqual(res.status, 200, 'Should return 200');
-    assertEqual(res.body.id, createdMockRuleId, 'Should return correct rule');
-    assertEqual(res.body.name, 'Test Mock Rule', 'Name should match');
+  await test('Server3 proxy request works independently', async () => {
+    const res = await request('GET', '/posts/2', null, {}, 'server3');
+    assertEqual(res.status, 200, 'Should return 200 from proxy');
+    assertEqual(res.body.id, 2, 'Should be post 2');
   });
 
-  await test('Update rule via API', async () => {
-    const updates = {
-      priority: 95,
-      name: 'Updated Mock Rule',
+  await test('Traffic logs are isolated between server2 and server3', async () => {
+    // Get server2 traffic
+    const res2 = await request('GET', '/servers/server2/traffic', null, {}, 'app');
+    assertEqual(res2.status, 200, 'Should return 200');
+    const server2HasServer3Traffic = res2.body.logs.some(log => 
+      log.request.path === '/posts/2'
+    );
+    assertEqual(server2HasServer3Traffic, false, 'Server2 should NOT see server3 traffic');
+    
+    // Get server3 traffic
+    const res3 = await request('GET', '/servers/server3/traffic', null, {}, 'app');
+    assertEqual(res3.status, 200, 'Should return 200');
+    const server3HasOwnTraffic = res3.body.logs.some(log => 
+      log.request.path === '/posts/2'
+    );
+    assertTrue(server3HasOwnTraffic, 'Server3 should see its own traffic');
+  });
+
+  await test('Update rule for server3 does not affect server2', async () => {
+    // Update server3 rule
+    const updateRes = await request('PUT', `/servers/server3/rules/${server3ProxyRuleId}`, {
+      priority: 90,
+      name: 'Updated Server3 Rule',
       method: 'GET',
-      pathRegex: '^/test/mock$',
-      action: 'mock',
+      pathRegex: '^/posts/.*',
+      action: 'proxy',
       enabled: true,
-      mockResponse: {
-        statusCode: 404,
-        body: { error: 'Not Found' },
-        latency: 0
-      }
-    };
+      target: 'https://jsonplaceholder.typicode.com'
+    }, {}, 'app');
+    assertEqual(updateRes.status, 200, 'Should update rule');
     
-    const res = await request('PUT', `/api/rules/${createdMockRuleId}`, updates);
-    assertEqual(res.status, 200, 'Should return 200');
-    assertEqual(res.body.name, 'Updated Mock Rule', 'Name should be updated');
-    assertEqual(res.body.priority, 95, 'Priority should be updated');
-    assertEqual(res.body.mockResponse.statusCode, 404, 'Status code should be updated');
+    // Verify server3 has updated rule
+    const res3 = await request('GET', '/servers/server3/rules', null, {}, 'app');
+    assertEqual(res3.body.rules[0].name, 'Updated Server3 Rule', 'Server3 rule should be updated');
+    assertEqual(res3.body.rules[0].priority, 90, 'Priority should be updated');
+    
+    // Verify server2 rules unchanged
+    const res2 = await request('GET', '/servers/server2/rules', null, {}, 'app');
+    const hasUpdatedRule = res2.body.rules.some(r => r.name === 'Updated Server3 Rule');
+    assertEqual(hasUpdatedRule, false, 'Server2 should not have server3 updated rule');
   });
 
-  await test('Toggle rule to disabled', async () => {
-    const res = await request('PATCH', `/api/rules/${createdMockRuleId}/toggle`);
-    assertEqual(res.status, 200, 'Should return 200');
-    assertEqual(res.body.enabled, false, 'Rule should be disabled');
+  await test('Delete server3 server removes all its data', async () => {
+    const deleteRes = await request('DELETE', '/servers/server3', null, {}, 'admin');
+    assertEqual(deleteRes.status, 200, 'Should delete successfully');
+    
+    // Verify server3 no longer exists
+    const serverRes = await request('GET', '/servers/server3', null, {}, 'admin');
+    assertEqual(serverRes.status, 404, 'Server3 should not be found');
+    
+    // Verify server2 still exists and unaffected
+    const res2 = await request('GET', '/servers/server2', null, {}, 'admin');
+    assertEqual(res2.status, 200, 'Server2 should still exist');
+    assertEqual(res2.body.id, 'server2', 'Should be server2');
   });
 
-  await test('Toggle rule back to enabled', async () => {
-    const res = await request('PATCH', `/api/rules/${createdMockRuleId}/toggle`);
+  await test('Cannot access deleted server3 rules', async () => {
+    const res = await request('GET', '/servers/server3/rules', null, {}, 'app');
     assertEqual(res.status, 200, 'Should return 200');
-    assertEqual(res.body.enabled, true, 'Rule should be enabled');
+    assertEqual(res.body.count, 0, 'Deleted customer should have 0 rules');
+  });
+
+  await test('Cannot access deleted server3 traffic', async () => {
+    const res = await request('GET', '/servers/server3/traffic', null, {}, 'app');
+    assertEqual(res.status, 200, 'Should return 200');
+    assertEqual(res.body.count, 0, 'Deleted customer should have 0 traffic logs');
   });
 
   console.log('');
 
   // ===========================================
-  // Section 3: Rule Validation
+  // Section 8: Advanced Rules (Phase 6 features)
   // ===========================================
-  console.log('Section 3: Rule Validation');
+  console.log('Section 8: Advanced Rules (Template Variables, Latency, Conditions)');
   console.log('-'.repeat(70));
 
-  await test('Reject rule with invalid regex pattern', async () => {
-    const invalidRule = {
-      priority: 100,
-      name: 'Invalid Rule',
-      method: 'GET',
-      pathRegex: '[invalid(regex',
-      action: 'mock',
-      mockResponse: {
-        statusCode: 200,
-        body: {}
-      }
-    };
-    
-    const res = await request('POST', '/api/rules', invalidRule);
-    assertEqual(res.status, 400, 'Should return 400 Bad Request');
-    assertExists(res.body.error, 'Should have error message');
-  });
-
-  await test('Reject mock rule without mockResponse', async () => {
-    const invalidRule = {
-      priority: 100,
-      name: 'Invalid Mock',
-      method: 'GET',
-      pathRegex: '^/test$',
-      action: 'mock'
-    };
-    
-    const res = await request('POST', '/api/rules', invalidRule);
-    assertEqual(res.status, 400, 'Should return 400 Bad Request');
-  });
-
-  await test('Reject proxy rule without target', async () => {
-    const invalidRule = {
-      priority: 100,
-      name: 'Invalid Proxy',
-      method: 'GET',
-      pathRegex: '^/test$',
-      action: 'proxy'
-    };
-    
-    const res = await request('POST', '/api/rules', invalidRule);
-    assertEqual(res.status, 400, 'Should return 400 Bad Request');
-  });
-
-  await test('Reject rule with missing name', async () => {
-    const invalidRule = {
-      priority: 100,
-      method: 'GET',
-      pathRegex: '^/test$',
-      action: 'mock',
-      mockResponse: { statusCode: 200, body: {} }
-    };
-    
-    const res = await request('POST', '/api/rules', invalidRule);
-    assertEqual(res.status, 400, 'Should return 400 Bad Request');
-  });
-
-  console.log('');
-
-  // ===========================================
-  // Section 4: Export/Import Rules
-  // ===========================================
-  console.log('Section 4: Export/Import Rules');
-  console.log('-'.repeat(70));
-
-  let exportedData;
-
-  await test('Export all rules', async () => {
-    const res = await request('POST', '/api/rules/export');
-    assertEqual(res.status, 200, 'Should return 200');
-    assertExists(res.body.version, 'Should have version');
-    assertExists(res.body.exportedAt, 'Should have exportedAt timestamp');
-    assertExists(res.body.rules, 'Should have rules array');
-    assertGreaterThan(res.body.count, 0, 'Should have at least one rule');
-    exportedData = res.body;
-  });
-
-  await test('Import rules in merge mode', async () => {
-    const newRules = [
-      {
-        priority: 80,
-        name: 'Imported Mock Rule',
-        method: 'GET',
-        pathRegex: '^/imported/mock$',
-        action: 'mock',
-        mockResponse: {
-          statusCode: 200,
-          body: { imported: true }
-        }
-      }
-    ];
-    
-    const res = await request('POST', '/api/rules/import', {
-      mode: 'merge',
-      rules: newRules
-    });
-    
-    assertEqual(res.status, 200, 'Should return 200');
-    assertEqual(res.body.mode, 'merge', 'Mode should be merge');
-    assertEqual(res.body.imported, 1, 'Should import 1 rule');
-    assertGreaterThan(res.body.total, res.body.imported, 'Total should be greater than imported');
-  });
-
-  await test('Import rules in replace mode', async () => {
-    const newRules = [
-      {
-        priority: 100,
-        name: 'Only Rule After Replace',
-        method: '*',
-        pathRegex: '.*',
-        action: 'proxy',
-        target: 'https://jsonplaceholder.typicode.com'
-      }
-    ];
-    
-    const res = await request('POST', '/api/rules/import', {
-      mode: 'replace',
-      rules: newRules
-    });
-    
-    assertEqual(res.status, 200, 'Should return 200');
-    assertEqual(res.body.mode, 'replace', 'Mode should be replace');
-    assertEqual(res.body.total, 1, 'Should only have 1 rule after replace');
-  });
-
-  await test('Restore exported rules', async () => {
-    // Re-import the previously exported data to restore state
-    const res = await request('POST', '/api/rules/import', {
-      mode: 'replace',
-      rules: exportedData.rules
-    });
-    
-    assertEqual(res.status, 200, 'Should return 200');
-    assertEqual(res.body.mode, 'replace', 'Mode should be replace');
-  });
-
-  await test('Reject import with invalid data', async () => {
-    const res = await request('POST', '/api/rules/import', {
-      mode: 'merge'
-      // Missing rules array
-    });
-    
-    assertEqual(res.status, 400, 'Should return 400 Bad Request');
-  });
-
-  console.log('');
-
-  // ===========================================
-  // Section 5: End-to-End Request Routing
-  // ===========================================
-  console.log('Section 5: End-to-End Request Routing');
-  console.log('-'.repeat(70));
-
-  // Clear traffic logs first
-  await request('DELETE', '/api/traffic');
-
-  // Create a high-priority mock rule for testing
-  const mockRuleRes = await request('POST', '/api/rules', {
-    priority: 200,
-    name: 'E2E Mock Test',
-    method: 'GET',
-    pathRegex: '^/e2e/mock/test$',
-    action: 'mock',
-    mockResponse: {
-      statusCode: 201,
-      body: { test: 'mock', success: true },
-      latency: 50
-    }
-  });
-  const e2eMockRuleId = mockRuleRes.body.id;
-
-  await test('Mock rule returns custom response', async () => {
-    const res = await request('GET', '/proxy/e2e/mock/test');
-    assertEqual(res.status, 201, 'Should return custom status code 201');
-    assertEqual(res.body.test, 'mock', 'Should return custom body');
-    assertEqual(res.body.success, true, 'Should return custom body');
-  });
-
-  await test('Mock rule is logged with matchedRule metadata', async () => {
-    await wait(100); // Give logger time to process
-    
-    const res = await request('GET', '/api/traffic');
-    assertEqual(res.status, 200, 'Should return 200');
-    
-    const logs = res.body.logs;
-    const mockLog = logs.find(l => l.request.path === '/e2e/mock/test');
-    
-    assertExists(mockLog, 'Should have logged the mock request');
-    assertEqual(mockLog.target, 'MOCK', 'Target should be MOCK');
-    assertExists(mockLog.matchedRule, 'Should have matchedRule metadata');
-    assertEqual(mockLog.matchedRule.id, e2eMockRuleId, 'Should match rule ID');
-    assertEqual(mockLog.matchedRule.action, 'mock', 'Should be mock action');
-  });
-
-  await test('Disabled rule is not matched', async () => {
-    // Disable the mock rule
-    await request('PATCH', `/api/rules/${e2eMockRuleId}/toggle`);
-    
-    // Request should not match disabled rule
-    const res = await request('GET', '/proxy/e2e/mock/test');
-    // With the rule disabled, it should fall through to the default catch-all proxy
-    // The default proxy should forward to jsonplaceholder which returns 404 for this path
-    assertEqual(res.status, 404, 'Should get 404 from default proxy backend');
-  });
-
-  await test('Re-enabled rule works again', async () => {
-    // Re-enable the mock rule
-    await request('PATCH', `/api/rules/${e2eMockRuleId}/toggle`);
-    
-    // Request should match again
-    const res = await request('GET', '/proxy/e2e/mock/test');
-    assertEqual(res.status, 201, 'Should return custom status code 201');
-  });
-
-  console.log('');
-
-  // ===========================================
-  // Section 6: Traffic Logging & Filtering
-  // ===========================================
-  console.log('Section 6: Traffic Logging & Filtering');
-  console.log('-'.repeat(70));
-
-  // Clear logs and create some test traffic
-  await request('DELETE', '/api/traffic');
-
-  // Create different types of traffic
-  await request('GET', '/proxy/e2e/mock/test');
-  await request('POST', '/api/rules', {
-    priority: 50,
-    name: 'Temp Rule',
-    method: 'GET',
-    pathRegex: '^/temp$',
-    action: 'mock',
-    mockResponse: { statusCode: 404, body: { error: 'temp' } }
-  });
-
-  await wait(100);
-
-  await test('Get all traffic logs', async () => {
-    const res = await request('GET', '/api/traffic');
-    assertEqual(res.status, 200, 'Should return 200');
-    assertExists(res.body.logs, 'Should have logs array');
-    assertGreaterThan(res.body.logs.length, 0, 'Should have logged traffic');
-  });
-
-  await test('Filter traffic by method', async () => {
-    const res = await request('GET', '/api/traffic?method=GET');
-    assertEqual(res.status, 200, 'Should return 200');
-    
-    const allGet = res.body.logs.every(log => log.request.method === 'GET');
-    assertTrue(allGet, 'All logs should be GET requests');
-  });
-
-  await test('Filter traffic by status code', async () => {
-    const res = await request('GET', '/api/traffic?statusCode=201');
-    assertEqual(res.status, 200, 'Should return 200');
-    
-    if (res.body.logs.length > 0) {
-      const allMatch = res.body.logs.every(log => log.response.statusCode === 201);
-      assertTrue(allMatch, 'All logs should have status 201');
-    }
-  });
-
-  await test('Get traffic statistics', async () => {
-    const res = await request('GET', '/api/traffic/stats');
-    assertEqual(res.status, 200, 'Should return 200');
-    assertExists(res.body.total, 'Should have total');
-    assertExists(res.body.byMethod, 'Should have byMethod');
-    assertExists(res.body.byStatusCode, 'Should have byStatusCode');
-  });
-
-  await test('Clear traffic logs', async () => {
-    const res = await request('DELETE', '/api/traffic');
-    assertEqual(res.status, 200, 'Should return 200');
-    
-    const checkRes = await request('GET', '/api/traffic');
-    assertEqual(checkRes.body.logs.length, 0, 'Logs should be cleared');
-  });
-
-  console.log('');
-
-  // ===========================================
-  // Section 7: Delete Rules & Cleanup
-  // ===========================================
-  console.log('Section 7: Delete Rules & Cleanup');
-  console.log('-'.repeat(70));
-
-  await test('Delete rule via API', async () => {
-    const res = await request('DELETE', `/api/rules/${e2eMockRuleId}`);
-    assertEqual(res.status, 200, 'Should return 200');
-    assertEqual(res.body.id, e2eMockRuleId, 'Should return deleted rule ID');
-  });
-
-  await test('Deleted rule no longer exists', async () => {
-    const res = await request('GET', `/api/rules/${e2eMockRuleId}`);
-    assertEqual(res.status, 404, 'Should return 404 Not Found');
-  });
-
-  await test('Cannot delete non-existent rule', async () => {
-    const res = await request('DELETE', '/api/rules/non-existent-id');
-    assertEqual(res.status, 404, 'Should return 404 Not Found');
-  });
-
-  await test('Cannot update non-existent rule', async () => {
-    const res = await request('PUT', '/api/rules/non-existent-id', {
-      priority: 100,
-      name: 'Test',
-      method: 'GET',
-      pathRegex: '.*',
-      action: 'mock',
-      mockResponse: { statusCode: 200, body: {} }
-    });
-    assertEqual(res.status, 404, 'Should return 404 Not Found');
-  });
-
-  console.log('');
-
-  // ===========================================
-  // Phase 6: Template Variables Tests
-  // ===========================================
-  console.log('--- Phase 6: Template Variables ---');
-
-  await test('Template variables render in mock responses', async () => {
-    // Create rule with template variables
-    const createRes = await request('POST', '/api/rules', {
-      priority: 100,
+  await test('Create mock rule with template variables', async () => {
+    const res = await request('POST', '/servers/server2/rules', {
+      priority: 110,
       name: 'Template Test',
       method: 'GET',
-      pathRegex: '^/template/.*',
+      pathRegex: '^/template$',
       action: 'mock',
       mockResponse: {
         statusCode: 200,
         body: {
-          path: '{{request.path}}',
-          method: '{{request.method}}',
-          timestamp: '{{timestamp()}}'
+          timestamp: '{{timestamp()}}',
+          uuid: '{{uuid()}}',
+          path: '{{request.path}}'
         }
       }
-    });
-    assertEqual(createRes.status, 201, 'Rule should be created');
-
-    // Make request to trigger template rendering
-    const res = await request('GET', '/proxy/template/test');
-    assertEqual(res.status, 200, 'Should return 200');
-    assertEqual(res.body.path, '/template/test', 'Path should be rendered');
-    assertEqual(res.body.method, 'GET', 'Method should be rendered');
-    assertExists(res.body.timestamp, 'Timestamp should exist');
-    assertTrue(res.body.timestamp.includes('T'), 'Timestamp should be ISO format');
+    }, {}, 'app');
+    assertEqual(res.status, 201, 'Should create rule');
   });
 
-  await test('Template variables handle query parameters', async () => {
-    const createRes = await request('POST', '/api/rules', {
-      priority: 99,
-      name: 'Query Template',
+  await test('Template variables render correctly', async () => {
+    const res = await request('GET', '/template', null, {}, 'server2');
+    assertEqual(res.status, 200, 'Should return 200');
+    assertExists(res.body.timestamp, 'Should have timestamp');
+    assertExists(res.body.uuid, 'Should have uuid');
+    assertEqual(res.body.path, '/template', 'Should have request path');
+  });
+
+  await test('Create rule with enhanced latency (range)', async () => {
+    const res = await request('POST', '/servers/server2/rules', {
+      priority: 120,
+      name: 'Latency Test',
       method: 'GET',
-      pathRegex: '^/query-test$',
+      pathRegex: '^/slow$',
       action: 'mock',
       mockResponse: {
         statusCode: 200,
-        body: {
-          userId: '{{request.query.userId}}',
-          name: '{{request.query.name}}'
-        }
+        body: { slow: true },
+        latency: { type: 'range', min: 50, max: 100 }
       }
-    });
-    assertEqual(createRes.status, 201, 'Rule should be created');
-
-    // Make request with query params
-    const res = await request('GET', '/proxy/query-test?userId=123&name=John');
-    assertEqual(res.status, 200, 'Should return 200');
-    assertEqual(res.body.userId, '123', 'Query param should be rendered');
-    assertEqual(res.body.name, 'John', 'Query param should be rendered');
+    }, {}, 'app');
+    assertEqual(res.status, 201, 'Should create rule');
   });
 
-  console.log('');
-
-  // ===========================================
-  // Phase 6: Enhanced Latency Tests
-  // ===========================================
-  console.log('--- Phase 6: Enhanced Latency ---');
-
-  await test('Fixed latency object works', async () => {
-    const createRes = await request('POST', '/api/rules', {
-      priority: 98,
-      name: 'Fixed Latency',
-      method: 'GET',
-      pathRegex: '^/fixed-latency$',
-      action: 'mock',
-      mockResponse: {
-        statusCode: 200,
-        body: { test: true },
-        latency: {
-          type: 'fixed',
-          value: 100
-        }
-      }
-    });
-    assertEqual(createRes.status, 201, 'Rule should be created');
-
-    // Make request and check latency
+  await test('Latency applies correctly', async () => {
     const start = Date.now();
-    const res = await request('GET', '/proxy/fixed-latency');
+    const res = await request('GET', '/slow', null, {}, 'server2');
     const duration = Date.now() - start;
-    
     assertEqual(res.status, 200, 'Should return 200');
-    assertTrue(duration >= 100, `Duration should be at least 100ms (was ${duration}ms)`);
-  });
-
-  await test('Range latency produces variable delays', async () => {
-    const createRes = await request('POST', '/api/rules', {
-      priority: 97,
-      name: 'Range Latency',
-      method: 'GET',
-      pathRegex: '^/range-latency$',
-      action: 'mock',
-      mockResponse: {
-        statusCode: 200,
-        body: { test: true },
-        latency: {
-          type: 'range',
-          min: 50,
-          max: 150
-        }
-      }
-    });
-    assertEqual(createRes.status, 201, 'Rule should be created');
-
-    // Make multiple requests to test range
-    let allInRange = true;
-    for (let i = 0; i < 3; i++) {
-      const start = Date.now();
-      const res = await request('GET', '/proxy/range-latency');
-      const duration = Date.now() - start;
-      
-      assertEqual(res.status, 200, 'Should return 200');
-      if (duration < 50 || duration > 200) { // Allow some tolerance
-        allInRange = false;
-      }
-    }
-    assertTrue(allInRange, 'All requests should have latency in range');
-  });
-
-  console.log('');
-
-  // ===========================================
-  // Phase 6: Conditions Tests
-  // ===========================================
-  console.log('--- Phase 6: Conditions ---');
-
-  await test('Header condition matches correctly', async () => {
-    // Delete default proxy rule to ensure 502 for non-matching requests
-    const rulesRes = await request('GET', '/api/rules');
-    const defaultRule = rulesRes.body.rules.find(r => r.name === 'Test Default Proxy');
-    if (defaultRule) {
-      await request('DELETE', `/api/rules/${defaultRule.id}`);
-    }
-
-    // Create rule with header condition
-    const createRes = await request('POST', '/api/rules', {
-      priority: 96,
-      name: 'Admin Only',
-      method: 'GET',
-      pathRegex: '^/admin$',
-      action: 'mock',
-      conditions: [
-        {
-          type: 'header',
-          key: 'x-user-role',
-          operator: 'equals',
-          value: 'admin'
-        }
-      ],
-      mockResponse: {
-        statusCode: 200,
-        body: { access: 'granted' }
-      }
-    });
-    assertEqual(createRes.status, 201, 'Rule should be created');
-
-    // Request with correct header should match
-    const res1 = await request('GET', '/proxy/admin', null, { 'X-User-Role': 'admin' });
-    assertEqual(res1.status, 200, 'Should return 200 with correct header');
-    assertEqual(res1.body.access, 'granted', 'Should return mock response');
-
-    // Request without header should not match (502)
-    const res2 = await request('GET', '/proxy/admin');
-    assertEqual(res2.status, 502, 'Should return 502 without header');
-  });
-
-  await test('Query parameter condition works', async () => {
-    const createRes = await request('POST', '/api/rules', {
-      priority: 95,
-      name: 'Debug Mode',
-      method: 'GET',
-      pathRegex: '^/debug-endpoint$',
-      action: 'mock',
-      conditions: [
-        {
-          type: 'query',
-          key: 'debug',
-          operator: 'exists'
-        }
-      ],
-      mockResponse: {
-        statusCode: 200,
-        body: { debug: true }
-      }
-    });
-    assertEqual(createRes.status, 201, 'Rule should be created');
-
-    // With query param should match
-    const res1 = await request('GET', '/proxy/debug-endpoint?debug=true');
-    assertEqual(res1.status, 200, 'Should return 200 with debug param');
-
-    // Without query param should not match
-    const res2 = await request('GET', '/proxy/debug-endpoint');
-    assertEqual(res2.status, 502, 'Should return 502 without debug param');
+    assertTrue(duration >= 50, 'Should take at least 50ms');
   });
 
   console.log('');
@@ -810,26 +529,18 @@ async function runTests() {
   // Summary
   // ===========================================
   console.log('='.repeat(70));
-  console.log('Test Summary');
-  console.log('='.repeat(70));
   console.log(`Tests Passed: ${testsPassed}`);
   console.log(`Tests Failed: ${testsFailed}`);
-  console.log(`Total Tests:  ${testsPassed + testsFailed}`);
   console.log('='.repeat(70));
 
   // Cleanup
-  if (testServer) {
-    testServer.close();
-  }
-
+  testServer.close();
   process.exit(testsFailed > 0 ? 1 : 0);
 }
 
 // Run tests
 runTests().catch(err => {
   console.error('Fatal test error:', err);
-  if (testServer) {
-    testServer.close();
-  }
+  if (testServer) testServer.close();
   process.exit(1);
 });

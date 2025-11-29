@@ -91,7 +91,7 @@ Build REST API endpoints for managing rules: create, read, update, delete, enabl
 - Atomic updates (validate before applying)
 - Export includes all rules, import merges or replaces
 
-## Phase 6: Backend - Response Customization
+## Phase 6: Backend - Response Customization ✅
 
 Enhance mock rule responses with additional capabilities beyond basic status/body.
 
@@ -101,6 +101,35 @@ Enhance mock rule responses with additional capabilities beyond basic status/bod
 - Partial response mocking (modify specific fields)
 - Request condition matching (query params, headers)
 - Template variables in mock responses (use request data)
+
+**Status:** Complete
+
+## Phase 6.1: Subdomain-Based Multi-Tenant Architecture
+
+Transform Fault-end from single-instance proxy to multi-tenant SaaS-ready platform with subdomain-based routing. Remove `/proxy` URL prefix and implement intelligent routing based on subdomains.
+
+### Architecture Overview:
+- **Root Domain Configuration:** Configurable via `ROOT_DOMAIN` env var (e.g., `localhost` for dev, `faultend.com` for production)
+- **Landing Page:** `[ROOT_DOMAIN]` (no subdomain) → Static landing page explaining the service
+- **Admin API:** `admin.[ROOT_DOMAIN]` → Management API for creating/deleting fault servers
+- **User App:** `app.[ROOT_DOMAIN]` → Main UI for managing rules and viewing traffic (current frontend)
+- **Fault Servers:** `[customer-id].[ROOT_DOMAIN]` → Customer-specific proxy instances (e.g., `customer1.localhost`, `companyB.localhost`)
+
+### Key Changes:
+- Remove `/proxy` URL prefix - all requests to fault servers are proxied directly
+- Subdomain detection middleware in Express
+- Multi-tenant data isolation (rules and traffic scoped per customer-id)
+- Admin API for fault server lifecycle management (create, list, delete)
+- Enhanced frontend to work at `app.[ROOT_DOMAIN]` subdomain
+- DNS wildcard support (`*.[ROOT_DOMAIN]`)
+
+### Benefits:
+- **Seamless Integration:** Users only change domain, not URL structure (`api.myapp.com/users` → `customer1.faultend.com/users`)
+- **SaaS-Ready:** Each customer gets isolated subdomain with own data
+- **Local Development:** Works with `*.localhost` natively (no DNS setup)
+- **Production Ready:** Uses wildcard DNS (`*.faultend.com A 123.45.67.89`)
+
+**See `phase6_1.md` for detailed implementation plan**
 
 ## Phase 7: Frontend - Project Setup and UI Framework
 

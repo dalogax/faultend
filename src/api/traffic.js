@@ -10,8 +10,7 @@ const {
 const router = express.Router();
 
 /**
- * GET /api/traffic
- * Get all traffic logs with optional filtering
+ * GET /servers/:serverId/traffic
  * 
  * Query Parameters:
  * - method: Filter by HTTP method (GET, POST, etc.)
@@ -25,6 +24,15 @@ const router = express.Router();
  * - limit: Maximum number of results (default: all)
  */
 router.get('/', (req, res) => {
+  const serverId = req.serverId;
+  
+  if (!serverId) {
+    return res.status(400).json({
+      error: 'Bad Request',
+      message: 'Server ID required. Access via /servers/:serverId/...'
+    });
+  }
+  
   const {
     method,
     statusCode,
@@ -49,10 +57,10 @@ router.get('/', (req, res) => {
   if (target) filters.target = target;
   if (hasError) filters.hasError = hasError === 'true';
 
-  // Get filtered logs
+  // Get filtered logs for customer
   let logs = Object.keys(filters).length > 0 
-    ? filterLogs(filters) 
-    : getAllLogs();
+    ? filterLogs(serverId, filters) 
+    : getAllLogs(serverId);
 
   // Apply limit if specified
   if (limit) {
@@ -61,27 +69,43 @@ router.get('/', (req, res) => {
   }
 
   res.json({
+    serverId: serverId,
     count: logs.length,
     logs: logs
   });
 });
 
-/**
- * GET /api/traffic/stats
- * Get traffic statistics
- */
 router.get('/stats', (req, res) => {
-  const stats = getStats();
-  res.json(stats);
+  const serverId = req.serverId;
+  
+  if (!serverId) {
+    return res.status(400).json({
+      error: 'Bad Request',
+      message: 'Server ID required'
+    });
+  }
+  
+  const stats = getStats(serverId);
+  res.json({ serverId, ...stats });
 });
 
 /**
- * GET /api/traffic/:id
+ * GET /servers/:serverId/traffic/:id
  * Get a specific transaction by ID
+ * Phase 6.1: Scoped per serverId
  */
 router.get('/:id', (req, res) => {
+  const serverId = req.serverId;
+  
+  if (!serverId) {
+    return res.status(400).json({
+      error: 'Bad Request',
+      message: 'Server ID required'
+    });
+  }
+  
   const { id } = req.params;
-  const log = getLogById(id);
+  const log = getLogById(serverId, id);
 
   if (!log) {
     return res.status(404).json({
@@ -94,14 +118,25 @@ router.get('/:id', (req, res) => {
 });
 
 /**
- * DELETE /api/traffic
+ * DELETE /servers/:serverId/traffic
  * Clear all traffic logs
+ * Phase 6.1: Scoped per serverId
  */
 router.delete('/', (req, res) => {
-  const clearedCount = clearLogs();
+  const serverId = req.serverId;
+  
+  if (!serverId) {
+    return res.status(400).json({
+      error: 'Bad Request',
+      message: 'Server ID required'
+    });
+  }
+  
+  const clearedCount = clearLogs(serverId);
   
   res.json({
     message: 'All traffic logs cleared',
+    serverId: serverId,
     clearedCount: clearedCount
   });
 });

@@ -1,11 +1,6 @@
-/**
- * Rules Engine - Phase 4-6
- * Manages routing rules for proxy and mock actions
- * Phase 6: Enhanced latency, template variables, conditions, header manipulation
- */
 
-// In-memory rules storage (sorted by priority, high to low)
-let rules = [];
+
+const { ensureServer } = require('../storage/storage');
 
 /**
  * Generate unique rule ID
@@ -91,7 +86,6 @@ function validateRule(ruleData) {
       errors.push('target is required for proxy action and must be a non-empty string');
     }
     
-    // Phase 6: Validate modifyRequestHeaders
     if (ruleData.modifyRequestHeaders !== undefined) {
       if (typeof ruleData.modifyRequestHeaders !== 'object') {
         errors.push('modifyRequestHeaders must be an object');
@@ -110,7 +104,6 @@ function validateRule(ruleData) {
     }
   }
   
-  // Phase 6: Ensure modifyRequestHeaders only on proxy rules
   if (ruleData.action === 'mock' && ruleData.modifyRequestHeaders !== undefined) {
     errors.push('modifyRequestHeaders is only allowed for proxy rules');
   }
@@ -125,7 +118,6 @@ function validateRule(ruleData) {
       if (ruleData.mockResponse.body === undefined) {
         errors.push('mockResponse.body is required');
       }
-      // Phase 6: Enhanced latency validation (number OR object)
       if (ruleData.mockResponse.latency !== undefined) {
         if (typeof ruleData.mockResponse.latency === 'number') {
           if (ruleData.mockResponse.latency < 0) {
@@ -164,10 +156,13 @@ function validateRule(ruleData) {
 
 /**
  * Add a new rule
+ * @param {string} serverId - Customer identifier
  * @param {Object} ruleData - Rule definition
  * @returns {Object} - Created rule with generated ID
  */
-function addRule(ruleData) {
+function addRule(serverId, ruleData) {
+  const customer = ensureServer(serverId);
+  
   // Validate rule
   validateRule(ruleData);
 
@@ -180,11 +175,9 @@ function addRule(ruleData) {
     method: ruleData.method,
     pathRegex: ruleData.pathRegex,
     action: ruleData.action,
-    // Phase 6: Add conditions if present
     ...(ruleData.conditions && { conditions: ruleData.conditions }),
     ...(ruleData.action === 'proxy' && { 
       target: ruleData.target,
-      // Phase 6: Add modifyRequestHeaders if present
       ...(ruleData.modifyRequestHeaders && { modifyRequestHeaders: ruleData.modifyRequestHeaders })
     }),
     ...(ruleData.action === 'mock' && { 
@@ -197,84 +190,93 @@ function addRule(ruleData) {
     })
   };
 
-  // Add to rules array
-  rules.push(rule);
+  // Add to customer's rules array
+  customer.rules.push(rule);
 
   // Sort by priority (high to low)
-  rules.sort((a, b) => b.priority - a.priority);
+  customer.rules.sort((a, b) => b.priority - a.priority);
 
   return rule;
 }
 
 /**
  * Get all rules sorted by priority
+ * @param {string} serverId - Customer identifier
  * @returns {Array} - Rules array
  */
-function getAllRules() {
-  return [...rules];
+function getAllRules(serverId) {
+  const customer = ensureServer(serverId);
+  return [...customer.rules];
 }
 
 /**
  * Get rule by ID
+ * @param {string} serverId - Customer identifier
  * @param {String} id - Rule ID
  * @returns {Object|null} - Rule or null if not found
  */
-function getRuleById(id) {
-  return rules.find(r => r.id === id) || null;
+function getRuleById(serverId, id) {
+  const customer = ensureServer(serverId);
+  return customer.rules.find(r => r.id === id) || null;
 }
 
 /**
  * Update an existing rule
+ * @param {string} serverId - Customer identifier
  * @param {String} id - Rule ID
  * @param {Object} updates - Updated rule data
  * @returns {Object} - Updated rule
  * @throws {Error} - If rule not found or validation fails
  */
-function updateRule(id, updates) {
-  const index = rules.findIndex(r => r.id === id);
+function updateRule(serverId, id, updates) {
+  const customer = ensureServer(serverId);
+  const index = customer.rules.findIndex(r => r.id === id);
   if (index === -1) {
     throw new Error(`Rule with ID '${id}' not found`);
   }
 
   // Merge updates with existing rule
-  const updatedRule = { ...rules[index], ...updates, id };
+  const updatedRule = { ...customer.rules[index], ...updates, id };
 
   // Validate updated rule
   validateRule(updatedRule);
 
   // Update in array
-  rules[index] = updatedRule;
+  customer.rules[index] = updatedRule;
 
   // Re-sort by priority
-  rules.sort((a, b) => b.priority - a.priority);
+  customer.rules.sort((a, b) => b.priority - a.priority);
 
   return updatedRule;
 }
 
 /**
  * Delete a rule
+ * @param {string} serverId - Customer identifier
  * @param {String} id - Rule ID
  * @returns {Boolean} - True if deleted
  * @throws {Error} - If rule not found
  */
-function deleteRule(id) {
-  const index = rules.findIndex(r => r.id === id);
+function deleteRule(serverId, id) {
+  const customer = ensureServer(serverId);
+  const index = customer.rules.findIndex(r => r.id === id);
   if (index === -1) {
     throw new Error(`Rule with ID '${id}' not found`);
   }
 
-  rules.splice(index, 1);
+  customer.rules.splice(index, 1);
   return true;
 }
 
 /**
  * Toggle rule enabled state
+ * @param {string} serverId - Customer identifier
  * @param {String} id - Rule ID
  * @returns {Object} - Updated rule
  * @throws {Error} - If rule not found
  */
-function toggleRule(id) {
-  const rule = getRuleById(id);
+function toggleRule(serverId, id) {
+  const rule = getRuleById(serverId, id);
   if (!rule) {
     throw new Error(`Rule with ID '${id}' not found`);
   }
@@ -285,11 +287,14 @@ function toggleRule(id) {
 
 /**
  * Import rules from array
+ * @param {string} serverId - Customer identifier
  * @param {Array} rulesArray - Array of rule definitions
  * @param {String} mode - "merge" or "replace"
  * @returns {Array} - Imported rules with generated IDs
  */
-function importRules(rulesArray, mode = 'merge') {
+function importRules(serverId, rulesArray, mode = 'merge') {
+  const customer = ensureServer(serverId);
+  
   if (!Array.isArray(rulesArray)) {
     throw new Error('Invalid import data: rules array is required');
   }
@@ -305,33 +310,38 @@ function importRules(rulesArray, mode = 'merge') {
 
   // Clear existing rules if replace mode
   if (mode === 'replace') {
-    rules = [];
+    customer.rules = [];
   }
 
   // Import rules
-  const importedRules = rulesArray.map(ruleData => addRule(ruleData));
+  const importedRules = rulesArray.map(ruleData => addRule(serverId, ruleData));
 
   return importedRules;
 }
 
 /**
  * Export all rules
+ * @param {string} serverId - Customer identifier
  * @returns {Object} - Export data with metadata
  */
-function exportRules() {
+function exportRules(serverId) {
+  const customer = ensureServer(serverId);
   return {
     version: '1.0',
     exportedAt: new Date().toISOString(),
-    rules: getAllRules(),
-    count: rules.length
+    serverId: serverId,
+    rules: getAllRules(serverId),
+    count: customer.rules.length
   };
 }
 
 /**
  * Clear all rules (for testing)
+ * @param {string} serverId - Customer identifier
  */
-function clearRules() {
-  rules = [];
+function clearRules(serverId) {
+  const customer = ensureServer(serverId);
+  customer.rules = [];
 }
 
 /**
@@ -435,12 +445,15 @@ function matchesConditions(conditions, request) {
 
 /**
  * Find the first matching rule for a request
+ * @param {string} serverId - Customer identifier
  * @param {Object} request - { method, path, req } (req = Express request object)
  * @returns {Object|null} - Matching rule or null
  */
-function findMatchingRule(request) {
+function findMatchingRule(serverId, request) {
+  const customer = ensureServer(serverId);
+  
   // Iterate through rules in priority order (already sorted)
-  for (const rule of rules) {
+  for (const rule of customer.rules) {
     // Skip disabled rules
     if (!rule.enabled) {
       continue;
@@ -479,11 +492,12 @@ function findMatchingRule(request) {
 
 /**
  * Execute a mock rule
+ * @param {string} serverId - Customer identifier
  * @param {Object} rule - The mock rule
  * @param {Object} req - Express request
  * @param {Object} res - Express response
  */
-async function executeMockRule(rule, req, res) {
+async function executeMockRule(serverId, rule, req, res) {
   const { statusCode, body, headers, latency } = rule.mockResponse;
 
   const startTime = Date.now();
@@ -530,7 +544,7 @@ async function executeMockRule(rule, req, res) {
   
   const duration = Date.now() - startTime;
   
-  logTransaction({
+  logTransaction(serverId, {
     request: {
       method: req.method,
       url: req.url,
@@ -562,18 +576,20 @@ async function executeMockRule(rule, req, res) {
 
 /**
  * Execute a proxy rule
+ * @param {string} serverId - Customer identifier
  * @param {Object} rule - The proxy rule
  * @param {Object} req - Express request
  * @param {Object} res - Express response
  * @param {Function} next - Express next middleware
  */
-function executeProxyRule(rule, req, res, next) {
+function executeProxyRule(serverId, rule, req, res, next) {
   console.log(`[PROXY RULE] Executing proxy rule: ${rule.name} → ${rule.target}`);
   
   // Import here to avoid circular dependency
   const { executeProxy } = require('../proxy/proxyHandler');
   
-  // Phase 6: Store full rule info including header modifications
+  // Phase 6.1: Store serverId and rule info
+  req.serverId = serverId;
   req.matchedRule = {
     id: rule.id,
     name: rule.name,
@@ -589,16 +605,17 @@ function executeProxyRule(rule, req, res, next) {
 
 /**
  * Execute a rule - either mock or proxy
+ * @param {string} serverId - Customer identifier
  * @param {Object} rule - The matched rule
  * @param {Object} req - Express request
  * @param {Object} res - Express response
  * @param {Function} next - Express next middleware
  */
-async function executeRule(rule, req, res, next) {
+async function executeRule(serverId, rule, req, res, next) {
   if (rule.action === 'mock') {
-    await executeMockRule(rule, req, res);
+    await executeMockRule(serverId, rule, req, res);
   } else if (rule.action === 'proxy') {
-    executeProxyRule(rule, req, res, next);
+    executeProxyRule(serverId, rule, req, res, next);
   } else {
     console.error(`[RULES ENGINE] Unknown action: ${rule.action}`);
     res.status(500).json({ error: 'Internal Server Error', message: 'Unknown rule action' });

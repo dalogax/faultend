@@ -1,7 +1,7 @@
 # Fault-end Development Context
 
 **Last Updated:** November 29, 2025  
-**Current Phase:** Phase 6 - Complete ✓
+**Current Phase:** Phase 6.1 - Complete ✓
 
 ---
 
@@ -13,6 +13,7 @@
 By routing REST + JSON traffic through Fault-end, you can inspect real requests and responses in real time and configure flexible routing rules. Rules can either mock responses (return custom status/body/latency) OR proxy to specified backends (forward to real APIs). This enables multi-backend support and complex testing scenarios.
 
 ### Key Features
+- **Subdomain architecture** - Isolated fault servers per subdomain
 - Real-time request/response inspection
 - **Rules-based routing** (no hardcoded backend URLs)
 - **Dual action types**: Mock responses OR proxy to backends
@@ -61,16 +62,19 @@ Unlike traditional proxies with a single hardcoded backend URL, Fault-end treats
 
 ### Deployment Model
 
-- **One Fault-end instance = One app/tester**
-- Deploy at a custom domain (e.g., `faultend.myapp.com`)
-- Configure rules for your specific testing needs
-- Data and rules are isolated per instance
-- Export/import configs for easy replication
+**Subdomain Architecture (Phase 6.1):**
+- Wildcard DNS: `*.localhost` (dev) or `*.faultend.com` (prod)
+- **Admin subdomain** (`admin.*`) - Fault server lifecycle management
+- **App subdomain** (`app.*`) - UI for managing rules and viewing traffic
+- **Fault server subdomains** (`[server-id].*`) - Isolated proxy instances
+- Each fault server has isolated rules and traffic logs
+- No `/api` prefix - subdomain provides context
 
-**Future SaaS Model:**
-- Spin up isolated instances (e.g., `customer1.faultend.io`)
-- Each with own rules, traffic logs, configuration
-- Multi-tenant with complete isolation
+**SaaS Model:**
+- Single Fault-end deployment serves multiple isolated fault servers
+- Each server accessible at `[server-id].faultend.com`
+- Managed via admin API at `admin.faultend.com`
+- Complete data isolation between servers
 
 ---
 
@@ -149,25 +153,31 @@ fault-end/
 ├── agents.md                   # This file - dev agent context
 │
 ├── src/
-│   ├── index.js                # Main entry point with rule initialization ✓
-│   ├── server.js               # Express server setup ✓
+│   ├── index.js                # Main entry point ✓
+│   ├── server.js               # Express server with subdomain routing ✓
+│   ├── middleware/             # Middleware
+│   │   └── subdomainRouter.js  # Subdomain detection and serverId extraction ✓
+│   ├── utils/                  # Utilities
+│   │   └── subdomain.js        # Subdomain parsing helpers ✓
 │   ├── proxy/                  # Proxy logic
-│   │   ├── config.js           # Proxy configuration (no hardcoded backend) ✓
-│   │   ├── proxyHandler.js     # HTTP proxy handler with header manipulation ✓
+│   │   ├── config.js           # Proxy configuration ✓
+│   │   ├── proxyHandler.js     # HTTP proxy handler ✓
 │   │   └── router.js           # Rules-based routing ✓
 │   ├── traffic/                # Traffic logging
-│   │   └── trafficLogger.js    # Traffic logging with rule metadata ✓
+│   │   └── trafficLogger.js    # Traffic logging ✓
 │   ├── rules/                  # Rules engine
 │   │   ├── rulesEngine.js      # Rules matching, execution, conditions ✓
 │   │   ├── templateEngine.js   # Template variable rendering ✓
 │   │   └── rulesManager.js     # Placeholder for future enhancements
 │   ├── api/                    # API routes
+│   │   ├── admin.js            # Fault server management API ✓
 │   │   ├── traffic.js          # Traffic API endpoints ✓
 │   │   └── rules.js            # Rules management API ✓
 │   └── storage/                # Data persistence
-│       └── storage.js          # Placeholder for Phase 11
+│       └── storage.js          # In-memory storage ✓
 │
 ├── public/                     # Static frontend files
+│   ├── landing.html            # Landing page ✓
 │   ├── index.html              # Main HTML template ✓
 │   ├── css/
 │   │   └── styles.css          # Base styles ✓
@@ -175,9 +185,7 @@ fault-end/
 │       └── app.js              # Frontend JavaScript ✓
 │
 ├── test/                       # Test files
-│   ├── integration.test.js     # Integration tests (Phase 3-6) ✓
-│   ├── phase4.test.js          # Unit tests for Phase 4 rules engine ✓
-│   └── phase4-integration.test.js  # Integration helper for Phase 4 ✓
+│   └── integration.test.js     # Integration tests (Phase 6.1) ✓
 │
 └── data/                       # Runtime data storage
     ├── traffic.json            # Will store logged traffic (Phase 11)
@@ -829,6 +837,95 @@ const {
 - No partial response modification (proxy + transform) - skipped for simplicity
 - No frontend UI yet (Phase 7-10)
 - No persistent storage - rules/traffic lost on restart (Phase 11)
+
+---
+
+### ✅ Phase 6.1: Subdomain Architecture (COMPLETE)
+
+**Completed Tasks:**
+1. ✅ Created subdomain detection utility (`src/utils/subdomain.js`)
+2. ✅ Created storage layer (`src/storage/storage.js`)
+3. ✅ Refactored rules engine for server isolation (11 functions updated)
+4. ✅ Refactored traffic logger for multi-tenancy (6 functions updated)
+5. ✅ Created subdomain routing middleware (`src/middleware/subdomainRouter.js`)
+6. ✅ Created admin API for fault server management (`src/api/admin.js`)
+7. ✅ Complete rewrite of server.js with subdomain routing
+8. ✅ Updated proxy router (removed /proxy prefix)
+9. ✅ Updated traffic and rules APIs (server scoping)
+10. ✅ Created landing page (`public/landing.html`)
+11. ✅ Updated startup messages
+12. ✅ Comprehensive integration tests (35 tests, all passing)
+13. ✅ Renamed terminology: customer → server throughout codebase
+14. ✅ Restructured APIs: path parameters instead of query parameters
+
+**Current Functionality:**
+- **Subdomain Routing:**
+  - `localhost` → Landing page
+  - `admin.localhost` → Admin API for server management
+  - `app.localhost` → App UI for managing rules and traffic
+  - `[server-id].localhost` → Isolated fault server instance
+
+- **API Structure (No `/api` prefix - subdomain provides context):**
+  - Admin subdomain: `/servers`, `/servers/:id`
+  - App subdomain: `/servers/:serverId/rules`, `/servers/:serverId/traffic`
+  - Path parameters instead of query parameters for server identification
+
+- **Data Isolation:**
+  - Each fault server has isolated rules and traffic logs
+  - In-memory storage with Map-based separation
+  - Complete data isolation between servers
+
+- **Server Identification:**
+  - Fault server subdomains: `serverId` extracted from subdomain
+  - App subdomain: `serverId` extracted from URL path (`/servers/:serverId/...`)
+
+**API Endpoints:**
+```bash
+# Admin API (admin.localhost)
+GET    /servers           # List all fault servers
+POST   /servers           # Create fault server
+GET    /servers/:id       # Get specific server
+DELETE /servers/:id       # Delete server
+
+# Rules API (app.localhost)
+GET    /servers/:serverId/rules              # List rules
+POST   /servers/:serverId/rules              # Create rule
+GET    /servers/:serverId/rules/:id          # Get rule
+PUT    /servers/:serverId/rules/:id          # Update rule
+DELETE /servers/:serverId/rules/:id          # Delete rule
+PATCH  /servers/:serverId/rules/:id/toggle   # Toggle rule
+POST   /servers/:serverId/rules/export       # Export rules
+POST   /servers/:serverId/rules/import       # Import rules
+
+# Traffic API (app.localhost)
+GET    /servers/:serverId/traffic       # Get traffic logs
+GET    /servers/:serverId/traffic/:id   # Get specific log
+GET    /servers/:serverId/traffic/stats # Get statistics
+DELETE /servers/:serverId/traffic       # Clear logs
+```
+
+**Example Usage:**
+```bash
+# Create a fault server
+curl -X POST http://admin.localhost:3000/servers \
+  -H "Content-Type: application/json" \
+  -d '{"id":"server1","name":"Server 1","description":"Test instance"}'
+
+# Create a proxy rule for server1
+curl -X POST http://app.localhost:3000/servers/server1/rules \
+  -H "Content-Type: application/json" \
+  -d '{"priority":100,"name":"API Proxy","method":"*","pathRegex":".*","action":"proxy","target":"https://jsonplaceholder.typicode.com"}'
+
+# Send request through server1's fault server
+curl http://server1.localhost:3000/posts/1
+
+# View traffic for server1
+curl http://app.localhost:3000/servers/server1/traffic
+```
+
+**Testing:**
+- Integration tests: `npm test` (35 tests, all passing)
+- Tests cover: subdomain routing, admin API, rules API, traffic API, server isolation, advanced rules
 
 ---
 

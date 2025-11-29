@@ -1,7 +1,4 @@
-/**
- * Template Engine - Phase 6
- * Renders dynamic values in mock response bodies using predefined functions
- */
+
 
 /**
  * Generate UUID v4

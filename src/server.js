@@ -1,45 +1,111 @@
 const express = require('express');
 const path = require('path');
+const subdomainRouter = require('./middleware/subdomainRouter');
 const proxyRouter = require('./proxy/router');
 const trafficRouter = require('./api/traffic');
 const rulesRouter = require('./api/rules');
+const adminRouter = require('./api/admin');
 
 const app = express();
 
-// Serve static frontend files
-app.use(express.static(path.join(__dirname, '../public')));
+app.use(subdomainRouter);
 
-// Health check endpoint
+// Health check endpoint (available on all subdomains)
 app.get('/health', (req, res) => {
   res.json({ 
     status: 'ok', 
     service: 'fault-end',
     version: '0.1.0',
+    subdomain: req.subdomain,
+    routeType: req.routeType,
+    serverId: req.serverId || null,
     timestamp: new Date().toISOString()
   });
 });
 
-// API endpoints
-app.use('/api/traffic', trafficRouter);
-app.use('/api/rules', rulesRouter);
-
-// Proxy routes - must be last to catch all unmatched routes
-// Note: Body parsing happens inside proxy router to preserve stream
-app.use('/proxy', proxyRouter);
-
-// 404 handler for non-proxied routes
-app.use((req, res) => {
-  // If request accepts JSON, return JSON error
-  if (req.accepts('json') && !req.accepts('html')) {
+// Route based on subdomain type
+app.use((req, res, next) => {
+  const { routeType } = req;
+  
+  // Landing page (no subdomain)
+  if (routeType === 'landing') {
+    if (req.path === '/' || req.path === '/index.html') {
+      return res.sendFile(path.join(__dirname, '../public/landing.html'));
+    }
     return res.status(404).json({
       error: 'Not Found',
-      message: 'Route not found. Use /proxy/* for proxied requests.',
-      availableRoutes: ['/health', '/api/traffic', '/api/traffic/stats', '/proxy/*']
+      message: 'Landing page only. Use admin.* for management, app.* for UI, or [server].* for fault servers.',
+      availableRoutes: ['/health']
     });
   }
   
-  // Otherwise serve the frontend
-  res.sendFile(path.join(__dirname, '../public/index.html'));
+  // Admin API
+  if (routeType === 'admin') {
+    // All non-health routes go to admin router
+    return next();
+  }
+  
+  // App UI
+  if (routeType === 'app') {
+    // Serve app.html for root path
+    if (req.path === '/' || req.path === '/index.html' || req.path === '/app.html') {
+      return res.sendFile(path.join(__dirname, '../public/app.html'));
+    }
+    // All other routes go to routers (no /api prefix needed)
+    return next();
+  }
+  
+  // Fault server - proxy all requests
+  if (routeType === 'fault-server') {
+    return next(); // Let proxy router handle it
+  }
+  
+  res.status(500).json({ error: 'Unknown route type' });
+});
+
+// Admin API routes (only on admin.*)
+app.use((req, res, next) => {
+  if (req.routeType !== 'admin') {
+    return next();
+  }
+  // Mount admin router directly (no /api/admin prefix)
+  adminRouter(req, res, next);
+});
+
+// Traffic and Rules APIs (only on app.*) - nested under /servers/:serverId
+app.use('/servers/:serverId/traffic', (req, res, next) => {
+  if (req.routeType !== 'app') {
+    return next();
+  }
+  // serverId already set by subdomainRouter middleware from path
+  trafficRouter(req, res, next);
+});
+
+app.use('/servers/:serverId/rules', (req, res, next) => {
+  if (req.routeType !== 'app') {
+    return next();
+  }
+  // serverId already set by subdomainRouter middleware from path
+  rulesRouter(req, res, next);
+});
+
+// Proxy router - handles ALL requests on fault-server subdomains
+// No /proxy prefix - all paths go through rules engine
+app.use((req, res, next) => {
+  if (req.routeType === 'fault-server') {
+    return proxyRouter(req, res, next);
+  }
+  next();
+});
+
+// Global 404 handler
+app.use((req, res) => {
+  res.status(404).json({
+    error: 'Not Found',
+    message: 'Route not found',
+    subdomain: req.subdomain,
+    routeType: req.routeType
+  });
 });
 
 // Global error handler

@@ -2,9 +2,6 @@ const { createProxyMiddleware } = require('http-proxy-middleware');
 const config = require('./config');
 const { logTransaction } = require('../traffic/trafficLogger');
 
-/**
- * Custom proxy middleware that intercepts requests and responses
- */
 function createFaultendProxy(targetUrl) {
   const target = targetUrl || config.defaultTarget;
   
@@ -14,11 +11,7 @@ function createFaultendProxy(targetUrl) {
     logLevel: config.logLevel,
     timeout: config.timeout,
     proxyTimeout: config.proxyTimeout,
-    pathRewrite: {
-      '^/proxy': '', // Remove /proxy prefix
-    },
     
-    // Intercept requests before forwarding
     onProxyReq: (proxyReq, req, res) => {
       console.log(`[PROXY] → ${req.method} ${req.url} → ${target}`);
       
@@ -26,7 +19,6 @@ function createFaultendProxy(targetUrl) {
       req.proxyStartTime = Date.now();
       req.proxyTarget = target;
       
-      // Phase 6: Apply header modifications if present in rule
       if (req.matchedRule && req.matchedRule.modifyRequestHeaders) {
         const modifications = req.matchedRule.modifyRequestHeaders;
         
@@ -104,7 +96,6 @@ function createFaultendProxy(targetUrl) {
         let parsedBody = null;
         const contentType = proxyRes.headers['content-type'] || '';
         
-        // Apply body size limit for storage (10MB)
         const maxBodySize = 10 * 1024 * 1024;
         if (responseBodySize > maxBodySize) {
           parsedBody = `<response too large: ${responseBodySize} bytes>`;
@@ -124,7 +115,8 @@ function createFaultendProxy(targetUrl) {
         }
         
         // Log the complete transaction
-        logTransaction({
+        const serverId = req.serverId || 'unknown';
+        logTransaction(serverId, {
           request: req.capturedRequest,
           response: {
             statusCode: proxyRes.statusCode,
@@ -147,7 +139,8 @@ function createFaultendProxy(targetUrl) {
       console.error(`[PROXY ERROR] ${req.method} ${req.url}:`, err.message);
       
       // Log error transaction
-      logTransaction({
+      const serverId = req.serverId || 'unknown';
+      logTransaction(serverId, {
         request: req.capturedRequest || {
           method: req.method,
           url: req.url,

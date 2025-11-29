@@ -1,7 +1,4 @@
-/**
- * Rules Management API - Phase 5
- * REST API endpoints for managing routing rules
- */
+
 
 const express = require('express');
 const router = express.Router();
@@ -19,21 +16,31 @@ const {
 // Parse JSON bodies for all rules endpoints
 router.use(express.json());
 
-/**
- * GET /api/rules
- * List all rules
- */
 router.get('/', (req, res) => {
-  const rules = getAllRules();
-  res.json({ rules, count: rules.length });
+  const serverId = req.serverId;
+  
+  if (!serverId) {
+    return res.status(400).json({
+      error: 'Bad Request',
+      message: 'Server ID required. Access via /servers/:serverId/rules'
+    });
+  }
+  
+  const rules = getAllRules(serverId);
+  res.json({ serverId, rules, count: rules.length });
 });
 
-/**
- * GET /api/rules/:id
- * Get specific rule by ID
- */
 router.get('/:id', (req, res) => {
-  const rule = getRuleById(req.params.id);
+  const serverId = req.serverId;
+  
+  if (!serverId) {
+    return res.status(400).json({
+      error: 'Bad Request',
+      message: 'Server ID required'
+    });
+  }
+  
+  const rule = getRuleById(serverId, req.params.id);
   if (!rule) {
     return res.status(404).json({
       error: 'Not Found',
@@ -43,14 +50,19 @@ router.get('/:id', (req, res) => {
   res.json(rule);
 });
 
-/**
- * POST /api/rules
- * Create new rule
- */
 router.post('/', (req, res) => {
+  const serverId = req.serverId;
+  
+  if (!serverId) {
+    return res.status(400).json({
+      error: 'Bad Request',
+      message: 'Server ID required'
+    });
+  }
+  
   try {
-    const rule = addRule(req.body);
-    console.log(`[API] Created rule: ${rule.name} (${rule.action}, priority: ${rule.priority})`);
+    const rule = addRule(serverId, req.body);
+    console.log(`[API] [${serverId}] Created rule: ${rule.name} (${rule.action}, priority: ${rule.priority})`);
     res.status(201).json(rule);
   } catch (error) {
     res.status(400).json({
@@ -60,14 +72,19 @@ router.post('/', (req, res) => {
   }
 });
 
-/**
- * PUT /api/rules/:id
- * Update existing rule
- */
 router.put('/:id', (req, res) => {
+  const serverId = req.serverId;
+  
+  if (!serverId) {
+    return res.status(400).json({
+      error: 'Bad Request',
+      message: 'Server ID required'
+    });
+  }
+  
   try {
-    const rule = updateRule(req.params.id, req.body);
-    console.log(`[API] Updated rule: ${rule.name} (${rule.action}, priority: ${rule.priority})`);
+    const rule = updateRule(serverId, req.params.id, req.body);
+    console.log(`[API] [${serverId}] Updated rule: ${rule.name} (${rule.action}, priority: ${rule.priority})`);
     res.json(rule);
   } catch (error) {
     if (error.message.includes('not found')) {
@@ -83,14 +100,19 @@ router.put('/:id', (req, res) => {
   }
 });
 
-/**
- * DELETE /api/rules/:id
- * Delete rule
- */
 router.delete('/:id', (req, res) => {
+  const serverId = req.serverId;
+  
+  if (!serverId) {
+    return res.status(400).json({
+      error: 'Bad Request',
+      message: 'Server ID required'
+    });
+  }
+  
   try {
-    deleteRule(req.params.id);
-    console.log(`[API] Deleted rule: ${req.params.id}`);
+    deleteRule(serverId, req.params.id);
+    console.log(`[API] [${serverId}] Deleted rule: ${req.params.id}`);
     res.json({
       message: 'Rule deleted successfully',
       id: req.params.id
@@ -104,13 +126,23 @@ router.delete('/:id', (req, res) => {
 });
 
 /**
- * PATCH /api/rules/:id/toggle
+ * PATCH /servers/:serverId/rules/:id/toggle
  * Toggle rule enabled state
+ * Phase 6.1: Scoped per serverId
  */
 router.patch('/:id/toggle', (req, res) => {
+  const serverId = req.serverId;
+  
+  if (!serverId) {
+    return res.status(400).json({
+      error: 'Bad Request',
+      message: 'Server ID required'
+    });
+  }
+  
   try {
-    const rule = toggleRule(req.params.id);
-    console.log(`[API] Toggled rule: ${rule.name} → ${rule.enabled ? 'enabled' : 'disabled'}`);
+    const rule = toggleRule(serverId, req.params.id);
+    console.log(`[API] [${serverId}] Toggled rule: ${rule.name} → ${rule.enabled ? 'enabled' : 'disabled'}`);
     res.json({
       id: rule.id,
       enabled: rule.enabled,
@@ -125,20 +157,40 @@ router.patch('/:id/toggle', (req, res) => {
 });
 
 /**
- * POST /api/rules/export
+ * POST /servers/:serverId/rules/export
  * Export all rules as JSON
+ * Phase 6.1: Scoped per serverId
  */
 router.post('/export', (req, res) => {
-  const exportData = exportRules();
-  console.log(`[API] Exported ${exportData.count} rule(s)`);
+  const serverId = req.serverId;
+  
+  if (!serverId) {
+    return res.status(400).json({
+      error: 'Bad Request',
+      message: 'Server ID required'
+    });
+  }
+  
+  const exportData = exportRules(serverId);
+  console.log(`[API] [${serverId}] Exported ${exportData.count} rule(s)`);
   res.json(exportData);
 });
 
 /**
- * POST /api/rules/import
+ * POST /servers/:serverId/rules/import
  * Import rules from JSON
+ * Phase 6.1: Scoped per serverId
  */
 router.post('/import', (req, res) => {
+  const serverId = req.serverId;
+  
+  if (!serverId) {
+    return res.status(400).json({
+      error: 'Bad Request',
+      message: 'Server ID required'
+    });
+  }
+  
   try {
     const { mode = 'merge', rules: rulesArray } = req.body;
 
@@ -149,13 +201,14 @@ router.post('/import', (req, res) => {
       });
     }
 
-    const importedRules = importRules(rulesArray, mode);
-    const allRules = getAllRules();
+    const importedRules = importRules(serverId, rulesArray, mode);
+    const allRules = getAllRules(serverId);
 
-    console.log(`[API] Imported ${importedRules.length} rule(s) in ${mode} mode (total: ${allRules.length})`);
+    console.log(`[API] [${serverId}] Imported ${importedRules.length} rule(s) in ${mode} mode (total: ${allRules.length})`);
 
     res.json({
       message: 'Rules imported successfully',
+      serverId,
       mode,
       imported: importedRules.length,
       total: allRules.length,

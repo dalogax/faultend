@@ -1,56 +1,43 @@
 const server = require('./server');
-const { getAllRules, addRule, getDefaultProxyRule } = require('./rules/rulesEngine');
 
 const PORT = process.env.PORT || 3000;
-
-/**
- * Initialize rules on startup
- * Just displays existing rules, doesn't create any defaults
- */
-function initializeRules() {
-  const rules = getAllRules();
-  
-  if (rules.length === 0) {
-    console.log('[INIT] No rules configured');
-    console.log('[INIT] Unmatched requests will return 502 Bad Gateway');
-    console.log('[INIT] Create rules via API: POST /api/rules');
-  } else {
-    console.log(`[INIT] Loaded ${rules.length} rule(s):`);
-    rules.forEach(rule => {
-      const status = rule.enabled ? '✓' : '✗';
-      const action = rule.action === 'proxy' ? `→ ${rule.target}` : 'MOCK';
-      console.log(`  ${status} [${rule.priority}] ${rule.name} (${rule.method} ${rule.pathRegex}) ${action}`);
-    });
-  }
-}
+const ROOT_DOMAIN = process.env.ROOT_DOMAIN || 'localhost';
 
 console.log('='.repeat(60));
 console.log('Fault-end Proxy Server');
 console.log('='.repeat(60));
 console.log(`Port:            ${PORT}`);
-console.log(`UI:              http://localhost:${PORT}`);
-console.log(`Proxy:           http://localhost:${PORT}/proxy/*`);
-console.log(`Traffic API:     http://localhost:${PORT}/api/traffic`);
-console.log(`Stats:           http://localhost:${PORT}/api/traffic/stats`);
+console.log(`Root Domain:     ${ROOT_DOMAIN}`);
+console.log(`Landing:         http://${ROOT_DOMAIN}:${PORT}`);
+console.log(`Admin API:       http://admin.${ROOT_DOMAIN}:${PORT}/servers`);
+console.log(`User App:        http://app.${ROOT_DOMAIN}:${PORT}`);
+console.log(`Fault Servers:   http://[server-id].${ROOT_DOMAIN}:${PORT}`);
 console.log('='.repeat(60));
 console.log('');
 
-// Initialize rules before starting server
-initializeRules();
+console.log('[INIT] Starting with subdomain-based architecture');
+console.log('[INIT] No fault servers created yet');
+console.log('[INIT] Create fault servers via Admin API');
 
 console.log('');
 
 server.listen(PORT, () => {
   console.log(`✓ Server is running\n`);
   console.log(`Examples:`);
-  console.log(`  # Make proxied requests (routed by rules)`);
-  console.log(`  curl http://localhost:${PORT}/proxy/posts/1`);
-  console.log(`  curl -X POST http://localhost:${PORT}/proxy/posts \\`);
+  console.log(`  # Create a fault server`);
+  console.log(`  curl -X POST http://admin.${ROOT_DOMAIN}:${PORT}/servers \\`);
   console.log(`    -H "Content-Type: application/json" \\`);
-  console.log(`    -d '{"title":"Test","body":"Content","userId":1}'`);
+  console.log(`    -d '{"id":"server1","name":"Server 1","description":"Test instance"}'`);
   console.log(``);
-  console.log(`  # View traffic logs`);
-  console.log(`  curl http://localhost:${PORT}/api/traffic`);
-  console.log(`  curl http://localhost:${PORT}/api/traffic/stats`);
-  console.log(`  curl "http://localhost:${PORT}/api/traffic?method=POST&statusCode=201"\n`);
+  console.log(`  # Create a proxy rule for server1`);
+  console.log(`  curl -X POST http://app.${ROOT_DOMAIN}:${PORT}/servers/server1/rules \\`);
+  console.log(`    -H "Content-Type: application/json" \\`);
+  console.log(`    -d '{"priority":100,"name":"API Proxy","method":"*","pathRegex":".*","action":"proxy","target":"https://jsonplaceholder.typicode.com"}'`);
+  console.log(``);
+  console.log(`  # Send request through server1's fault server`);
+  console.log(`  curl http://server1.${ROOT_DOMAIN}:${PORT}/posts/1`);
+  console.log(``);
+  console.log(`  # View traffic for server1`);
+  console.log(`  curl http://app.${ROOT_DOMAIN}:${PORT}/servers/server1/traffic`);
+  console.log('');
 });

@@ -1,11 +1,9 @@
-/**
- * Traffic Logger Module
- * Handles capturing, storing, and querying HTTP traffic
- */
 
-// Traffic storage
-let trafficLogs = [];
-let maxLogs = 1000; // Maximum number of logs to keep in memory
+
+const { ensureServer } = require('../storage/storage');
+
+// Traffic storage configuration
+let maxLogs = 10000; // Maximum number of logs to keep in memory per customer
 
 /**
  * Transaction data model
@@ -35,8 +33,6 @@ class Transaction {
     this.duration = data.duration || 0;
     this.target = data.target;
     this.error = data.error || null;
-    
-    // Phase 4: Include matched rule information
     this.matchedRule = data.matchedRule || null;
   }
 }
@@ -50,15 +46,19 @@ function generateId() {
 
 /**
  * Log a new transaction
+ * @param {string} serverId - Customer identifier
+ * @param {Object} transactionData - Transaction data
+ * @returns {Object} - Created transaction
  */
-function logTransaction(transactionData) {
+function logTransaction(serverId, transactionData) {
+  const customer = ensureServer(serverId);
   const transaction = new Transaction(transactionData);
   
-  trafficLogs.push(transaction);
+  customer.traffic.push(transaction);
   
   // Enforce max logs limit (FIFO)
-  if (trafficLogs.length > maxLogs) {
-    trafficLogs.shift();
+  if (customer.traffic.length > maxLogs) {
+    customer.traffic.shift();
   }
   
   return transaction;
@@ -66,23 +66,34 @@ function logTransaction(transactionData) {
 
 /**
  * Get all traffic logs
+ * @param {string} serverId - Customer identifier
+ * @returns {Array} - Traffic logs array
  */
-function getAllLogs() {
-  return trafficLogs;
+function getAllLogs(serverId) {
+  const customer = ensureServer(serverId);
+  return customer.traffic;
 }
 
 /**
  * Get transaction by ID
+ * @param {string} serverId - Customer identifier
+ * @param {string} id - Transaction ID
+ * @returns {Object|undefined} - Transaction or undefined if not found
  */
-function getLogById(id) {
-  return trafficLogs.find(log => log.id === id);
+function getLogById(serverId, id) {
+  const customer = ensureServer(serverId);
+  return customer.traffic.find(log => log.id === id);
 }
 
 /**
  * Filter logs by criteria
+ * @param {string} serverId - Customer identifier
+ * @param {Object} criteria - Filter criteria
+ * @returns {Array} - Filtered traffic logs
  */
-function filterLogs(criteria = {}) {
-  let filtered = [...trafficLogs];
+function filterLogs(serverId, criteria = {}) {
+  const customer = ensureServer(serverId);
+  let filtered = [...customer.traffic];
   
   // Filter by HTTP method
   if (criteria.method) {
@@ -158,27 +169,33 @@ function filterLogs(criteria = {}) {
 
 /**
  * Clear all logs
+ * @param {string} serverId - Customer identifier
+ * @returns {number} - Number of logs cleared
  */
-function clearLogs() {
-  const count = trafficLogs.length;
-  trafficLogs = [];
+function clearLogs(serverId) {
+  const customer = ensureServer(serverId);
+  const count = customer.traffic.length;
+  customer.traffic = [];
   return count;
 }
 
 /**
  * Get statistics
+ * @param {string} serverId - Customer identifier
+ * @returns {Object} - Traffic statistics
  */
-function getStats() {
+function getStats(serverId) {
+  const customer = ensureServer(serverId);
   return {
-    total: trafficLogs.length,
-    byMethod: countByMethod(),
-    byStatusCode: countByStatusCode(),
-    errors: trafficLogs.filter(log => log.error !== null).length,
-    averageDuration: calculateAverageDuration()
+    total: customer.traffic.length,
+    byMethod: countByMethod(customer.traffic),
+    byStatusCode: countByStatusCode(customer.traffic),
+    errors: customer.traffic.filter(log => log.error !== null).length,
+    averageDuration: calculateAverageDuration(customer.traffic)
   };
 }
 
-function countByMethod() {
+function countByMethod(trafficLogs) {
   const counts = {};
   trafficLogs.forEach(log => {
     counts[log.request.method] = (counts[log.request.method] || 0) + 1;
@@ -186,7 +203,7 @@ function countByMethod() {
   return counts;
 }
 
-function countByStatusCode() {
+function countByStatusCode(trafficLogs) {
   const counts = {};
   trafficLogs.forEach(log => {
     const code = log.response.statusCode;
@@ -195,21 +212,18 @@ function countByStatusCode() {
   return counts;
 }
 
-function calculateAverageDuration() {
+function calculateAverageDuration(trafficLogs) {
   if (trafficLogs.length === 0) return 0;
   const total = trafficLogs.reduce((sum, log) => sum + log.duration, 0);
   return Math.round(total / trafficLogs.length);
 }
 
 /**
- * Set maximum logs to keep
+ * Set maximum logs to keep per customer
+ * @param {number} max - Maximum number of logs
  */
 function setMaxLogs(max) {
   maxLogs = max;
-  // Trim if necessary
-  if (trafficLogs.length > maxLogs) {
-    trafficLogs = trafficLogs.slice(-maxLogs);
-  }
 }
 
 module.exports = {
