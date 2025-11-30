@@ -31,7 +31,7 @@ function initSampleData() {
 }
 
 console.log('='.repeat(60));
-console.log('Fault-end Proxy Server');
+console.log('Faultend Proxy Server');
 console.log('='.repeat(60));
 console.log(`Port:            ${PORT}`);
 console.log(`Root Domain:     ${ROOT_DOMAIN}`);

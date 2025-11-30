@@ -1,4 +1,4 @@
-# Multi-stage build for Fault-end
+# Multi-stage build for Faultend
 FROM node:20.18.1-alpine AS base
 
 # Set working directory

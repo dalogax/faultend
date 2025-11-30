@@ -146,7 +146,7 @@ router.use('/', (req, res, next) => {
 
 **Key Changes:**
 
-- Remove `X-Fault-End-Target` header check
+- Remove `X-Faultend-Target` header check
 - Remove `config.defaultTarget` usage
 - All routing through rules engine
 - 502 error for unmatched requests
@@ -298,7 +298,7 @@ No new endpoints in this phase, but behavior changes:
 ### Changed Behaviors
 
 **Proxy Endpoint:** `/proxy/*`
-- **Before:** Always proxies to `BACKEND_URL` or `X-Fault-End-Target`
+- **Before:** Always proxies to `BACKEND_URL` or `X-Faultend-Target`
 - **After:** Evaluates rules, proxies OR mocks based on matched rule
 - **No match:** Returns 502 instead of proxying to default
 
@@ -313,7 +313,7 @@ No new endpoints in this phase, but behavior changes:
 ### Breaking Changes
 
 1. **No more `BACKEND_URL` fallback** - Must configure proxy rules
-2. **No more `X-Fault-End-Target` header** - Routing via rules only
+2. **No more `X-Faultend-Target` header** - Routing via rules only
 3. **Unmatched requests fail** - Forces explicit routing configuration
 
 ### Upgrade Path

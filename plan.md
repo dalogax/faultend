@@ -1,8 +1,8 @@
-# Fault-end Implementation Plan
+# Faultend Implementation Plan
 
 ## Overview
 
-Fault-end uses a **rules-based routing system** where both mocking and proxying are configured through prioritized rules. There is no hardcoded backend URL - all routing is explicit and configurable.
+Faultend uses a **rules-based routing system** where both mocking and proxying are configured through prioritized rules. There is no hardcoded backend URL - all routing is explicit and configurable.
 
 ### Core Concepts
 
@@ -14,7 +14,7 @@ Fault-end uses a **rules-based routing system** where both mocking and proxying 
 
 ### Deployment Model
 
-- **One Fault-end instance = One app/tester**
+- **One Faultend instance = One app/tester**
 - Deploy at a custom domain (e.g., `faultend.myapp.com`)
 - Configure rules for specific testing needs
 - Data and rules are isolated per instance
@@ -23,7 +23,7 @@ Fault-end uses a **rules-based routing system** where both mocking and proxying 
 ### Future SaaS Vision
 
 - On-demand instance provisioning (e.g., `customer1.faultend.io`)
-- Each customer gets isolated Fault-end instance
+- Each customer gets isolated Faultend instance
 - Complete data isolation (rules, traffic logs, configuration)
 - Multi-tenant architecture with separate databases/storage
 - API-driven instance management
@@ -106,7 +106,7 @@ Enhance mock rule responses with additional capabilities beyond basic status/bod
 
 ## Phase 6.1: Subdomain-Based Multi-Tenant Architecture
 
-Transform Fault-end from single-instance proxy to multi-tenant SaaS-ready platform with subdomain-based routing. Remove `/proxy` URL prefix and implement intelligent routing based on subdomains.
+Transform Faultend from single-instance proxy to multi-tenant SaaS-ready platform with subdomain-based routing. Remove `/proxy` URL prefix and implement intelligent routing based on subdomains.
 
 ### Architecture Overview:
 - **Root Domain Configuration:** Configurable via `ROOT_DOMAIN` env var (e.g., `localhost` for dev, `faultend.com` for production)
@@ -167,7 +167,7 @@ Create the rules list view showing all defined rules with:
 - Export/Import buttons for rule configuration
 
 ### Import/Export Feature:
-- Export button → Download `fault-end-config.json`
+- Export button → Download `Faultend-config.json`
 - Import button → File picker → Load rules
 - Import options: Merge (add new rules) or Replace (clear existing)
 - Validation before import with error messages
@@ -204,14 +204,14 @@ Enable easy deployment and instance provisioning through Docker.
 ### Usage:
 ```bash
 # Build image
-docker build -t fault-end:latest .
+docker build -t Faultend:latest .
 
 # Run container
-docker run -p 3000:3000 -v $(pwd)/data:/app/data fault-end:latest
+docker run -p 3000:3000 -v $(pwd)/data:/app/data Faultend:latest
 ```
 
 ### Deployment Options:
-- Single instance: `docker run -p 3000:3000 -v $(pwd)/data:/app/data fault-end`
+- Single instance: `docker run -p 3000:3000 -v $(pwd)/data:/app/data Faultend`
 - Docker Compose for easy setup with persistent storage
 - Kubernetes manifests for scalable SaaS deployment
 - Cloud platform support (AWS ECS, Google Cloud Run, Azure Container Instances)

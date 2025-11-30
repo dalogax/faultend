@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 
 const APP_URL = 'http://app.localhost:3000';
 
-test.describe('Fault-end Frontend Tests', () => {
+test.describe('Faultend Frontend Tests', () => {
   
   test('page loads successfully', async ({ page }) => {
     await page.goto(APP_URL);

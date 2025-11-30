@@ -8,7 +8,7 @@
 
 ## Overview
 
-Phase 7 establishes the frontend foundation for Fault-end's management UI at `app.[ROOT_DOMAIN]`. This phase focuses on creating a clean, modern, and functional user interface using vanilla HTML, CSS, and JavaScript with no build process. The UI will serve as the foundation for traffic viewing (Phase 8) and rule management (Phases 9-10).
+Phase 7 establishes the frontend foundation for Faultend's management UI at `app.[ROOT_DOMAIN]`. This phase focuses on creating a clean, modern, and functional user interface using vanilla HTML, CSS, and JavaScript with no build process. The UI will serve as the foundation for traffic viewing (Phase 8) and rule management (Phases 9-10).
 
 ---
 

@@ -282,12 +282,12 @@ const router = express.Router();
  */
 router.use('/', (req, res, next) => {
   // Get target from header or use default
-  const targetUrl = req.headers['x-fault-end-target'] || config.defaultTarget;
+  const targetUrl = req.headers['x-Faultend-target'] || config.defaultTarget;
   
   if (!targetUrl) {
     return res.status(400).json({
       error: 'No target backend specified',
-      message: 'Set BACKEND_URL environment variable or X-Fault-End-Target header'
+      message: 'Set BACKEND_URL environment variable or X-Faultend-Target header'
     });
   }
   
@@ -379,7 +379,7 @@ app.use(express.static(path.join(__dirname, '../public')));
 app.get('/health', (req, res) => {
   res.json({ 
     status: 'ok', 
-    service: 'fault-end',
+    service: 'Faultend',
     version: '0.1.0',
     timestamp: new Date().toISOString()
   });
@@ -441,7 +441,7 @@ const PORT = process.env.PORT || 3000;
 const BACKEND_URL = process.env.BACKEND_URL || 'https://jsonplaceholder.typicode.com';
 
 console.log('='.repeat(60));
-console.log('Fault-end Proxy Server');
+console.log('Faultend Proxy Server');
 console.log('='.repeat(60));
 console.log(`Port:            ${PORT}`);
 console.log(`Default Backend: ${BACKEND_URL}`);
@@ -504,7 +504,7 @@ curl http://localhost:3000/debug/intercepted
 ### Test 4: Custom Backend Target
 ```bash
 curl -X GET http://localhost:3000/proxy/users \
-  -H "X-Fault-End-Target: https://jsonplaceholder.typicode.com"
+  -H "X-Faultend-Target: https://jsonplaceholder.typicode.com"
 
 # Expected: Users list from specified backend
 ```
@@ -512,7 +512,7 @@ curl -X GET http://localhost:3000/proxy/users \
 ### Test 5: Error Handling - Invalid Backend
 ```bash
 curl -X GET http://localhost:3000/proxy/test \
-  -H "X-Fault-End-Target: https://invalid-backend-url-that-does-not-exist.example"
+  -H "X-Faultend-Target: https://invalid-backend-url-that-does-not-exist.example"
 
 # Expected: 502 error with proper error message
 ```
@@ -568,7 +568,7 @@ curl http://localhost:3000/debug/intercepted
 - [x] Request bodies are preserved and forwarded correctly
 - [x] Response bodies are captured completely
 - [x] Request/response data stored in memory with all details
-- [x] Custom backend targets work via X-Fault-End-Target header
+- [x] Custom backend targets work via X-Faultend-Target header
 - [x] Error handling returns 502 with descriptive messages
 - [x] Console logging shows complete request flow
 - [x] Response timing is measured accurately
@@ -639,7 +639,7 @@ Client Response
 
 1. **Raw Body Preservation**: Custom body parser keeps `rawBody` for accurate proxying while parsing for inspection
 2. **In-Memory Storage**: Simple array with 1000-item limit (FIFO) for Phase 2; will persist in Phase 11
-3. **Target Flexibility**: Support both `BACKEND_URL` env var and `X-Fault-End-Target` header
+3. **Target Flexibility**: Support both `BACKEND_URL` env var and `X-Faultend-Target` header
 4. **Error Handling**: Return 502 for proxy errors with detailed context
 5. **Timing**: Capture response time for each request
 6. **JSON Optimization**: Auto-parse JSON responses but preserve raw text as fallback
@@ -661,7 +661,7 @@ Client Response
 Create `.env.example` file:
 
 ```bash
-# Fault-end Configuration
+# Faultend Configuration
 
 # Server port
 PORT=3000

@@ -21,7 +21,7 @@ app.use(subdomainRouter);
 app.get('/health', (req, res) => {
   res.json({ 
     status: 'ok', 
-    service: 'fault-end',
+    service: 'Faultend',
     version: '0.1.0',
     subdomain: req.subdomain,
     routeType: req.routeType,

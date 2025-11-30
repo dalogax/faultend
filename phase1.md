@@ -7,7 +7,7 @@ Set up a single Node.js project structure with backend and frontend in the same 
 
 ### 1.1 Initialize Node.js Project
 - Run `npm init -y` to create package.json
-- Set project name to "fault-end"
+- Set project name to "Faultend"
 - Set description: "Lightweight proxy tool for testing application resilience"
 - Set main entry point to "src/index.js"
 - Set version to "0.1.0"
@@ -29,7 +29,7 @@ npm install --save-dev nodemon
 
 ### 1.3 Create Directory Structure
 ```
-fault-end/
+Faultend/
 ├── package.json
 ├── README.md
 ├── plan.md
@@ -65,7 +65,7 @@ const server = require('./server');
 const PORT = process.env.PORT || 3000;
 
 server.listen(PORT, () => {
-  console.log(`Fault-end proxy running on http://localhost:${PORT}`);
+  console.log(`Faultend proxy running on http://localhost:${PORT}`);
   console.log(`UI available at http://localhost:${PORT}`);
 });
 ```
@@ -83,7 +83,7 @@ app.use(express.static(path.join(__dirname, '../public')));
 
 // Health check endpoint
 app.get('/health', (req, res) => {
-  res.json({ status: 'ok', service: 'fault-end' });
+  res.json({ status: 'ok', service: 'Faultend' });
 });
 
 module.exports = app;
@@ -96,12 +96,12 @@ module.exports = app;
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Fault-end - Resilience Testing Proxy</title>
+  <title>Faultend - Resilience Testing Proxy</title>
   <link rel="stylesheet" href="/css/styles.css">
 </head>
 <body>
   <header>
-    <h1>Fault-end</h1>
+    <h1>Faultend</h1>
     <p>Lightweight proxy for testing application resilience</p>
   </header>
   
@@ -157,7 +157,7 @@ main {
 // Simple startup message
 document.addEventListener('DOMContentLoaded', () => {
   const app = document.getElementById('app');
-  app.innerHTML = '<p>Fault-end is ready. Waiting for implementation...</p>';
+  app.innerHTML = '<p>Faultend is ready. Waiting for implementation...</p>';
 });
 ```
 
@@ -195,7 +195,7 @@ data/rules.json
 
 3. **Test Endpoints:**
    - Visit `http://localhost:3000` - should show basic UI
-   - Visit `http://localhost:3000/health` - should return JSON: `{"status":"ok","service":"fault-end"}`
+   - Visit `http://localhost:3000/health` - should return JSON: `{"status":"ok","service":"Faultend"}`
 
 4. **Verify Development Workflow:**
    - Server should auto-restart on file changes (with nodemon)

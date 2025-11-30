@@ -426,7 +426,7 @@ function matchesConditions(conditions, request) {
   // NEW: Optional header modifications
   "modifyRequestHeaders": {
     "add": {
-      "X-Forwarded-By": "fault-end",
+      "X-Forwarded-By": "Faultend",
       "X-Test-Mode": "true"
     },
     "remove": [
@@ -559,7 +559,7 @@ function applyHeaderModifications(proxyReq, modifications) {
   
   // NEW: Header modifications
   modifyRequestHeaders: {
-    add: { "X-Forwarded-By": "fault-end" },
+    add: { "X-Forwarded-By": "Faultend" },
     remove: ["Cookie"],
     set: { "Authorization": "Bearer test-token" }
   }
@@ -767,7 +767,7 @@ curl -X POST http://localhost:3000/api/rules -H "Content-Type: application/json"
   "target": "https://jsonplaceholder.typicode.com",
   "modifyRequestHeaders": {
     "add": {"X-Custom": "added"},
-    "set": {"User-Agent": "Fault-end/1.0"}
+    "set": {"User-Agent": "Faultend/1.0"}
   }
 }'
 ```

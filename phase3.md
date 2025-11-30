@@ -528,7 +528,7 @@ app.use(express.static(path.join(__dirname, '../public')));
 app.get('/health', (req, res) => {
   res.json({ 
     status: 'ok', 
-    service: 'fault-end',
+    service: 'Faultend',
     version: '0.1.0',
     timestamp: new Date().toISOString()
   });
@@ -588,7 +588,7 @@ const PORT = process.env.PORT || 3000;
 const BACKEND_URL = process.env.BACKEND_URL || 'https://jsonplaceholder.typicode.com';
 
 console.log('='.repeat(60));
-console.log('Fault-end Proxy Server');
+console.log('Faultend Proxy Server');
 console.log('='.repeat(60));
 console.log(`Port:            ${PORT}`);
 console.log(`Default Backend: ${BACKEND_URL}`);
@@ -683,7 +683,7 @@ curl http://localhost:3000/api/traffic
 ### Test 9: Error Logging
 ```bash
 # Trigger an error with invalid backend
-curl -H "X-Fault-End-Target: http://invalid-backend-12345.local" \
+curl -H "X-Faultend-Target: http://invalid-backend-12345.local" \
   http://localhost:3000/proxy/test
 
 # Check error was logged

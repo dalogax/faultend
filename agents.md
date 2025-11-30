@@ -1,4 +1,4 @@
-# Fault-end Development Context
+# Faultend Development Context
 
 **Last Updated:** November 30, 2025  
 **Current Phase:** Phase 7 - Complete ✓
@@ -7,10 +7,10 @@
 
 ## Project Overview
 
-**Fault-end** is a lightweight proxy tool designed to help developers and testers validate the resilience of mobile and web applications against unreliable backend behavior.
+**Faultend** is a lightweight proxy tool designed to help developers and testers validate the resilience of mobile and web applications against unreliable backend behavior.
 
 ### Core Concept
-By routing REST + JSON traffic through Fault-end, you can inspect real requests and responses in real time and configure flexible routing rules. Rules can either mock responses (return custom status/body/latency) OR proxy to specified backends (forward to real APIs). This enables multi-backend support and complex testing scenarios.
+By routing REST + JSON traffic through Faultend, you can inspect real requests and responses in real time and configure flexible routing rules. Rules can either mock responses (return custom status/body/latency) OR proxy to specified backends (forward to real APIs). This enables multi-backend support and complex testing scenarios.
 
 ### Key Features
 - **Subdomain architecture** - Isolated fault servers per subdomain
@@ -30,7 +30,7 @@ By routing REST + JSON traffic through Fault-end, you can inspect real requests 
 - Optimized for REST + JSON APIs
 
 ### Architecture Decision: Proxy-as-Rule
-Unlike traditional proxies with a single hardcoded backend URL, Fault-end treats proxying as a configurable rule action. This means:
+Unlike traditional proxies with a single hardcoded backend URL, Faultend treats proxying as a configurable rule action. This means:
 - No `BACKEND_URL` environment variable
 - All routing is explicit and visible in the rules list
 - Support for multiple backend services (microservices-friendly)
@@ -41,12 +41,12 @@ Unlike traditional proxies with a single hardcoded backend URL, Fault-end treats
 
 ## Use Case Workflow
 
-1. Launch Fault-end and open the UI
-2. Configure your mobile/web app to use Fault-end's base URL (e.g., `faultend.myapp.com`)
+1. Launch Faultend and open the UI
+2. Configure your mobile/web app to use Faultend's base URL (e.g., `faultend.myapp.com`)
 3. Create initial proxy rules to route traffic to your backends:
    - Rule 1 (priority 100): `.*` → Proxy to `https://api.myapp.com`
    - Rule 2 (priority 90): `/auth/.*` → Proxy to `https://auth.myapp.com`
-4. Interact with your app normally - Fault-end routes based on rules
+4. Interact with your app normally - Faultend routes based on rules
 5. Each request/response appears live in the UI
 6. Click a logged request to **convert it into a mock or proxy rule**
 7. Edit the auto-filled form:
@@ -71,7 +71,7 @@ Unlike traditional proxies with a single hardcoded backend URL, Fault-end treats
 - No `/api` prefix - subdomain provides context
 
 **SaaS Model:**
-- Single Fault-end deployment serves multiple isolated fault servers
+- Single Faultend deployment serves multiple isolated fault servers
 - Each server accessible at `[server-id].faultend.com`
 - Managed via admin API at `admin.faultend.com`
 - Complete data isolation between servers
@@ -111,7 +111,7 @@ A UI built for clarity and speed:
 ```
 Client Request
     ↓
-Fault-end Proxy
+Faultend Proxy
     ↓
 Check Rules (by priority, high to low)
     ↓
@@ -137,7 +137,7 @@ Frontend UI ←→ API ←→ Traffic & Rules Store
 ## Current Directory Structure
 
 ```
-fault-end/
+Faultend/
 ├── .env                        # Environment configuration (SAMPLE_DATA, ROOT_DOMAIN, PORT)
 ├── .gitignore
 ├── .tool-versions              # Node version (20.18.1)
@@ -218,7 +218,7 @@ fault-end/
 
 **Current Functionality:**
 - Express server runs on port 3000
-- Health check endpoint: `GET /health` → `{"status":"ok","service":"fault-end","version":"0.1.0"}`
+- Health check endpoint: `GET /health` → `{"status":"ok","service":"Faultend","version":"0.1.0"}`
 - Static frontend served at `http://localhost:3000`
 - Basic HTML UI with header and placeholder content
 
@@ -249,7 +249,7 @@ npm run dev        # Run server with nodemon (auto-restart)
 - In-memory transaction storage (up to 1000 items)
 - Console logging shows complete request flow
 - Response timing measurement
-- Custom backend target via `X-Fault-End-Target` header or `BACKEND_URL` env var
+- Custom backend target via `X-Faultend-Target` header or `BACKEND_URL` env var
 - Debug endpoints for inspecting intercepted traffic
 
 **Proxy Endpoints:**
@@ -258,7 +258,7 @@ npm run dev        # Run server with nodemon (auto-restart)
 curl http://localhost:3000/proxy/posts/1
 
 # With custom target
-curl -H "X-Fault-End-Target: https://api.example.com" \
+curl -H "X-Faultend-Target: https://api.example.com" \
   http://localhost:3000/proxy/users
 
 # Debug - View intercepted traffic
@@ -432,7 +432,7 @@ curl -X DELETE http://localhost:3000/api/traffic
 **Current Functionality:**
 - **Rules-based routing:** All requests evaluated against priority-ordered rules
 - **Dual-action rules:** Each rule specifies either `mock` or `proxy` action
-- **No hardcoded backend:** Removed `BACKEND_URL` fallback and `X-Fault-End-Target` header
+- **No hardcoded backend:** Removed `BACKEND_URL` fallback and `X-Faultend-Target` header
 - **Priority-based evaluation:** Rules sorted and evaluated by priority (higher first)
 - **Path regex matching:** Flexible pattern matching with regex
 - **Method filtering:** Rules can target specific HTTP methods or use wildcard (`*`)
@@ -548,7 +548,7 @@ curl http://localhost:3000/proxy/admin/stats
 
 **Breaking Changes from Phase 3:**
 - No more `BACKEND_URL` environment variable
-- No more `X-Fault-End-Target` header support
+- No more `X-Faultend-Target` header support
 - Server starts with zero rules (no automatic default rule creation)
 - Unmatched requests return 502 Bad Gateway
 - Must explicitly create proxy rules via API for routing

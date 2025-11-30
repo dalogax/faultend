@@ -1,5 +1,5 @@
 {
-  "name": "fault-end",
+  "name": "Faultend",
   "version": "0.1.0",
   "description": "Lightweight proxy tool for testing application resilience",
   "main": "src/index.js",

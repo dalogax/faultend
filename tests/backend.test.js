@@ -1,5 +1,5 @@
 /**
- * Fault-end Integration Tests
+ * Faultend Integration Tests
  * Run with: npm test
  * 
  * Tests multi-server subdomain-based architecture:
@@ -104,7 +104,7 @@ function wait(ms) {
 // Main test suite
 async function runTests() {
   console.log('='.repeat(70));
-  console.log('Fault-end Integration Tests');
+  console.log('Faultend Integration Tests');
   console.log('='.repeat(70));
   console.log('');
 

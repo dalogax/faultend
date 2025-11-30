@@ -8,7 +8,7 @@
 
 ## Overview
 
-Transform Fault-end from a single-instance proxy tool to a multi-tenant SaaS-ready platform using subdomain-based routing. This phase removes the `/proxy` URL prefix requirement and enables seamless integration by allowing users to simply replace their backend domain with a Fault-end subdomain.
+Transform Faultend from a single-instance proxy tool to a multi-tenant SaaS-ready platform using subdomain-based routing. This phase removes the `/proxy` URL prefix requirement and enables seamless integration by allowing users to simply replace their backend domain with a Faultend subdomain.
 
 ---
 
@@ -687,7 +687,7 @@ app.use(subdomainRouter);
 app.get('/health', (req, res) => {
   res.json({ 
     status: 'ok', 
-    service: 'fault-end',
+    service: 'Faultend',
     version: '0.1.0',
     subdomain: req.subdomain,
     routeType: req.routeType,
@@ -826,7 +826,7 @@ module.exports = app;
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Fault-end - Resilience Testing Proxy</title>
+  <title>Faultend - Resilience Testing Proxy</title>
   <style>
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -851,7 +851,7 @@ module.exports = app;
   </style>
 </head>
 <body>
-  <h1>🔧 Fault-end</h1>
+  <h1>🔧 Faultend</h1>
   <p>Lightweight proxy for testing application resilience against unreliable backends.</p>
   
   <h2>Quick Start</h2>
@@ -869,7 +869,7 @@ module.exports = app;
   </ol>
   
   <h2>Documentation</h2>
-  <p>Visit <a href="https://github.com/dalogax/fault-end">GitHub</a> for full documentation.</p>
+  <p>Visit <a href="https://github.com/dalogax/Faultend">GitHub</a> for full documentation.</p>
   
   <script>
     const rootDomain = window.location.hostname;
@@ -904,7 +904,7 @@ console.log(`Proxy:           http://localhost:${PORT}/proxy/*`);
 const ROOT_DOMAIN = process.env.ROOT_DOMAIN || 'localhost';
 
 console.log('='.repeat(60));
-console.log('Fault-end Proxy Server');
+console.log('Faultend Proxy Server');
 console.log('='.repeat(60));
 console.log(`Port:            ${PORT}`);
 console.log(`Root Domain:     ${ROOT_DOMAIN}`);
@@ -1113,7 +1113,7 @@ ENV ROOT_DOMAIN=${ROOT_DOMAIN}
 ```yaml
 version: '3.8'
 services:
-  fault-end:
+  Faultend:
     build: .
     ports:
       - "3000:3000"

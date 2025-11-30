@@ -263,7 +263,7 @@ POST /api/rules/export
 }
 ```
 
-**Note:** Frontend can save this as `fault-end-config.json` file.
+**Note:** Frontend can save this as `Faultend-config.json` file.
 
 ---
 
@@ -682,7 +682,7 @@ When server starts:
 ```
 [INIT] Rules engine initialized with 1 rule(s)
 [INIT]   - "Default Catch-All Proxy" (priority: 0, action: proxy → https://jsonplaceholder.typicode.com)
-[SERVER] Fault-end started on http://localhost:3000
+[SERVER] Faultend started on http://localhost:3000
 [SERVER] Available routes:
 [SERVER]   - GET  /health              - Health check
 [SERVER]   - GET  /api/traffic         - List traffic logs
