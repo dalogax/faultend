@@ -1,4 +1,5 @@
 const express = require('express');
+const cors = require('cors');
 const path = require('path');
 const subdomainRouter = require('./middleware/subdomainRouter');
 const proxyRouter = require('./proxy/router');
@@ -7,6 +8,12 @@ const rulesRouter = require('./api/rules');
 const adminRouter = require('./api/admin');
 
 const app = express();
+
+// Enable CORS for all subdomains
+app.use(cors({
+  origin: true, // Allow all origins in development
+  credentials: true
+}));
 
 app.use(subdomainRouter);
 
@@ -47,6 +54,10 @@ app.use((req, res, next) => {
   
   // App UI
   if (routeType === 'app') {
+    // Serve static files (CSS, JS, etc.)
+    if (req.path.startsWith('/css/') || req.path.startsWith('/js/') || req.path.startsWith('/fonts/') || req.path === '/faultend.svg') {
+      return express.static(path.join(__dirname, '../public'))(req, res, next);
+    }
     // Serve app.html for root path
     if (req.path === '/' || req.path === '/index.html' || req.path === '/app.html') {
       return res.sendFile(path.join(__dirname, '../public/app.html'));

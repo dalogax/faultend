@@ -1,0 +1,54 @@
+/* CSS Custom Properties */
+
+:root {
+  /* Monochrome Base Colors */
+  --color-black: #000000;
+  --color-white: #ffffff;
+  --color-red: #DC2626;
+  --color-gray-dark: #333333;
+  --color-gray-mid: #666666;
+  --color-gray-light: #cccccc;
+  --color-background: #fafafa;
+
+  /* Pastel Accent Colors (for badges only) */
+  --color-get: #b8d4f1;
+  --color-post: #b8e6d5;
+  --color-put: #f5d5b8;
+  --color-patch: #d5e8e6;
+  --color-delete: #f5c2c2;
+  --color-options: #e8d5f5;
+  --color-head: #f5f5d5;
+
+  /* Status Code Pastels */
+  --color-status-2xx: #d4edda;
+  --color-status-3xx: #d1ecf1;
+  --color-status-4xx: #fff3cd;
+  --color-status-5xx: #f8d7da;
+
+  /* Typography */
+  --font-primary: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: "SF Mono", "Monaco", "Consolas", "Liberation Mono", "Courier New", monospace;
+  --font-weight: 300;
+
+  /* Font Sizes (3 levels only) */
+  --text-sm: 0.875rem;   /* 14px */
+  --text-base: 1rem;     /* 16px */
+  --text-lg: 1.5rem;     /* 24px */
+
+  /* Line Heights */
+  --line-height-tight: 1.2;
+  --line-height-normal: 1.6;
+
+  /* Spacing (4 levels) */
+  --space-sm: 0.5rem;    /* 8px */
+  --space-md: 1rem;      /* 16px */
+  --space-lg: 2rem;      /* 32px */
+  --space-xl: 4rem;      /* 64px */
+
+  /* Border Radius - None (all sharp edges) */
+  --radius: 0;
+
+  /* Transitions */
+  --transition-fast: 150ms ease-out;
+  --transition-normal: 300ms ease-out;
+}

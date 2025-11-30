@@ -1,7 +1,7 @@
 # Fault-end Development Context
 
-**Last Updated:** November 29, 2025  
-**Current Phase:** Phase 6.1 - Complete ✓
+**Last Updated:** November 30, 2025  
+**Current Phase:** Phase 7 - Complete ✓
 
 ---
 
@@ -138,58 +138,63 @@ Frontend UI ←→ API ←→ Traffic & Rules Store
 
 ```
 fault-end/
+├── .env                        # Environment configuration (SAMPLE_DATA, ROOT_DOMAIN, PORT)
 ├── .gitignore
 ├── .tool-versions              # Node version (20.18.1)
-├── package.json                # v0.1.0
+├── package.json                # v0.1.0, includes dotenv
 ├── package-lock.json
+├── playwright.config.js        # Playwright test configuration
 ├── README.md                   # User-facing documentation
 ├── plan.md                     # High-level phase plan
-├── phase1.md                   # Detailed Phase 1 implementation guide
-├── phase2.md                   # Detailed Phase 2 implementation guide
-├── phase3.md                   # Detailed Phase 3 implementation guide
-├── phase4.md                   # Detailed Phase 4 implementation guide ✓
-├── phase5.md                   # Detailed Phase 5 implementation guide ✓
-├── phase6.md                   # Detailed Phase 6 implementation guide ✓
+├── phase1.md - phase6_1.md     # Detailed implementation guides ✓
 ├── agents.md                   # This file - dev agent context
 │
 ├── src/
-│   ├── index.js                # Main entry point ✓
-│   ├── server.js               # Express server with subdomain routing ✓
-│   ├── middleware/             # Middleware
+│   ├── index.js                # Main entry point with dotenv, sample data init ✓
+│   ├── server.js               # Express server with subdomain routing, CORS ✓
+│   ├── middleware/
 │   │   └── subdomainRouter.js  # Subdomain detection and serverId extraction ✓
-│   ├── utils/                  # Utilities
+│   ├── utils/
 │   │   └── subdomain.js        # Subdomain parsing helpers ✓
-│   ├── proxy/                  # Proxy logic
+│   ├── proxy/
 │   │   ├── config.js           # Proxy configuration ✓
 │   │   ├── proxyHandler.js     # HTTP proxy handler ✓
 │   │   └── router.js           # Rules-based routing ✓
-│   ├── traffic/                # Traffic logging
+│   ├── traffic/
 │   │   └── trafficLogger.js    # Traffic logging ✓
-│   ├── rules/                  # Rules engine
+│   ├── rules/
 │   │   ├── rulesEngine.js      # Rules matching, execution, conditions ✓
 │   │   ├── templateEngine.js   # Template variable rendering ✓
 │   │   └── rulesManager.js     # Placeholder for future enhancements
-│   ├── api/                    # API routes
+│   ├── api/
 │   │   ├── admin.js            # Fault server management API ✓
 │   │   ├── traffic.js          # Traffic API endpoints ✓
 │   │   └── rules.js            # Rules management API ✓
-│   └── storage/                # Data persistence
+│   └── storage/
 │       └── storage.js          # In-memory storage ✓
 │
 ├── public/                     # Static frontend files
 │   ├── landing.html            # Landing page ✓
-│   ├── index.html              # Main HTML template ✓
+│   ├── app.html                # Main app UI ✓
+│   ├── faultend.svg            # Logo (48px) ✓
 │   ├── css/
-│   │   └── styles.css          # Base styles ✓
+│   │   ├── reset.css           # CSS reset ✓
+│   │   ├── variables.css       # Design system tokens ✓
+│   │   ├── components.css      # Reusable components ✓
+│   │   ├── layout.css          # Responsive layout system ✓
+│   │   ├── drawer.css          # Drawer styles ✓
+│   │   └── app.css             # App-specific styles + Inter font ✓
 │   └── js/
-│       └── app.js              # Frontend JavaScript ✓
+│       ├── config.js           # Configuration ✓
+│       ├── api.js              # API client ✓
+│       ├── components.js       # UI components (Toast, Spinner, Badges) ✓
+│       ├── drawer.js           # Drawer controller ✓
+│       ├── router.js           # View router ✓
+│       └── app.js              # Main application controller ✓
 │
-├── test/                       # Test files
-│   └── integration.test.js     # Integration tests (Phase 6.1) ✓
-│
-└── data/                       # Runtime data storage
-    ├── traffic.json            # Will store logged traffic (Phase 11)
-    └── rules.json              # Will store mock rules (Phase 11)
+└── tests/                      # Test files
+    ├── backend.test.js         # Backend integration tests (35 tests) ✓
+    └── frontend.spec.js        # Frontend Playwright tests (32 tests) ✓
 ```
 
 ---
@@ -929,13 +934,68 @@ curl http://app.localhost:3000/servers/server1/traffic
 
 ---
 
+### ✅ Phase 7: Frontend - UI Implementation (COMPLETE)
+
+**Completed Tasks:**
+1. ✅ Created complete CSS foundation (6 CSS files)
+2. ✅ Implemented minimalist black/white design (Inter font weight 300 only)
+3. ✅ Built server list table on landing page
+4. ✅ Implemented navigation: server list → management view (2-column layout)
+5. ✅ Created settings drawer with delete server functionality
+6. ✅ Responsive horizontal layout (adapts to window width)
+7. ✅ Complete JavaScript modules (8 files)
+8. ✅ Hash-based routing (no view suffix, both columns shown)
+9. ✅ Environment configuration via .env file
+10. ✅ Sample data initialization (SAMPLE_DATA=true)
+11. ✅ Comprehensive testing (32 Playwright tests, all passing)
+
+**Current Functionality:**
+- **Minimalist Design:**
+  - Black and white only (+ one red accent #DC2626 for danger)
+  - Sharp edges (0px border-radius everywhere)
+  - No shadows or blur effects
+  - Inter font weight 300 only
+  - 3 font sizes: 14px, 16px, 24px
+  - 4 spacing levels: 8px, 16px, 32px, 64px
+
+- **Layout:**
+  - Responsive horizontal layout (no min-width constraint)
+  - Fixed top bar with 48px clickable logo, brand text, server name, settings button
+  - Server list table view (ID, URL, Traffic count, Rules count)
+  - Two-column management view (Traffic left, Rules right)
+  - Right-side drawer (600px width) for settings
+  - Toast notifications (top-right)
+
+- **Navigation:**
+  - Hash-based routing: "" = server list, "server/{id}" = management
+  - Click server row to navigate to management view
+  - Click logo to return home
+  - Settings button opens drawer when viewing a server
+
+- **Server Management:**
+  - Create server button (placeholder)
+  - Delete server via settings drawer
+  - Confirmation dialog before delete
+  - Auto-refresh and navigation after delete
+
+- **Sample Data:**
+  - Controlled by .env file (SAMPLE_DATA=true)
+  - Creates 3 test servers (dev-api, staging, mobile-api)
+  - Disabled for backend tests, enabled for frontend tests and dev
+
+**Testing:**
+- Backend tests: 35/35 passing (SAMPLE_DATA=false)
+- Frontend tests: 32/32 passing (SAMPLE_DATA=true)
+- Total: 67/67 tests passing
+
+---
+
 ### 📋 Upcoming Phases
 
-- **Phase 7:** Frontend - Project Setup and UI Framework
-- **Phase 8:** Frontend - Real-time Traffic Viewer
-- **Phase 9:** Frontend - Rule Creator Interface (mock OR proxy)
-- **Phase 10:** Frontend - Rules Management Interface (with export/import UI)
-- **Phase 11:** Data Persistence and Storage
+- **Phase 8:** Real-time Traffic Viewer (left column)
+- **Phase 9:** Rules Editor (right column)
+- **Phase 10:** Create Server Dialog
+- **Phase 11:** Data Persistence (SQLite or JSON files)
 
 ---
 
@@ -982,106 +1042,84 @@ curl http://app.localhost:3000/servers/server1/traffic
 ## How to Run (Current State)
 
 ```bash
-# Install dependencies (already done)
+# Install dependencies
 npm install
 
-# Start server (creates default proxy rule on first run)
-npm start
-
-# Or with auto-restart during development
+# Start server with sample data (uses .env)
 npm run dev
 
-# Run integration tests (Phase 4-5)
+# Start server without sample data
+npm start
+
+# Run all tests (backend + frontend)
 npm test
 
-# Test proxy with default rule
-curl http://localhost:3000/proxy/posts/1
+# Run backend tests only
+npm run test:backend
 
-# View traffic logs (includes matchedRule metadata)
-curl http://localhost:3000/api/traffic
+# Run frontend tests only
+npm run test:frontend
 
-# Get statistics
-curl http://localhost:3000/api/traffic/stats
-
-# Clear logs
-curl -X DELETE http://localhost:3000/api/traffic
-
-# List all rules
-curl http://localhost:3000/api/rules
-
-# Create a mock rule
-curl -X POST http://localhost:3000/api/rules \
-  -H "Content-Type: application/json" \
-  -d '{"priority":100,"name":"Test Mock","method":"GET","pathRegex":"^/test$","action":"mock","mockResponse":{"statusCode":200,"body":{"test":true}}}'
-
-# Export rules
-curl -X POST http://localhost:3000/api/rules/export > config.json
-
-# View UI
-open http://localhost:3000
+# Access the application
+open http://app.localhost:3000
 ```
 
-**Expected Output (Phase 6):**
+**Environment Configuration (.env):**
+```env
+SAMPLE_DATA=true
+ROOT_DOMAIN=localhost
+PORT=3000
+```
+
+**Expected Output:**
 - Server starts on port 3000
-- Starts with zero rules configured
-- Unmatched requests return 502 Bad Gateway with helpful error
-- Health endpoint returns `{"status":"ok","service":"fault-end"}`
-- All API endpoints functional:
-  - `/health` - Health check
-  - `/api/traffic` - Traffic logs with filtering
-  - `/api/traffic/stats` - Statistics
-  - `/api/rules` - List rules
-  - `/api/rules` (POST) - Create rule
-  - `/api/rules/:id` - Get/Update/Delete rule
-  - `/api/rules/:id/toggle` - Enable/disable
-  - `/api/rules/export` - Export configuration
-  - `/api/rules/import` - Import configuration
-  - `/proxy/*` - Proxy with rules
-- Phase 6 unit tests: `node test/phase6.test.js` (31/31 passing)
-- Integration tests: `npm test` (40/40 passing)
-- Template variables render in mock responses
-- Enhanced latency (fixed/range) works correctly
-- Condition matching filters requests properly
-- Header manipulation modifies proxy requests
-- Traffic logs include `matchedRule` field with rule metadata
-- UI shows "Fault-end is ready. Waiting for implementation..."
+- If SAMPLE_DATA=true: creates 3 test servers (dev-api, staging, mobile-api)
+- All API endpoints functional at subdomain routes:
+  - `http://admin.localhost:3000/servers` - Admin API
+  - `http://app.localhost:3000/servers/:id/rules` - Rules API
+  - `http://app.localhost:3000/servers/:id/traffic` - Traffic API
+  - `http://[server-id].localhost:3000/` - Fault server proxy
+- Backend tests: 35/35 passing
+- Frontend tests: 32/32 passing
+- UI accessible at `http://app.localhost:3000`
 
 ---
 
 ## Next Steps for Development Agent
 
-When implementing Phase 7:
+**Phase 8: Real-time Traffic Viewer**
+- Implement traffic log display in left column
+- Auto-refresh/polling for new traffic
+- Request/response detail view
+- Filtering by method, status, path
 
-1. Read `phase7.md` for detailed implementation tasks
-2. Set up frontend build process (or continue with vanilla JS)
-3. Create UI framework and layout
-4. Implement navigation and routing (if needed)
-5. Design component structure for traffic viewer and rule management
+**Phase 9: Rules Editor**
+- Rule creation form in right column
+- Mock vs Proxy action selection
+- Template variable support
+- Condition matching UI
+- Priority management
 
-**Phase 7 Complete When:** Frontend foundation is established and ready for feature implementation
+**Phase 10: Create Server Dialog**
+- Server creation modal
+- Server ID validation
+- Integration with admin API
+
+**Phase 11: Data Persistence**
+- SQLite or JSON file storage
+- Migrate from in-memory to persistent storage
+- Data migration strategies
 
 ---
 
 ## Important Notes
 
-- **Backend URL:** No hardcoded backend URLs - all routing via rules
+- **Subdomain Architecture:** All routing via subdomains (admin/app/[server-id])
+- **No /api prefix:** Subdomain provides context
 - **Rules-Based Routing:** All proxy and mock behavior configured through prioritized rules
-- **Request Flow:** All proxied requests go to `/proxy/*` path
-- **Data Limit:** Initial in-memory storage limited to 1000 transactions
+- **Data Limit:** In-memory storage limited to 1000 transactions per server
 - **Content Type:** Focus on JSON; other content types supported but not optimized
-- **CORS:** May need to handle CORS headers for web client testing
-- **Export/Import:** Rule configuration export/import implemented in Phase 5 (API) and Phase 10 (UI)
+- **Environment:** Use .env for configuration (SAMPLE_DATA, ROOT_DOMAIN, PORT)
+- **Testing:** Backend tests disable sample data, frontend tests enable it
 
 ---
-
-## Questions to Consider for Future Phases
-
-1. Should we support WebSocket proxying or only HTTP?
-2. What's the best persistence strategy - SQLite, JSON files, or other?
-3. How should rule priorities be handled when multiple rules match?
-4. Should we support request body transformation in rules?
-5. Do we need authentication/authorization for the UI?
-
----
-
-*This document should be updated at the end of each phase implementation.*

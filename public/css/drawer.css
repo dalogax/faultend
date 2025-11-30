@@ -1,0 +1,68 @@
+/* Right-Side Drawer */
+
+.drawer-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.3);
+  z-index: 2000;
+  display: none;
+  opacity: 0;
+  transition: opacity var(--transition-normal);
+}
+
+.drawer-overlay.active {
+  display: block;
+  opacity: 1;
+}
+
+.drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 600px;
+  background: var(--color-white);
+  border-left: 1px solid var(--color-black);
+  display: flex;
+  flex-direction: column;
+  transform: translateX(100%);
+  transition: transform var(--transition-normal);
+  z-index: 2001;
+}
+
+.drawer.active {
+  transform: translateX(0);
+}
+
+.drawer-header {
+  padding: var(--space-lg);
+  border-bottom: 1px solid var(--color-black);
+}
+
+.drawer-title {
+  font-size: var(--text-lg);
+  font-weight: var(--font-weight);
+  color: var(--color-black);
+  line-height: var(--line-height-tight);
+}
+
+.drawer-body {
+  flex: 1;
+  padding: var(--space-lg);
+  overflow-y: auto;
+}
+
+.drawer-footer {
+  padding: var(--space-lg);
+  border-top: 1px solid var(--color-black);
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-md);
+}
+
+.drawer-footer .btn {
+  flex: 1;
+}

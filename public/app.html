@@ -3,36 +3,87 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Fault-end - Management</title>
-  <style>
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-      margin: 0;
-      background: #f5f5f5;
-    }
-    .container {
-      text-align: center;
-      padding: 40px;
-    }
-    h1 {
-      color: #333;
-      font-size: 2rem;
-      margin-bottom: 10px;
-    }
-    p {
-      color: #666;
-      font-size: 1rem;
-    }
-  </style>
+  <title>faultend - Management</title>
+  
+  <!-- CSS -->
+  <link rel="stylesheet" href="/css/reset.css">
+  <link rel="stylesheet" href="/css/variables.css">
+  <link rel="stylesheet" href="/css/components.css">
+  <link rel="stylesheet" href="/css/layout.css">
+  <link rel="stylesheet" href="/css/drawer.css">
+  <link rel="stylesheet" href="/css/app.css">
 </head>
 <body>
-  <div class="container">
-    <h1>Fault-end Management</h1>
-    <p>Management UI - coming soon</p>
+  <!-- Top Bar -->
+  <header class="top-bar">
+    <div class="top-bar-left">
+      <a href="#" class="logo-link">
+        <img src="/faultend.svg" alt="faultend" class="logo">
+        <span class="brand">faultend</span>
+      </a>
+    </div>
+    
+    <div class="top-bar-center" id="serverInfo" style="display: none;">
+      <span class="server-name"></span>
+    </div>
+    
+    <div class="top-bar-right">
+      <button id="settingsBtn" class="btn-secondary" style="display: none;">Settings</button>
+    </div>
+  </header>
+
+  <!-- Main Content Area -->
+  <main class="main-content">
+    <!-- Server List View -->
+    <div id="serverListView" class="view active">
+      <div class="view-header">
+        <h2>Servers</h2>
+        <button id="createServerBtn" class="btn">Create Server</button>
+      </div>
+      <div id="serverListContent">
+        <p class="empty-state">Loading servers...</p>
+      </div>
+    </div>
+
+    <!-- Server Management View (Traffic/Rules in 2 columns) -->
+    <div id="serverManagementView" class="view" style="display: none;">
+      <div class="two-column-layout">
+        <!-- Traffic Column -->
+        <div class="column" id="trafficView">
+          <h2>Traffic</h2>
+          <p class="empty-state">No traffic logs yet. Send requests through your fault server to see them here.</p>
+        </div>
+
+        <!-- Rules Column -->
+        <div class="column" id="rulesView">
+          <h2>Rules</h2>
+          <p class="empty-state">No rules configured. Create rules to control how requests are handled.</p>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Right-Side Drawer -->
+  <div id="drawerOverlay" class="drawer-overlay"></div>
+  <div id="drawer" class="drawer">
+    <div class="drawer-header">
+      <h2 id="drawerTitle" class="drawer-title">Server Settings</h2>
+    </div>
+    <div id="drawerBody" class="drawer-body">
+      <div id="configView">
+        <div class="settings-section">
+        </div>
+      </div>
+    </div>
+    <div class="drawer-footer">
+      <button id="deleteServerBtn" class="btn-danger">Delete Server</button>
+    </div>
   </div>
+
+  <!-- Toast Notifications -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <!-- JavaScript Modules -->
+  <script type="module" src="/js/app.js"></script>
 </body>
 </html>

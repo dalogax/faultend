@@ -10,6 +10,9 @@
  * - Multi-server data isolation
  */
 
+// Disable sample data for tests (before any requires)
+process.env.SAMPLE_DATA = 'false';
+
 const http = require('http');
 
 const ROOT_DOMAIN = process.env.ROOT_DOMAIN || 'localhost';
@@ -534,13 +537,13 @@ async function runTests() {
   console.log('='.repeat(70));
 
   // Cleanup
-  testServer.close();
+  await new Promise(resolve => testServer.close(resolve));
   process.exit(testsFailed > 0 ? 1 : 0);
 }
 
 // Run tests
-runTests().catch(err => {
+runTests().catch(async err => {
   console.error('Fatal test error:', err);
-  if (testServer) testServer.close();
+  if (testServer) await new Promise(resolve => testServer.close(resolve));
   process.exit(1);
 });
