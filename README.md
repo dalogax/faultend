@@ -1,6 +1,5 @@
-<img src="public/faultend.svg" alt="Faultend" width="120">
 
-# Faultend
+# <img src="public/faultend.svg" alt="Faultend" height="32"> Faultend
 
 A lightweight proxy for testing application resilience against unreliable backends.
 
