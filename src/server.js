@@ -36,6 +36,11 @@ app.use((req, res, next) => {
   
   // Landing page (no subdomain)
   if (routeType === 'landing') {
+    // Serve static files (CSS, JS, SVG, etc.)
+    if (req.path.startsWith('/css/') || req.path.startsWith('/js/') || req.path.startsWith('/fonts/') || req.path === '/faultend.svg') {
+      return express.static(path.join(__dirname, '../public'))(req, res, next);
+    }
+    // Serve landing.html for root path
     if (req.path === '/' || req.path === '/index.html') {
       return res.sendFile(path.join(__dirname, '../public/landing.html'));
     }
