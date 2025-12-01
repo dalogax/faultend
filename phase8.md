@@ -851,20 +851,5 @@ Phase 8 is complete when:
 
 ---
 
-## Future Enhancements (Post Phase 8)
-
-- WebSocket for real-time updates (no polling)
-- Export traffic logs as HAR file
-- Request replay functionality
-- Request/response diff viewer
-- Syntax highlighting for JSON
-- Copy to clipboard buttons
-- Filter by date/time range
-- Advanced search with regex patterns
-- Saved filter presets
-- Traffic statistics dashboard
-
----
-
 **Next Phase:** Phase 9 - Frontend - Rules Editor
 

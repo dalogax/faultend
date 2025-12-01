@@ -1097,14 +1097,6 @@ curl http://app.localhost:3000/servers/server1/traffic
 
 ---
 
-### 📋 Upcoming Phases
-
-- **Phase 9:** Rules Editor (right column)
-- **Phase 10:** Create Server Dialog
-- **Phase 11:** Data Persistence (SQLite or JSON files)
-
----
-
 ## Development Guidelines
 
 ### Code Style
@@ -1193,25 +1185,6 @@ PORT=3000
 ---
 
 ## Next Steps for Development Agent
-
-**Phase 9: Rules Editor**
-- Rule creation form in right column
-- Mock vs Proxy action selection
-- Template variable support
-- Condition matching UI
-- Priority management
-- Enable/disable toggle
-- Export/import UI
-
-**Phase 10: Create Server Dialog**
-- Server creation modal
-- Server ID validation
-- Integration with admin API
-
-**Phase 11: Data Persistence**
-- SQLite or JSON file storage
-- Migrate from in-memory to persistent storage
-- Data migration strategies
 
 ---
 
