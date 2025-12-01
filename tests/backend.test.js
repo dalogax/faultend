@@ -317,6 +317,35 @@ async function runTests() {
     assertTrue(res.body.total >= 1, 'Should have traffic');
   });
 
+  await test('502 responses are logged when no rule matches', async () => {
+    const resGet = await request('GET', '/servers/server2/rules', null, {}, 'app');
+    const server2Rule = resGet.body.rules[0];
+    
+    await request('DELETE', `/servers/server2/rules/${server2Rule.id}`, null, {}, 'app');
+    
+    const res502 = await request('GET', '/unmatched-path', null, {}, 'server2');
+    assertEqual(res502.status, 502, 'Should return 502 for unmatched request');
+    assertEqual(res502.body.error, 'No matching rule', 'Should have error message');
+    
+    const trafficRes = await request('GET', '/servers/server2/traffic', null, {}, 'app');
+    const unmatchedLog = trafficRes.body.logs.find(log => 
+      log.request.path === '/unmatched-path' && log.response.statusCode === 502
+    );
+    assertTrue(unmatchedLog !== undefined, 'Should have logged 502 response');
+    assertEqual(unmatchedLog.target, 'UNMATCHED', 'Target should be UNMATCHED');
+    assertEqual(unmatchedLog.matchedRule, null, 'Should have no matched rule');
+    
+    const recreateRes = await request('POST', '/servers/server2/rules', {
+      priority: server2Rule.priority,
+      name: server2Rule.name,
+      method: server2Rule.method,
+      pathRegex: server2Rule.pathRegex,
+      action: server2Rule.action,
+      mockResponse: server2Rule.mockResponse
+    }, {}, 'app');
+    assertEqual(recreateRes.status, 201, 'Should recreate rule successfully');
+  });
+
   console.log('');
 
   // ===========================================

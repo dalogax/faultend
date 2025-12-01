@@ -1,5 +1,6 @@
 const express = require('express');
 const { findMatchingRule, executeRule } = require('../rules/rulesEngine');
+const { logTransaction } = require('../traffic/trafficLogger');
 
 const router = express.Router();
 
@@ -36,6 +37,38 @@ router.use('/', (req, res, next) => {
   
   if (!rule) {
     console.log(`[PROXY ROUTER] [${serverId}] No matching rule for ${req.method} ${req.path}`);
+    
+    // Log the 502 response to traffic
+    const startTime = Date.now();
+    logTransaction(serverId, {
+      request: {
+        method: req.method,
+        url: req.url,
+        path: req.path,
+        headers: req.headers,
+        query: req.query,
+        body: req.rawBody || req.body || null,
+        bodySize: req.rawBodySize || 0,
+        contentType: req.get('content-type') || null
+      },
+      response: {
+        statusCode: 502,
+        statusMessage: 'Bad Gateway',
+        headers: { 'content-type': 'application/json' },
+        body: {
+          error: 'No matching rule',
+          message: `No proxy or mock rule configured for ${req.method} ${req.path}`,
+          hint: `Configure routing rules for customer '${serverId}' via the admin panel`,
+          serverId: serverId
+        },
+        bodySize: 0,
+        contentType: 'application/json'
+      },
+      duration: Date.now() - startTime,
+      target: 'UNMATCHED',
+      matchedRule: null
+    });
+    
     return res.status(502).json({
       error: 'No matching rule',
       message: `No proxy or mock rule configured for ${req.method} ${req.path}`,

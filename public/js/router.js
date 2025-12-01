@@ -27,7 +27,28 @@ class ViewRouter {
     const settingsBtn = document.getElementById('settingsBtn');
     if (settingsBtn) {
       settingsBtn.addEventListener('click', () => {
-        window.faultendApp.getDrawer().open();
+        this.openServerSettings();
+      });
+    }
+  }
+
+  openServerSettings() {
+    const drawer = window.faultendApp.getDrawer();
+    drawer.setTitle('Server Settings');
+    drawer.setContent(`
+      <div class="settings-section">
+        <p>Server ID: <strong>${this.currentServerId}</strong></p>
+      </div>
+      <div class="drawer-footer">
+        <button id="deleteServerBtn" class="btn-danger">Delete Server</button>
+      </div>
+    `);
+    drawer.open();
+    
+    const deleteBtn = document.getElementById('deleteServerBtn');
+    if (deleteBtn) {
+      deleteBtn.addEventListener('click', () => {
+        window.faultendApp.deleteCurrentServer();
       });
     }
   }

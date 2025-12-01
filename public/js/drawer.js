@@ -86,9 +86,31 @@ class DrawerController {
     return this.drawer.classList.contains('active');
   }
 
+  setTitle(title) {
+    if (this.drawerTitle) {
+      this.drawerTitle.textContent = title;
+    }
+  }
+
+  setContent(content) {
+    if (!this.drawerBody) return;
+    
+    this.drawerBody.innerHTML = '';
+    
+    if (typeof content === 'string') {
+      this.drawerBody.innerHTML = content;
+    } else if (content instanceof HTMLElement) {
+      this.drawerBody.appendChild(content);
+    }
+  }
+
   setLoading(loading) {
-    this.saveBtn.disabled = loading;
-    this.cancelBtn.disabled = loading;
+    if (this.saveBtn) {
+      this.saveBtn.disabled = loading;
+    }
+    if (this.cancelBtn) {
+      this.cancelBtn.disabled = loading;
+    }
   }
 }
 

@@ -5,7 +5,7 @@ import { fetchServers } from './api.js';
 import { Toast } from './components.js';
 import ViewRouter from './router.js';
 import DrawerController from './drawer.js';
-import { initTrafficView, loadTrafficData } from './views/traffic.js';
+import { initTrafficView, loadTrafficData, stopTrafficPolling } from './views/traffic.js';
 import { initRulesView, loadRulesData } from './views/rules.js';
 import { initConfigView, loadConfigData } from './views/config.js';
 
@@ -76,18 +76,13 @@ class App {
     createBtn.addEventListener('click', () => {
       this.showCreateServerDialog();
     });
-    
-    // Delete server button (in drawer)
-    const deleteBtn = document.getElementById('deleteServerBtn');
-    deleteBtn.addEventListener('click', () => {
-      this.deleteCurrentServer();
-    });
   }
 
   bindViewLoad() {
     window.addEventListener('viewload', (e) => {
       const view = e.detail.view;
       if (view === 'serverList') {
+        stopTrafficPolling();
         this.renderServerList();
       } else {
         this.loadViewData(view);
@@ -142,7 +137,8 @@ class App {
 
     console.log(`Loading data for view: ${view}, server: ${serverId}`);
     
-    // Load data based on current view
+    stopTrafficPolling();
+    
     switch (view) {
       case 'traffic':
         loadTrafficData(serverId);

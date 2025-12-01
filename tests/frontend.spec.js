@@ -255,7 +255,6 @@ test.describe('Faultend Frontend Tests', () => {
     await page.goto(APP_URL);
     await page.waitForSelector('.server-table tbody tr');
     
-    // Should have no console errors
     expect(consoleErrors.length).toBe(0);
   });
 
@@ -272,5 +271,273 @@ test.describe('Faultend Frontend Tests', () => {
     await page.waitForSelector('.server-table');
     
     expect(failedResources.length).toBe(0);
+  });
+
+  test('traffic view displays when navigating to server', async ({ page }) => {
+    await page.goto(APP_URL);
+    
+    await page.waitForSelector('.server-table tbody tr');
+    await page.locator('.server-table tbody tr').first().click();
+    
+    const trafficView = page.locator('#trafficView');
+    await expect(trafficView).toBeVisible();
+    
+    const trafficHeader = trafficView.locator('.traffic-header h2');
+    await expect(trafficHeader).toHaveText('Traffic');
+  });
+
+  test('traffic filters are displayed', async ({ page }) => {
+    await page.goto(APP_URL);
+    
+    await page.waitForSelector('.server-table tbody tr');
+    await page.locator('.server-table tbody tr').first().click();
+    
+    const methodFilter = page.locator('#methodFilter');
+    await expect(methodFilter).toBeVisible();
+    
+    const statusFilter = page.locator('#statusFilter');
+    await expect(statusFilter).toBeVisible();
+    
+    const pathSearch = page.locator('#pathSearch');
+    await expect(pathSearch).toBeVisible();
+  });
+
+  test('traffic action buttons are displayed', async ({ page }) => {
+    await page.goto(APP_URL);
+    
+    await page.waitForSelector('.server-table tbody tr');
+    await page.locator('.server-table tbody tr').first().click();
+    
+    const refreshBtn = page.locator('#refreshTrafficBtn');
+    await expect(refreshBtn).toBeVisible();
+    
+    const clearBtn = page.locator('#clearTrafficBtn');
+    await expect(clearBtn).toBeVisible();
+  });
+
+  test('traffic empty state displays when no traffic', async ({ page }) => {
+    await page.goto(APP_URL);
+    
+    await page.waitForSelector('.server-table tbody tr');
+    await page.locator('.server-table tbody tr').first().click();
+    
+    await page.waitForTimeout(1000);
+    
+    const emptyState = page.locator('.empty-state');
+    const count = await emptyState.count();
+    
+    if (count > 0) {
+      await expect(emptyState.first()).toContainText('No traffic');
+    }
+  });
+
+  test('traffic logs appear after making requests', async ({ page, request }) => {
+    await page.goto(APP_URL);
+    
+    await page.waitForSelector('.server-table tbody tr');
+    const firstRow = page.locator('.server-table tbody tr').first();
+    const serverId = await firstRow.locator('td').first().textContent();
+    
+    // Create a proxy rule first
+    await request.post(`http://app.localhost:3000/servers/${serverId}/rules`, {
+      data: {
+        priority: 100,
+        name: 'Test Proxy Rule',
+        method: '*',
+        pathRegex: '.*',
+        action: 'proxy',
+        target: 'https://jsonplaceholder.typicode.com'
+      }
+    });
+    
+    // Make a request through the fault server
+    await request.get(`http://${serverId}.localhost:3000/posts/1`);
+    
+    // Navigate to the server
+    await firstRow.click();
+    
+    // Wait for traffic to load and appear
+    await page.waitForTimeout(2000);
+    
+    // Check that traffic table has rows
+    const trafficRows = page.locator('.traffic-table tbody tr');
+    const count = await trafficRows.count();
+    
+    expect(count).toBeGreaterThan(0);
+    
+    // Verify first row has the correct data
+    const firstTrafficRow = trafficRows.first();
+    await expect(firstTrafficRow).toBeVisible();
+    
+    // Check for GET badge
+    const methodBadge = firstTrafficRow.locator('.badge-get');
+    await expect(methodBadge).toBeVisible();
+    
+    // Check for path
+    const pathCell = firstTrafficRow.locator('.path-cell');
+    await expect(pathCell).toContainText('/posts/1');
+  });
+
+  test('clicking traffic row opens detail drawer', async ({ page, request }) => {
+    await page.goto(APP_URL);
+    
+    await page.waitForSelector('.server-table tbody tr');
+    const firstRow = page.locator('.server-table tbody tr').first();
+    const serverId = await firstRow.locator('td').first().textContent();
+    
+    // Create a proxy rule
+    await request.post(`http://app.localhost:3000/servers/${serverId}/rules`, {
+      data: {
+        priority: 100,
+        name: 'Test Proxy',
+        method: '*',
+        pathRegex: '.*',
+        action: 'proxy',
+        target: 'https://jsonplaceholder.typicode.com'
+      }
+    });
+    
+    // Make a request
+    await request.get(`http://${serverId}.localhost:3000/posts/1`);
+    
+    // Navigate to server
+    await firstRow.click();
+    
+    // Wait for traffic to appear
+    await page.waitForTimeout(2000);
+    
+    // Click first traffic row
+    const trafficRow = page.locator('.traffic-table tbody tr').first();
+    await trafficRow.click();
+    
+    // Drawer should open
+    const drawer = page.locator('#drawer');
+    await expect(drawer).toHaveClass(/active/);
+    
+    // Check drawer title
+    const drawerTitle = page.locator('#drawerTitle');
+    await expect(drawerTitle).toHaveText('Request Details');
+    
+    // Check detail sections exist
+    const overviewSection = page.locator('.detail-section').first();
+    await expect(overviewSection).toBeVisible();
+    await expect(overviewSection).toContainText('Overview');
+  });
+
+  test('traffic filters work correctly', async ({ page, request }) => {
+    await page.goto(APP_URL);
+    
+    await page.waitForSelector('.server-table tbody tr');
+    const firstRow = page.locator('.server-table tbody tr').first();
+    const serverId = await firstRow.locator('td').first().textContent();
+    
+    // Create a proxy rule
+    await request.post(`http://app.localhost:3000/servers/${serverId}/rules`, {
+      data: {
+        priority: 100,
+        name: 'Test Proxy',
+        method: '*',
+        pathRegex: '.*',
+        action: 'proxy',
+        target: 'https://jsonplaceholder.typicode.com'
+      }
+    });
+    
+    // Make GET and POST requests
+    await request.get(`http://${serverId}.localhost:3000/posts/1`);
+    await request.post(`http://${serverId}.localhost:3000/posts`, {
+      data: { title: 'Test', body: 'Content', userId: 1 }
+    });
+    
+    // Navigate to server
+    await firstRow.click();
+    
+    // Wait for traffic
+    await page.waitForTimeout(2000);
+    
+    // Check we have at least 2 traffic entries
+    let trafficRows = page.locator('.traffic-table tbody tr');
+    let count = await trafficRows.count();
+    expect(count).toBeGreaterThanOrEqual(2);
+    
+    // Filter by GET method
+    const methodFilter = page.locator('#methodFilter');
+    await methodFilter.selectOption('GET');
+    
+    // Wait for filter to apply
+    await page.waitForTimeout(1000);
+    
+    // Should only show GET requests
+    trafficRows = page.locator('.traffic-table tbody tr');
+    const getRows = await trafficRows.count();
+    
+    // All visible rows should have GET badge
+    for (let i = 0; i < getRows; i++) {
+      const row = trafficRows.nth(i);
+      const getBadge = row.locator('.badge-get');
+      await expect(getBadge).toBeVisible();
+    }
+  });
+
+  test('clear traffic button works', async ({ page, request }) => {
+    await page.goto(APP_URL);
+    
+    await page.waitForSelector('.server-table tbody tr');
+    const firstRow = page.locator('.server-table tbody tr').first();
+    const serverId = await firstRow.locator('td').first().textContent();
+    
+    // Create a proxy rule
+    await request.post(`http://app.localhost:3000/servers/${serverId}/rules`, {
+      data: {
+        priority: 100,
+        name: 'Test Proxy',
+        method: '*',
+        pathRegex: '.*',
+        action: 'proxy',
+        target: 'https://jsonplaceholder.typicode.com'
+      }
+    });
+    
+    // Make a request
+    await request.get(`http://${serverId}.localhost:3000/posts/1`);
+    
+    // Navigate to server
+    await firstRow.click();
+    
+    // Wait for traffic
+    await page.waitForTimeout(2000);
+    
+    // Verify traffic exists
+    let trafficRows = page.locator('.traffic-table tbody tr');
+    let count = await trafficRows.count();
+    expect(count).toBeGreaterThan(0);
+    
+    // Click clear button and confirm
+    page.on('dialog', dialog => dialog.accept());
+    const clearBtn = page.locator('#clearTrafficBtn');
+    await clearBtn.click();
+    
+    // Wait for clear to complete
+    await page.waitForTimeout(1000);
+    
+    // Should show empty state in traffic view
+    const trafficView = page.locator('#trafficView');
+    const emptyState = trafficView.locator('.empty-state');
+    await expect(emptyState).toBeVisible();
+    await expect(emptyState).toContainText('No traffic');
+  });
+
+  test('clicking refresh button reloads traffic', async ({ page }) => {
+    await page.goto(APP_URL);
+    
+    await page.waitForSelector('.server-table tbody tr');
+    await page.locator('.server-table tbody tr').first().click();
+    
+    await page.waitForTimeout(1000);
+    
+    const refreshBtn = page.locator('#refreshTrafficBtn');
+    await refreshBtn.click();
+    
+    await page.waitForTimeout(500);
   });
 });

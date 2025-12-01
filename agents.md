@@ -1,7 +1,7 @@
 # Faultend Development Context
 
-**Last Updated:** November 30, 2025  
-**Current Phase:** Phase 7 - Complete ✓
+**Last Updated:** December 1, 2025  
+**Current Phase:** Phase 8 - Complete ✓
 
 ---
 
@@ -180,7 +180,7 @@ Faultend/
 │   ├── css/
 │   │   ├── reset.css           # CSS reset ✓
 │   │   ├── variables.css       # Design system tokens ✓
-│   │   ├── components.css      # Reusable components ✓
+│   │   ├── components.css      # Reusable components + Traffic styles ✓
 │   │   ├── layout.css          # Responsive layout system ✓
 │   │   ├── drawer.css          # Drawer styles ✓
 │   │   └── app.css             # App-specific styles + Inter font ✓
@@ -190,11 +190,15 @@ Faultend/
 │       ├── components.js       # UI components (Toast, Spinner, Badges) ✓
 │       ├── drawer.js           # Drawer controller ✓
 │       ├── router.js           # View router ✓
-│       └── app.js              # Main application controller ✓
+│       ├── app.js              # Main application controller ✓
+│       └── views/
+│           ├── traffic.js      # Traffic view logic ✓
+│           ├── rules.js        # Rules view logic (Phase 9)
+│           └── config.js       # Config view logic (Phase 10)
 │
 └── tests/                      # Test files
     ├── backend.test.js         # Backend integration tests (35 tests) ✓
-    └── frontend.spec.js        # Frontend Playwright tests (32 tests) ✓
+    └── frontend.spec.js        # Frontend Playwright tests (42 tests) ✓
 ```
 
 ---
@@ -985,14 +989,116 @@ curl http://app.localhost:3000/servers/server1/traffic
 
 **Testing:**
 - Backend tests: 35/35 passing (SAMPLE_DATA=false)
-- Frontend tests: 32/32 passing (SAMPLE_DATA=true)
-- Total: 67/67 tests passing
+- Frontend tests: 42/42 passing (SAMPLE_DATA=true)
+- Total: 77/77 tests passing
+
+---
+
+### ✅ Phase 8: Frontend - Real-time Traffic Viewer (COMPLETE)
+
+**Completed Tasks:**
+1. ✅ Implemented TrafficTable component (`public/js/views/traffic.js`)
+2. ✅ Implemented TrafficDetail component for drawer view
+3. ✅ Added traffic table rendering with method/status badges
+4. ✅ Implemented filtering (method, status family, path search)
+5. ✅ Added auto-refresh polling (every 2 seconds)
+6. ✅ Implemented clear traffic functionality
+7. ✅ Created detail view in right-side drawer
+8. ✅ Added CSS styles for traffic components
+9. ✅ Updated drawer controller with setTitle/setContent methods
+10. ✅ Integrated polling lifecycle with view router
+11. ✅ Added 10 new frontend tests (42 total)
+12. ✅ Validated all functionality
+
+**Current Functionality:**
+- **Traffic Table Display:**
+  - Method badges with pastel colors
+  - Status badges color-coded by family (2xx, 4xx, 5xx)
+  - Path truncation for long URLs
+  - Duration in milliseconds
+  - Rule indicator (✓ or −)
+  - Clickable rows to view details
+
+- **Filtering System:**
+  - Filter by HTTP method (GET, POST, PUT, PATCH, DELETE)
+  - Filter by status code family (2xx, 3xx, 4xx, 5xx)
+  - Search by path (substring match with debouncing)
+  - Combined filters work together
+
+- **Auto-Refresh:**
+  - Polls traffic every 2 seconds when view is active
+  - Stops polling when navigating away
+  - Displays last update time with relative formatting
+  - Manual refresh button available
+
+- **Detail View:**
+  - Opens in right-side drawer on row click
+  - Overview section (method, path, status, duration, timestamp, target)
+  - Matched rule information (if applicable)
+  - Request details (headers, query params, body)
+  - Response details (headers, body)
+  - Error details (if error occurred)
+  - JSON formatting in code blocks
+  - "Create Rule" button placeholder (Phase 9)
+
+- **Actions:**
+  - Refresh button - manually reload traffic
+  - Clear button - delete all traffic logs with confirmation
+  - Empty states for no traffic and filtered results
+
+**Traffic Data Model:**
+```javascript
+{
+  id: "1764414722814-fdpza1d0n",
+  timestamp: "2025-11-29T11:12:02.814Z",
+  request: {
+    method: "POST",
+    path: "/posts",
+    headers: { ... },
+    query: {},
+    body: { title: "Test", body: "Content", userId: 1 }
+  },
+  response: {
+    statusCode: 201,
+    statusMessage: "Created",
+    headers: { ... },
+    body: { title: "Test", body: "Content", userId: 1, id: 101 }
+  },
+  duration: 293,
+  target: "https://jsonplaceholder.typicode.com",
+  matchedRule: {
+    id: "rule-123",
+    name: "API Proxy",
+    action: "proxy",
+    priority: 100
+  },
+  error: null
+}
+```
+
+**Implementation Details:**
+- **TrafficTable class:** Manages table rendering, filtering, polling
+- **TrafficDetail class:** Renders detail view content for drawer
+- **Auto-polling strategy:** `setInterval` with start/stop on view lifecycle
+- **Client-side status filtering:** Status family filtering done client-side
+- **Debounced path search:** 300ms debounce on input to reduce API calls
+- **Relative timestamps:** "just now", "X seconds ago", etc.
+
+**Testing:**
+- Frontend tests: 42/42 passing (added 10 new tests)
+- Tests cover: traffic display, filters, detail view, polling, empty states
+- All existing tests continue to pass
+
+**Known Limitations:**
+- Polling-based updates (WebSocket in future for true real-time)
+- Status family filtering done client-side (backend only supports exact status)
+- No syntax highlighting for JSON (plain formatting with indentation)
+- "Create Rule" button is placeholder (implemented in Phase 9)
 
 ---
 
 ### 📋 Upcoming Phases
 
-- **Phase 8:** Real-time Traffic Viewer (left column)
 - **Phase 9:** Rules Editor (right column)
 - **Phase 10:** Create Server Dialog
 - **Phase 11:** Data Persistence (SQLite or JSON files)
@@ -1080,18 +1186,13 @@ PORT=3000
   - `http://app.localhost:3000/servers/:id/traffic` - Traffic API
   - `http://[server-id].localhost:3000/` - Fault server proxy
 - Backend tests: 35/35 passing
-- Frontend tests: 32/32 passing
+- Frontend tests: 42/42 passing
 - UI accessible at `http://app.localhost:3000`
+- Traffic viewer functional with real-time updates
 
 ---
 
 ## Next Steps for Development Agent
-
-**Phase 8: Real-time Traffic Viewer**
-- Implement traffic log display in left column
-- Auto-refresh/polling for new traffic
-- Request/response detail view
-- Filtering by method, status, path
 
 **Phase 9: Rules Editor**
 - Rule creation form in right column
@@ -1099,6 +1200,8 @@ PORT=3000
 - Template variable support
 - Condition matching UI
 - Priority management
+- Enable/disable toggle
+- Export/import UI
 
 **Phase 10: Create Server Dialog**
 - Server creation modal
