@@ -73,3 +73,74 @@ export function createEmptyState(message) {
   empty.textContent = message;
   return empty;
 }
+
+/**
+ * Confirmation Dialog
+ */
+export const ConfirmDialog = {
+  show(options) {
+    return new Promise((resolve) => {
+      const {
+        title = 'Confirm',
+        message = 'Are you sure?',
+        confirmText = 'Confirm',
+        cancelText = 'Cancel',
+        danger = false
+      } = options;
+
+      // Create overlay
+      const overlay = document.createElement('div');
+      overlay.className = 'confirm-overlay';
+      
+      // Create dialog
+      const dialog = document.createElement('div');
+      dialog.className = 'confirm-dialog';
+      dialog.innerHTML = `
+        <div class="confirm-header">
+          <h3>${title}</h3>
+        </div>
+        <div class="confirm-body">
+          <p>${message}</p>
+        </div>
+        <div class="confirm-actions">
+          <button class="btn-secondary confirm-cancel">${cancelText}</button>
+          <button class="btn ${danger ? 'btn-danger' : 'btn-primary'} confirm-ok">${confirmText}</button>
+        </div>
+      `;
+      
+      // Append to body
+      document.body.appendChild(overlay);
+      document.body.appendChild(dialog);
+      
+      // Show with animation
+      setTimeout(() => {
+        overlay.classList.add('active');
+        dialog.classList.add('active');
+      }, 10);
+      
+      // Handle actions
+      const cleanup = (result) => {
+        overlay.classList.remove('active');
+        dialog.classList.remove('active');
+        setTimeout(() => {
+          overlay.remove();
+          dialog.remove();
+        }, 200);
+        resolve(result);
+      };
+      
+      dialog.querySelector('.confirm-cancel').addEventListener('click', () => cleanup(false));
+      dialog.querySelector('.confirm-ok').addEventListener('click', () => cleanup(true));
+      overlay.addEventListener('click', () => cleanup(false));
+      
+      // ESC key to cancel
+      const escHandler = (e) => {
+        if (e.key === 'Escape') {
+          cleanup(false);
+          document.removeEventListener('keydown', escHandler);
+        }
+      };
+      document.addEventListener('keydown', escHandler);
+    });
+  }
+};

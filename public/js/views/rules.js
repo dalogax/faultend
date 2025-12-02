@@ -11,7 +11,7 @@ export function loadRulesData(serverId) {
   console.log('Loading rules data for server:', serverId);
   
   if (!rulesList) {
-    rulesList = new RulesList('rulesView', serverId);
+    rulesList = new RulesList('rules-content', serverId);
   } else {
     rulesList.serverId = serverId;
   }
@@ -168,7 +168,6 @@ class RulesList {
   async toggleRule(ruleId, newState) {
     try {
       await toggleRule(this.serverId, ruleId);
-      Toast.success(`Rule ${newState ? 'enabled' : 'disabled'}`);
       await this.load();
     } catch (error) {
       console.error('Failed to toggle rule:', error);
@@ -194,13 +193,21 @@ class RulesList {
       return;
     }
 
-    if (!confirm(`Delete rule "${rule.name}"? This cannot be undone.`)) {
+    const { ConfirmDialog } = await import('../components.js');
+    const confirmed = await ConfirmDialog.show({
+      title: 'Delete Rule',
+      message: `Delete rule "${rule.name}"? This cannot be undone.`,
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      danger: true
+    });
+
+    if (!confirmed) {
       return;
     }
 
     try {
       await deleteRule(this.serverId, ruleId);
-      Toast.success('Rule deleted');
       await this.load();
     } catch (error) {
       console.error('Failed to delete rule:', error);
@@ -593,10 +600,8 @@ class RuleForm {
 
       if (this.existingRule) {
         await updateRule(this.serverId, this.existingRule.id, data);
-        Toast.success('Rule updated');
       } else {
         await createRule(this.serverId, data);
-        Toast.success('Rule created');
       }
 
       const drawer = window.faultendApp.getDrawer();

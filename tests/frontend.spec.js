@@ -104,10 +104,10 @@ test.describe('Faultend Frontend Tests', () => {
     await expect(trafficView).toBeVisible();
     await expect(trafficView.locator('h2')).toHaveText('Traffic');
     
-    // Check rules column
+    // Check rules column (no tabs anymore)
     const rulesView = page.locator('#rulesView');
     await expect(rulesView).toBeVisible();
-    await expect(rulesView.locator('h2')).toHaveText('Rules');
+    await expect(rulesView.locator('#rules-content h2')).toHaveText('Rules');
   });
 
   test('shows settings button when viewing a server', async ({ page }) => {
@@ -513,9 +513,12 @@ test.describe('Faultend Frontend Tests', () => {
     expect(count).toBeGreaterThan(0);
     
     // Click clear button and confirm
-    page.on('dialog', dialog => dialog.accept());
     const clearBtn = page.locator('#clearTrafficBtn');
     await clearBtn.click();
+    
+    // Wait for custom dialog and click confirm
+    await page.waitForTimeout(300);
+    await page.locator('.confirm-ok').click();
     
     // Wait for clear to complete
     await page.waitForTimeout(1000);
@@ -761,12 +764,16 @@ test.describe('Faultend Frontend Tests', () => {
     
     await page.waitForTimeout(1000);
     
-    page.on('dialog', dialog => dialog.dismiss());
-    
     const firstRule = page.locator('.rules-table tbody tr').first();
     const deleteBtn = firstRule.locator('.delete-rule-btn');
     await deleteBtn.click();
     
+    // Wait for custom dialog
+    await page.waitForTimeout(300);
+    await expect(page.locator('.confirm-dialog')).toBeVisible();
+    
+    // Cancel
+    await page.locator('.confirm-cancel').click();
     await page.waitForTimeout(500);
   });
 
@@ -851,5 +858,46 @@ test.describe('Faultend Frontend Tests', () => {
     const errorCount = await errors.count();
     expect(errorCount).toBeGreaterThan(0);
     await expect(page.getByText('Invalid regex pattern')).toBeVisible();
+  });
+
+  // Phase 10 Tests
+  test('create server button opens drawer with tabs', async ({ page }) => {
+    await page.goto(APP_URL);
+    await page.waitForSelector('#createServerBtn');
+    
+    await page.click('#createServerBtn');
+    await page.waitForTimeout(500);
+    
+    await expect(page.locator('#drawer')).toHaveClass(/active/);
+    await expect(page.locator('#drawerTitle')).toHaveText('Create New Server');
+    await expect(page.locator('.tab[data-tab="manual"]')).toHaveClass(/active/);
+    await expect(page.locator('.tab[data-tab="import"]')).toBeVisible();
+  });
+
+  test('manual server creation validates server ID', async ({ page }) => {
+    await page.goto(APP_URL);
+    await page.click('#createServerBtn');
+    await page.waitForTimeout(500);
+    
+    await page.fill('#server-id', 'Invalid_ID');
+    await page.click('button[type="submit"]');
+    await page.waitForTimeout(500);
+    
+    await expect(page.locator('#id-error')).toHaveText(/Must start with letter/);
+  });
+
+  test('settings drawer shows export button', async ({ page }) => {
+    await page.goto(APP_URL);
+    await page.waitForSelector('.server-table tbody tr');
+    await page.locator('.server-table tbody tr').first().click();
+    await page.waitForTimeout(1000);
+    
+    // Click settings button
+    await page.click('#settingsBtn');
+    await page.waitForTimeout(500);
+    
+    // Check drawer is visible with export button
+    await expect(page.locator('#drawer')).toHaveClass(/active/);
+    await expect(page.locator('#exportConfigBtn')).toBeVisible();
   });
 });

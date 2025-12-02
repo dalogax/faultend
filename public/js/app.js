@@ -7,7 +7,6 @@ import ViewRouter from './router.js';
 import DrawerController from './drawer.js';
 import { initTrafficView, loadTrafficData, stopTrafficPolling } from './views/traffic.js';
 import { initRulesView, loadRulesData } from './views/rules.js';
-import { initConfigView, loadConfigData } from './views/config.js';
 
 class App {
   constructor() {
@@ -28,8 +27,7 @@ class App {
     // Initialize views
     initTrafficView();
     initRulesView();
-    initConfigView();
-
+    
     // Load servers
     await this.loadServers();
 
@@ -153,8 +151,270 @@ class App {
   }
   
   showCreateServerDialog() {
-    // TODO: Implement create server dialog in drawer
-    Toast.show('Create server dialog - to be implemented');
+    this.currentTab = 'manual';
+    this.importData = null;
+    
+    this.drawer.setTitle('Create New Server');
+    this.drawer.setContent(this.renderServerForm());
+    this.drawer.open();
+    
+    this.attachServerFormHandlers();
+  }
+  
+  renderServerForm() {
+    return `
+      <div class="server-form-container">
+        <div class="tabs">
+          <button class="tab ${this.currentTab === 'manual' ? 'active' : ''}" 
+                  data-tab="manual">Manual</button>
+          <button class="tab ${this.currentTab === 'import' ? 'active' : ''}" 
+                  data-tab="import">Import from File</button>
+        </div>
+        
+        <div class="tab-content" id="manual-tab" 
+             style="display: ${this.currentTab === 'manual' ? 'block' : 'none'}">
+          <form id="manual-form" class="form">
+            <div class="form-group">
+              <label for="server-id">Server ID *</label>
+              <input type="text" id="server-id" required 
+                     pattern="^[a-z][a-z0-9-]*$">
+              <small>Alphanumeric and hyphens only, must start with letter</small>
+              <div class="error-message" id="id-error"></div>
+            </div>
+            
+            <div class="form-actions">
+              <button type="button" class="btn-secondary" data-action="cancel">
+                Cancel
+              </button>
+              <button type="submit" class="btn-primary">
+                Create Server
+              </button>
+            </div>
+          </form>
+        </div>
+        
+        <div class="tab-content" id="import-tab" 
+             style="display: ${this.currentTab === 'import' ? 'block' : 'none'}">
+          <div class="import-form">
+            <p>Upload a configuration file to create a new server with pre-configured rules.</p>
+            
+            <input type="file" id="import-file" accept=".json" style="display:none">
+            <button id="choose-file-btn" class="btn-primary">
+              Choose File
+            </button>
+            
+            <div id="import-preview" style="display:none">
+              <!-- Preview content inserted here -->
+            </div>
+            
+            <div class="form-actions" id="import-actions" style="display:none">
+              <button type="button" class="btn-secondary" data-action="cancel">
+                Cancel
+              </button>
+              <button type="button" class="btn-primary" id="import-create-btn">
+                Create Server
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+  
+  attachServerFormHandlers() {
+    // Tab switching
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.onclick = () => {
+        this.currentTab = tab.dataset.tab;
+        this.drawer.setContent(this.renderServerForm());
+        this.attachServerFormHandlers();
+      };
+    });
+    
+    // Manual form handlers
+    const manualForm = document.getElementById('manual-form');
+    if (manualForm) {
+      manualForm.onsubmit = (e) => this.handleManualServerCreate(e);
+    }
+    
+    // Import handlers
+    const chooseFileBtn = document.getElementById('choose-file-btn');
+    const fileInput = document.getElementById('import-file');
+    if (chooseFileBtn && fileInput) {
+      chooseFileBtn.onclick = () => fileInput.click();
+      fileInput.onchange = (e) => this.handleFileSelect(e);
+    }
+    
+    const importCreateBtn = document.getElementById('import-create-btn');
+    if (importCreateBtn) {
+      importCreateBtn.onclick = () => this.handleImportServerCreate();
+    }
+    
+    // Cancel buttons
+    document.querySelectorAll('[data-action="cancel"]').forEach(btn => {
+      btn.onclick = () => this.drawer.close();
+    });
+  }
+  
+  validateServerId(id) {
+    if (!/^[a-z][a-z0-9-]*$/.test(id)) {
+      return 'Must start with letter, contain only lowercase letters, numbers, and hyphens';
+    }
+    return null;
+  }
+  
+  async checkServerIdExists(id) {
+    return this.servers.some(s => s.id === id);
+  }
+  
+  showError(elementId, message) {
+    const errorEl = document.getElementById(elementId);
+    if (errorEl) {
+      errorEl.textContent = message;
+    }
+  }
+  
+  async handleManualServerCreate(event) {
+    event.preventDefault();
+    
+    const id = document.getElementById('server-id').value.trim();
+    
+    // Validate ID format
+    const formatError = this.validateServerId(id);
+    if (formatError) {
+      this.showError('id-error', formatError);
+      return;
+    }
+    
+    // Check if exists
+    const exists = await this.checkServerIdExists(id);
+    if (exists) {
+      this.showError('id-error', 'Server ID already exists');
+      return;
+    }
+    
+    // Create server
+    try {
+      const { createServer } = await import('./api.js');
+      await createServer({ id });
+      this.drawer.close();
+      
+      // Refresh server list and navigate
+      await this.loadServers();
+      this.renderServerList();
+      this.router.navigateToServer(id);
+    } catch (error) {
+      Toast.error('Failed to create server');
+    }
+  }
+  
+  async handleFileSelect(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    try {
+      const text = await file.text();
+      const data = JSON.parse(text);
+      
+      // Validate
+      if (!this.validateImportData(data)) {
+        Toast.error('Invalid configuration file');
+        return;
+      }
+      
+      // Check if server ID already exists
+      const exists = await this.checkServerIdExists(data.server.id);
+      if (exists) {
+        Toast.error(`Server '${data.server.id}' already exists`);
+        return;
+      }
+      
+      // Store data and show preview
+      this.importData = data;
+      this.showImportPreview(data);
+      
+    } catch (error) {
+      if (error instanceof SyntaxError) {
+        Toast.error('Invalid JSON file');
+      } else {
+        console.error('File read failed:', error);
+        Toast.error('Failed to read file');
+      }
+    } finally {
+      e.target.value = '';
+    }
+  }
+  
+  validateImportData(data) {
+    return data &&
+           data.version &&
+           data.server &&
+           data.server.id &&
+           Array.isArray(data.rules);
+  }
+  
+  showImportPreview(data) {
+    const preview = document.getElementById('import-preview');
+    const actions = document.getElementById('import-actions');
+    
+    const rulesList = data.rules
+      .slice(0, 10)
+      .map(r => `<li>${r.name} (${r.action}, priority ${r.priority})</li>`)
+      .join('');
+    
+    const more = data.rules.length > 10 ? 
+      `<li>... and ${data.rules.length - 10} more</li>` : '';
+    
+    preview.innerHTML = `
+      <div class="preview-info">
+        <p><strong>Server ID:</strong> ${data.server.id}</p>
+        <p><strong>Name:</strong> ${data.server.name || '(none)'}</p>
+        <p><strong>Rules:</strong> ${data.rules.length}</p>
+      </div>
+      
+      <div class="rules-preview">
+        <p><strong>Rules to import:</strong></p>
+        <ul>${rulesList}${more}</ul>
+      </div>
+    `;
+    
+    preview.style.display = 'block';
+    actions.style.display = 'flex';
+  }
+  
+  async handleImportServerCreate() {
+    if (!this.importData) {
+      Toast.error('No file selected');
+      return;
+    }
+    
+    try {
+      const { createServer, importRules } = await import('./api.js');
+      
+      // Create server first
+      await createServer({
+        id: this.importData.server.id
+      });
+      
+      // Import rules if any
+      if (this.importData.rules.length > 0) {
+        await importRules(this.importData.server.id, {
+          mode: 'replace',
+          rules: this.importData.rules
+        });
+      }
+      
+      this.drawer.close();
+      
+      // Refresh and navigate
+      await this.loadServers();
+      this.renderServerList();
+      this.router.navigateToServer(this.importData.server.id);
+      
+    } catch (error) {
+      console.error('Import server creation failed:', error);
+      Toast.error('Failed to create server from import');
+    }
   }
   
   async deleteCurrentServer() {
@@ -164,15 +424,22 @@ class App {
       return;
     }
     
-    if (!confirm(`Are you sure you want to delete server "${serverId}"? This will permanently remove all traffic logs and rules.`)) {
+    const { ConfirmDialog } = await import('./components.js');
+    const confirmed = await ConfirmDialog.show({
+      title: 'Delete Server',
+      message: `Are you sure you want to delete server "${serverId}"? This will permanently remove all traffic logs and rules.`,
+      confirmText: 'Delete Server',
+      cancelText: 'Cancel',
+      danger: true
+    });
+    
+    if (!confirmed) {
       return;
     }
     
     try {
       const { deleteServer } = await import('./api.js');
       await deleteServer(serverId);
-      
-      Toast.success(`Server "${serverId}" deleted`);
       
       // Close drawer and navigate to server list
       this.drawer.close();

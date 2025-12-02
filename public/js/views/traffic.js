@@ -295,7 +295,16 @@ class TrafficTable {
   }
 
   async clearAll() {
-    if (!confirm('Clear all traffic logs? This cannot be undone.')) {
+    const { ConfirmDialog } = await import('../components.js');
+    const confirmed = await ConfirmDialog.show({
+      title: 'Clear All Traffic',
+      message: 'Clear all traffic logs? This cannot be undone.',
+      confirmText: 'Clear All',
+      cancelText: 'Cancel',
+      danger: true
+    });
+    
+    if (!confirmed) {
       return;
     }
     
@@ -303,7 +312,6 @@ class TrafficTable {
       await clearTraffic(this.serverId);
       this.logs = [];
       this.render();
-      Toast.success('Traffic cleared');
     } catch (error) {
       console.error('Failed to clear traffic:', error);
       Toast.error('Failed to clear traffic');

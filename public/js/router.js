@@ -39,17 +39,77 @@ class ViewRouter {
       <div class="settings-section">
         <p>Server ID: <strong>${this.currentServerId}</strong></p>
       </div>
+      
+      <div class="settings-section">
+        <h3>Export Configuration</h3>
+        <p>Download your server configuration as JSON for backup or sharing.</p>
+        <button id="exportConfigBtn" class="btn-secondary">Export Configuration</button>
+      </div>
+      
       <div class="drawer-footer">
         <button id="deleteServerBtn" class="btn-danger">Delete Server</button>
       </div>
     `);
     drawer.open();
     
+    const exportBtn = document.getElementById('exportConfigBtn');
+    if (exportBtn) {
+      exportBtn.addEventListener('click', () => {
+        this.exportServerConfig();
+      });
+    }
+    
     const deleteBtn = document.getElementById('deleteServerBtn');
     if (deleteBtn) {
       deleteBtn.addEventListener('click', () => {
         window.faultendApp.deleteCurrentServer();
       });
+    }
+  }
+  
+  async exportServerConfig() {
+    try {
+      const { fetchRules } = await import('./api.js');
+      
+      // Fetch rules
+      const rulesData = await fetchRules(this.currentServerId);
+      const rules = rulesData.rules || [];
+      
+      // Fetch server info from app servers list
+      const servers = window.faultendApp?.servers || [];
+      const server = servers.find(s => s.id === this.currentServerId) || { id: this.currentServerId };
+      
+      // Build export object
+      const exportData = {
+        version: '1.0',
+        exportedAt: new Date().toISOString(),
+        server: {
+          id: server.id,
+          name: server.name || '',
+          description: server.description || ''
+        },
+        rules: rules,
+        metadata: {
+          rulesCount: rules.length,
+          exportSource: 'faultend-ui'
+        }
+      };
+      
+      // Download file
+      const blob = new Blob([JSON.stringify(exportData, null, 2)], {
+        type: 'application/json'
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `faultend-${this.currentServerId}-${Date.now()}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      
+    } catch (error) {
+      console.error('Export failed:', error);
+      const { Toast } = await import('./components.js');
+      Toast.error('Export failed');
     }
   }
 
@@ -100,11 +160,38 @@ class ViewRouter {
     const serverInfo = document.getElementById('serverInfo');
     serverInfo.style.display = 'flex';
     serverInfo.querySelector('.server-name').textContent = serverId;
+    
+    // Set server URL
+    const port = window.location.port ? `:${window.location.port}` : '';
+    const protocol = window.location.protocol;
+    const rootDomain = window.location.hostname.split('.').slice(1).join('.') || 'localhost';
+    const serverUrl = `${protocol}//${serverId}.${rootDomain}${port}`;
+    document.getElementById('serverUrl').textContent = serverUrl;
+    
     document.getElementById('settingsBtn').style.display = 'block';
+    
+    // Bind copy URL button
+    const copyBtn = document.getElementById('copyUrlBtn');
+    if (copyBtn) {
+      copyBtn.onclick = () => this.copyServerUrl(serverUrl);
+    }
     
     // Trigger load event for both traffic and rules
     this.triggerViewLoad('traffic');
     this.triggerViewLoad('rules');
+  }
+  
+  copyServerUrl(url) {
+    navigator.clipboard.writeText(url).then(() => {
+      const btn = document.getElementById('copyUrlBtn');
+      const originalText = btn.textContent;
+      btn.textContent = '✓';
+      setTimeout(() => {
+        btn.textContent = originalText;
+      }, 1000);
+    }).catch(err => {
+      console.error('Failed to copy URL:', err);
+    });
   }
   
   navigateToServer(serverId) {

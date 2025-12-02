@@ -25,6 +25,10 @@
     
     <div class="top-bar-center" id="serverInfo" style="display: none;">
       <span class="server-name"></span>
+      <div class="server-url-container">
+        <code class="server-url" id="serverUrl"></code>
+        <button class="btn-icon copy-url-btn" id="copyUrlBtn" title="Copy URL">📋</button>
+      </div>
     </div>
     
     <div class="top-bar-right">
@@ -54,10 +58,12 @@
           <p class="empty-state">No traffic logs yet. Send requests through your fault server to see them here.</p>
         </div>
 
-        <!-- Rules Column -->
+        <!-- Rules/Config Column -->
         <div class="column" id="rulesView">
-          <h2>Rules</h2>
-          <p class="empty-state">No rules configured. Create rules to control how requests are handled.</p>
+          <div id="rules-content" class="column-content">
+            <h2>Rules</h2>
+            <p class="empty-state">No rules configured. Create rules to control how requests are handled.</p>
+          </div>
         </div>
       </div>
     </div>

@@ -143,124 +143,79 @@ Create the main traffic viewer component that displays proxied requests and resp
 
 **Status:** Complete
 
-## Phase 9: Frontend - Rule Creator Interface
+## Phase 9: Frontend - Rules Management Interface ✅
 
-Build the one-click workflow to convert a logged request into a rule (mock OR proxy). Implement the rule editor form in the right column of the server management view.
+Build the complete rules management interface including creation, editing, and list view.
 
-### Features:
-- Rule creation form with all necessary fields
-- Method selector and path regex input
-- Action selector (Mock / Proxy radio buttons)
-- For Mock action: status code, JSON body editor, latency configuration
-- For Proxy action: target backend URL input
-- Priority slider/input
-- JSON syntax validation
-- Template variable support in mock responses
-- Condition matching UI (headers, query params, body fields)
-- Enable/disable toggle for new rules
-- Form validation and error handling
+### Features (ALL IMPLEMENTED):
+- ✅ Rules list displaying all configured rules
+- ✅ Visual distinction between mock and proxy rules (badges)
+- ✅ Rule information table showing: priority, name, method, path regex, action type
+- ✅ Enable/disable toggle switches per rule
+- ✅ Edit button (opens rule editor form in drawer)
+- ✅ Delete button with confirmation dialog
+- ✅ Empty state when no rules configured
+- ✅ "Create Rule" button in header
+- ✅ Rule creation form with all necessary fields
+- ✅ Action selector (Mock / Proxy) with conditional fields
+- ✅ Form validation (regex, URL, required fields)
+- ✅ Integration with traffic detail drawer "Create Rule" button
+- ✅ Auto-fill from traffic logs when creating from request
 
-### Workflow:
-1. Click logged request → "Create Rule" button in traffic detail drawer
-2. Auto-fill: method, path pattern (extracted from request), current response body
-3. Choose action: Mock (pre-filled with current response) OR Proxy (empty target input)
-4. Edit fields as needed (adjust regex, modify response, set latency, add conditions)
-5. Set priority (suggest next available priority)
-6. Save → rule created, activated, and appears in rules list
+**Status:** Complete
 
-### Deliverables:
-- Rule creation form component in `public/js/views/rules.js`
-- Integration with traffic detail drawer "Create Rule" button
-- Form state management (validation, error display)
-- API integration for rule creation
-- Success/error toast notifications
+## Phase 10: Frontend - Server Management & Configuration
 
-## Phase 10: Frontend - Rules Management Interface
-
-Create the rules list view showing all defined rules in the right column, with comprehensive management capabilities.
+Complete server management with creation, export/import configuration, and deletion capabilities.
 
 ### Features:
-- Rules list displaying all configured rules
-- Visual distinction between mock and proxy rules (icons, colors, or badges)
-- Rule information cards showing: name, method, path pattern, action type, priority, enabled status
-- Priority ordering display (sorted by priority, high to low)
-- Priority reordering (drag-and-drop or up/down buttons)
-- Enable/disable toggle switches per rule
-- Edit button (opens rule editor - reuse Phase 9 form component)
-- Delete button with confirmation dialog
-- Expand/collapse for full rule details (conditions, headers, etc.)
-- Empty state when no rules configured
-- Rule count display
 
-### Export/Import Feature:
-- Export button → Download `faultend-config.json` with all rules
-- Import button → File picker → Upload and load rules
-- Import options modal: 
-  - Merge mode (add new rules, keep existing)
-  - Replace mode (clear all existing rules first)
-- Validation before import with detailed error messages
-- Preview of rules to be imported
-- Backup creation before replace mode
+**Server Creation:**
+- "Create Server" button on landing page
+- Form with Server ID (required), Name (optional), Description (optional)
+- Server ID validation (alphanumeric + hyphens, must start with letter)
+- Real-time validation and duplicate checking
+- Auto-navigation to new server after creation
 
-### Additional Features:
-- Search/filter rules by name, method, path pattern
-- Bulk operations (enable/disable multiple, delete multiple)
-- Rule duplication (copy existing rule as template)
-- Quick stats (total rules, enabled/disabled count, mock/proxy breakdown)
+**Export/Import Configuration:**
+- Export button in Config tab - downloads complete server configuration as JSON
+- Import button with file picker - uploads and restores configuration
+- Import validation and preview before applying
+- Import replaces all existing rules
+- Confirmation dialog before destructive operations
 
-### Deliverables:
-- Complete rules list component in `public/js/views/rules.js`
-- Rule card component for individual rule display
-- Export/import functionality with file handling
-- Drag-and-drop priority reordering
-- Edit modal integration (reuse Phase 9 form)
-- Delete confirmation dialogs
-- Rule validation for imports
-
-## Phase 10.5: Frontend - Server Lifecycle Management
-
-Complete the server management functionality with creation and deletion capabilities.
-
-### Server Creation Features:
-- Server creation modal/drawer triggered by "Create Server" button
-- Form fields:
-  - Server ID (required, validated for uniqueness and format)
-  - Server Name (optional, human-readable display name)
-  - Description (optional, purpose/notes about the server)
-- Server ID validation:
-  - Alphanumeric and hyphens only
-  - Must start with letter
-  - Check for duplicates via API
-  - Real-time validation feedback
-- Form validation and error display
-- Integration with Admin API (`POST /servers`)
-- Success feedback and automatic navigation to new server
-- Error handling for conflicts and API failures
-
-### Server Deletion Features:
-- Delete server button in server settings drawer (already implemented)
-- Confirmation dialog with warning about data loss
-- Integration with Admin API (`DELETE /servers/:id`)
+**Server Deletion:**
+- Delete button in server settings (already implemented)
+- Confirmation with data loss warning
 - Auto-navigation to server list after deletion
-- Refresh server list after deletion
-- Error handling for API failures
 
-### Workflow:
-1. Click "Create Server" button on server list page
-2. Modal/drawer opens with creation form
-3. Enter server ID (validated in real-time)
-4. Optionally enter name and description
-5. Submit → API call to create server
-6. On success: Close modal, refresh server list, navigate to new server
-7. On error: Display error message, keep form open
+### Export Data Format:
+```json
+{
+  "version": "1.0",
+  "exportedAt": "2025-12-02T12:00:00.000Z",
+  "server": {
+    "id": "dev-api",
+    "name": "Development API",
+    "description": "Test server for development"
+  },
+  "rules": [
+    { /* complete rule object */ }
+  ],
+  "metadata": {
+    "rulesCount": 5,
+    "exportSource": "faultend-ui"
+  }
+}
+```
 
 ### Deliverables:
-- Server creation form component
-- Integration with existing drawer or modal system
-- Admin API integration for server creation
-- Form validation (client-side and server-side feedback)
-- Success/error handling with toast notifications
-- Auto-navigation to newly created server
+- Server creation form on landing page
+- Config view UI (`public/js/views/config.js`) with export/import
+- JSON validation and import preview
+- Integration with Admin API (`POST /servers`, `DELETE /servers/:id`)
+- Integration with Rules API (`GET /servers/:id/rules`, `POST /servers/:id/rules/import`)
+- Toast notifications for all operations
 
 ## Phase 11: Data Persistence and Storage (TBD)
 
