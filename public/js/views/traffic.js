@@ -317,7 +317,7 @@ class TrafficDetail {
   }
 
   render() {
-    return `
+    const html = `
       <div class="traffic-detail">
         ${this.renderOverview()}
         ${this.renderMatchedRule()}
@@ -326,6 +326,10 @@ class TrafficDetail {
         ${this.renderActions()}
       </div>
     `;
+    
+    setTimeout(() => this.bindActionsEvents(), 0);
+    
+    return html;
   }
 
   renderOverview() {
@@ -451,10 +455,24 @@ class TrafficDetail {
   renderActions() {
     return `
       <div class="detail-actions">
-        <button class="btn btn-primary" onclick="alert('Create rule feature coming in Phase 9')">
+        <button class="btn btn-primary" id="createRuleFromTrafficBtn">
           Create Rule
         </button>
       </div>
     `;
   }
+  
+  bindActionsEvents() {
+    const createRuleBtn = document.getElementById('createRuleFromTrafficBtn');
+    if (createRuleBtn) {
+      createRuleBtn.addEventListener('click', async () => {
+        const { openRuleForm } = await import('./rules.js');
+        const drawer = window.faultendApp.getDrawer();
+        const serverId = window.faultendApp.router.currentServerId;
+        openRuleForm(serverId, this.log);
+      });
+    }
+  }
 }
+
+export { TrafficDetail };

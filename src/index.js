@@ -1,6 +1,7 @@
 require('dotenv').config();
 const server = require('./server');
 const { createServer } = require('./storage/storage');
+const { addRule } = require('./rules/rulesEngine');
 
 const PORT = process.env.PORT || 3000;
 const ROOT_DOMAIN = process.env.ROOT_DOMAIN || 'localhost';
@@ -27,6 +28,117 @@ function initSampleData() {
       }
     }
   });
+  
+  console.log('[INIT] Creating sample rules...');
+  
+  addRule('dev-api', {
+    priority: 100,
+    name: 'Default API Proxy',
+    method: '*',
+    pathRegex: '.*',
+    action: 'proxy',
+    target: 'https://jsonplaceholder.typicode.com'
+  });
+  console.log('  ✓ dev-api: Default API Proxy');
+  
+  addRule('dev-api', {
+    priority: 110,
+    name: 'Mock User 1',
+    method: 'GET',
+    pathRegex: '^/users/1$',
+    action: 'mock',
+    mockResponse: {
+      statusCode: 200,
+      body: {
+        id: 1,
+        name: 'Test User',
+        email: 'test@example.com',
+        username: 'testuser'
+      },
+      latency: { type: 'fixed', value: 500 }
+    }
+  });
+  console.log('  ✓ dev-api: Mock User 1');
+  
+  addRule('dev-api', {
+    priority: 90,
+    name: 'Mock 404',
+    method: '*',
+    pathRegex: '^/not-found$',
+    action: 'mock',
+    enabled: false,
+    mockResponse: {
+      statusCode: 404,
+      body: { error: 'Not Found', message: 'Resource does not exist' }
+    }
+  });
+  console.log('  ✓ dev-api: Mock 404 (disabled)');
+  
+  addRule('staging', {
+    priority: 100,
+    name: 'API Proxy',
+    method: '*',
+    pathRegex: '.*',
+    action: 'proxy',
+    target: 'https://jsonplaceholder.typicode.com'
+  });
+  console.log('  ✓ staging: API Proxy');
+  
+  addRule('staging', {
+    priority: 120,
+    name: 'Dynamic Posts Response',
+    method: 'GET',
+    pathRegex: '^/posts$',
+    action: 'mock',
+    mockResponse: {
+      statusCode: 200,
+      body: {
+        posts: [],
+        count: 0,
+        timestamp: '{{timestamp()}}',
+        requestId: '{{uuid()}}'
+      },
+      latency: { type: 'range', min: 100, max: 300 }
+    }
+  });
+  console.log('  ✓ staging: Dynamic Posts Response');
+  
+  addRule('staging', {
+    priority: 105,
+    name: 'Conditional User Mock',
+    method: 'GET',
+    pathRegex: '^/users/123$',
+    conditions: [
+      {
+        type: 'header',
+        key: 'x-api-version',
+        operator: 'equals',
+        value: '2.0'
+      }
+    ],
+    action: 'mock',
+    mockResponse: {
+      statusCode: 200,
+      body: {
+        id: 123,
+        name: 'API v2 User',
+        version: '2.0',
+        createdAt: '{{timestamp()}}'
+      }
+    }
+  });
+  console.log('  ✓ staging: Conditional User Mock');
+  
+  addRule('mobile-api', {
+    priority: 100,
+    name: 'Mobile API Proxy',
+    method: '*',
+    pathRegex: '.*',
+    action: 'proxy',
+    target: 'https://jsonplaceholder.typicode.com'
+  });
+  console.log('  ✓ mobile-api: Mobile API Proxy');
+  
   console.log('[INIT] Sample data initialized\n');
 }
 
@@ -48,13 +160,13 @@ console.log('[INIT] Create fault servers via Admin API');
 
 console.log('');
 
+// Initialize sample data BEFORE starting server if enabled
+if (SAMPLE_DATA) {
+  initSampleData();
+}
+
 server.listen(PORT, () => {
   console.log(`✓ Server is running\n`);
-  
-  // Initialize sample data if enabled
-  if (SAMPLE_DATA) {
-    initSampleData();
-  }
   
   console.log(`Examples:`);
   console.log(`  # Create a fault server`);

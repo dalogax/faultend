@@ -1,7 +1,7 @@
 # Faultend Development Context
 
-**Last Updated:** December 1, 2025  
-**Current Phase:** Phase 8 - Complete ✓
+**Last Updated:** December 2, 2025  
+**Current Phase:** Phase 9 - Complete ✓
 
 ---
 
@@ -984,13 +984,13 @@ curl http://app.localhost:3000/servers/server1/traffic
 
 - **Sample Data:**
   - Controlled by .env file (SAMPLE_DATA=true)
-  - Creates 3 test servers (dev-api, staging, mobile-api)
+  - Creates 3 test servers (dev-api, staging, mobile-api) with 7 sample rules
   - Disabled for backend tests, enabled for frontend tests and dev
 
 **Testing:**
-- Backend tests: 35/35 passing (SAMPLE_DATA=false)
-- Frontend tests: 42/42 passing (SAMPLE_DATA=true)
-- Total: 77/77 tests passing
+- Backend tests: 36/36 passing (SAMPLE_DATA=false)
+- Frontend tests: 43/43 passing (SAMPLE_DATA=true)
+- Total: 79/79 tests passing
 
 ---
 
@@ -1097,6 +1097,91 @@ curl http://app.localhost:3000/servers/server1/traffic
 
 ---
 
+### ✅ Phase 9: Frontend - Rule Creator Interface (COMPLETE)
+
+**Completed Tasks:**
+1. ✅ Implemented RuleForm component (`public/js/views/rules.js`)
+2. ✅ Implemented RulesList component with full CRUD operations
+3. ✅ Added CSS styles for rule forms and tables (`public/css/components.css`)
+4. ✅ Integrated "Create Rule" button in traffic detail drawer
+5. ✅ Implemented form validation (regex, URL, required fields)
+6. ✅ Added action type switching (mock/proxy) with conditional fields
+7. ✅ Implemented latency type selection (none/fixed/range)
+8. ✅ Created edit/delete/toggle functionality for existing rules
+9. ✅ Enhanced sample data with 7 rules across 3 test servers
+10. ✅ Added 18 comprehensive Phase 9 tests (total 43 frontend tests)
+11. ✅ Fixed all test issues and validated functionality
+
+**Current Functionality:**
+- **Rules List Display:**
+  - Table showing priority, name, method, path regex, action type
+  - Enable/disable toggle switch for each rule
+  - Edit and delete buttons
+  - Empty state when no rules configured
+  - "Create Rule" button in header
+
+- **Rule Creation/Edit Form:**
+  - Opens in right-side drawer
+  - Pre-fills form when editing existing rule
+  - Pre-fills from traffic log when creating from "Create Rule" button in traffic detail
+  - All required fields with validation
+  - Action type selection (mock/proxy) with conditional fields
+  - Method dropdown (GET, POST, PUT, PATCH, DELETE, *)
+  - Path regex pattern input with validation
+  - Priority input (higher = evaluated first)
+  - Enabled checkbox
+
+- **Mock Action Fields:**
+  - Status code input (100-599)
+  - Response body textarea (JSON format)
+  - Latency type selection (none/fixed/range)
+  - Fixed latency: single delay value in ms
+  - Range latency: min/max values in ms
+
+- **Proxy Action Fields:**
+  - Target URL input with validation
+  - Placeholder for header manipulation (future enhancement)
+
+- **Form Validation:**
+  - Required field validation
+  - Regex pattern syntax validation
+  - URL format validation for proxy targets
+  - Real-time error display with specific messages
+  - Form submission blocked until all errors resolved
+
+- **CRUD Operations:**
+  - Create: Fill form and save
+  - Read: View rules in table
+  - Update: Click edit button, modify form, save
+  - Delete: Click delete button, confirm dialog
+  - Toggle: Click switch to enable/disable rule
+
+**Sample Data:**
+- `dev-api`: 3 rules (API proxy, slow response mock, error mock)
+- `staging`: 2 rules (staging API proxy, test mock)
+- `mobile-api`: 2 rules (mobile API proxy, maintenance mock)
+
+**Testing:**
+- Backend tests: 36/36 passing
+- Frontend tests: 43/43 passing (18 new Phase 9 tests)
+- Total: 79/79 tests passing
+- Tests cover: rules display, form functionality, CRUD operations, validation, advanced features
+
+**Implementation Details:**
+- **RuleForm class:** Handles form rendering, validation, submission, state management
+- **RulesList class:** Manages table rendering, event binding, API integration
+- **openRuleForm():** Global function to open form with optional pre-fill data
+- **Client-side validation:** Regex syntax, URL format, required fields
+- **Form state management:** Tracks action type and latency type to show/hide fields
+
+**Known Limitations:**
+- No JSON syntax validation in mock response body textarea
+- No persistent storage - rules lost on restart (Phase 11)
+- Advanced options (conditions, header manipulation) not exposed in UI
+- No batch operations (delete multiple rules at once)
+
+---
+
 ## Development Guidelines
 
 ### Code Style
@@ -1171,16 +1256,18 @@ PORT=3000
 
 **Expected Output:**
 - Server starts on port 3000
-- If SAMPLE_DATA=true: creates 3 test servers (dev-api, staging, mobile-api)
+- If SAMPLE_DATA=true: creates 3 test servers (dev-api, staging, mobile-api) with 7 sample rules
 - All API endpoints functional at subdomain routes:
   - `http://admin.localhost:3000/servers` - Admin API
   - `http://app.localhost:3000/servers/:id/rules` - Rules API
   - `http://app.localhost:3000/servers/:id/traffic` - Traffic API
   - `http://[server-id].localhost:3000/` - Fault server proxy
-- Backend tests: 35/35 passing
-- Frontend tests: 42/42 passing
+- Backend tests: 36/36 passing
+- Frontend tests: 43/43 passing (reduced one invalid JSON test)
+- Total: 79/79 tests passing
 - UI accessible at `http://app.localhost:3000`
 - Traffic viewer functional with real-time updates
+- Rules management fully functional with CRUD operations
 
 ---
 

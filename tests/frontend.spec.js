@@ -540,4 +540,316 @@ test.describe('Faultend Frontend Tests', () => {
     
     await page.waitForTimeout(500);
   });
+
+  test('rules view displays in right column', async ({ page }) => {
+    await page.goto(APP_URL);
+    
+    await page.waitForSelector('.server-table tbody tr');
+    await page.locator('.server-table tbody tr').first().click();
+    
+    await page.waitForTimeout(500);
+    
+    const rulesView = page.locator('#rulesView');
+    await expect(rulesView).toBeVisible();
+  });
+
+  test('rules list loads and displays sample rules', async ({ page }) => {
+    await page.goto(APP_URL);
+    
+    await page.waitForSelector('.server-table tbody tr');
+    const firstRow = page.locator('.server-table tbody tr').first();
+    await firstRow.click();
+    
+    await page.waitForTimeout(1000);
+    
+    const rulesTable = page.locator('.rules-table');
+    await expect(rulesTable).toBeVisible();
+    
+    const ruleRows = page.locator('.rules-table tbody tr');
+    const count = await ruleRows.count();
+    
+    expect(count).toBeGreaterThan(0);
+  });
+
+  test('rules list shows rule details correctly', async ({ page }) => {
+    await page.goto(APP_URL);
+    
+    await page.waitForSelector('.server-table tbody tr');
+    await page.locator('.server-table tbody tr').first().click();
+    
+    await page.waitForTimeout(1000);
+    
+    const firstRule = page.locator('.rules-table tbody tr').first();
+    
+    await expect(firstRule.locator('.priority-cell')).toBeVisible();
+    await expect(firstRule.locator('.name-cell')).toBeVisible();
+    await expect(firstRule.locator('.badge').first()).toBeVisible();
+    await expect(firstRule.locator('.toggle-switch')).toBeVisible();
+  });
+
+  test('clicking create rule button opens form in drawer', async ({ page }) => {
+    await page.goto(APP_URL);
+    
+    await page.waitForSelector('.server-table tbody tr');
+    await page.locator('.server-table tbody tr').first().click();
+    
+    await page.waitForTimeout(1000);
+    
+    const createBtn = page.locator('#createRuleBtn');
+    await createBtn.click();
+    
+    await page.waitForTimeout(500);
+    
+    const drawer = page.locator('#drawer');
+    await expect(drawer).toHaveClass(/active/);
+    
+    const form = page.locator('.rule-form');
+    await expect(form).toBeVisible();
+  });
+
+  test('rule form has all required fields', async ({ page }) => {
+    await page.goto(APP_URL);
+    
+    await page.waitForSelector('.server-table tbody tr');
+    await page.locator('.server-table tbody tr').first().click();
+    
+    await page.waitForTimeout(1000);
+    
+    const createBtn = page.locator('#createRuleBtn');
+    await createBtn.click();
+    
+    await page.waitForTimeout(500);
+    
+    await expect(page.locator('#ruleName')).toBeVisible();
+    await expect(page.locator('#rulePriority')).toBeVisible();
+    await expect(page.locator('#ruleMethod')).toBeVisible();
+    await expect(page.locator('#rulePathRegex')).toBeVisible();
+    await expect(page.locator('input[name="action"][value="mock"]')).toBeVisible();
+    await expect(page.locator('input[name="action"][value="proxy"]')).toBeVisible();
+  });
+
+  test('switching action type shows correct fields', async ({ page }) => {
+    await page.goto(APP_URL);
+    
+    await page.waitForSelector('.server-table tbody tr');
+    await page.locator('.server-table tbody tr').first().click();
+    
+    await page.waitForTimeout(1000);
+    
+    await page.locator('#createRuleBtn').click();
+    await page.waitForTimeout(500);
+    
+    const mockRadio = page.locator('input[name="action"][value="mock"]');
+    await mockRadio.check();
+    
+    await expect(page.locator('#mockStatusCode')).toBeVisible();
+    await expect(page.locator('#mockBody')).toBeVisible();
+    
+    const proxyRadio = page.locator('input[name="action"][value="proxy"]');
+    await proxyRadio.check();
+    
+    await expect(page.locator('#proxyTarget')).toBeVisible();
+  });
+
+  test('create rule form validates required fields', async ({ page }) => {
+    await page.goto(APP_URL);
+    
+    await page.waitForSelector('.server-table tbody tr');
+    await page.locator('.server-table tbody tr').first().click();
+    
+    await page.waitForTimeout(1000);
+    
+    await page.locator('#createRuleBtn').click();
+    await page.waitForTimeout(500);
+    
+    const saveBtn = page.locator('#saveRuleBtn');
+    await saveBtn.click();
+    
+    await page.waitForTimeout(500);
+    
+    const errors = page.locator('.form-error');
+    const errorCount = await errors.count();
+    expect(errorCount).toBeGreaterThan(0);
+  });
+
+  test('create mock rule successfully', async ({ page }) => {
+    await page.goto(APP_URL);
+    
+    await page.waitForSelector('.server-table tbody tr');
+    await page.locator('.server-table tbody tr').first().click();
+    
+    await page.waitForTimeout(1000);
+    
+    const initialRuleCount = await page.locator('.rules-table tbody tr').count();
+    
+    await page.locator('#createRuleBtn').click();
+    await page.waitForTimeout(500);
+    
+    await page.fill('#ruleName', 'Test Mock Rule');
+    await page.fill('#rulePriority', '150');
+    await page.selectOption('#ruleMethod', 'GET');
+    await page.fill('#rulePathRegex', '^/test$');
+    
+    await page.locator('input[name="action"][value="mock"]').check();
+    await page.fill('#mockStatusCode', '200');
+    await page.fill('#mockBody', '{"test": true}');
+    
+    await page.locator('#saveRuleBtn').click();
+    
+    await page.waitForTimeout(2000);
+    
+    const newRuleCount = await page.locator('.rules-table tbody tr').count();
+    expect(newRuleCount).toBeGreaterThan(initialRuleCount);
+  });
+
+  test('create proxy rule successfully', async ({ page }) => {
+    await page.goto(APP_URL);
+    
+    await page.waitForSelector('.server-table tbody tr');
+    await page.locator('.server-table tbody tr').first().click();
+    
+    await page.waitForTimeout(1000);
+    
+    const initialRuleCount = await page.locator('.rules-table tbody tr').count();
+    
+    await page.locator('#createRuleBtn').click();
+    await page.waitForTimeout(500);
+    
+    await page.fill('#ruleName', 'Test Proxy Rule');
+    await page.fill('#rulePriority', '75');
+    await page.selectOption('#ruleMethod', 'POST');
+    await page.fill('#rulePathRegex', '^/api/.*');
+    
+    await page.locator('input[name="action"][value="proxy"]').check();
+    await page.fill('#proxyTarget', 'https://api.example.com');
+    
+    await page.locator('#saveRuleBtn').click();
+    
+    await page.waitForTimeout(2000);
+    
+    const newRuleCount = await page.locator('.rules-table tbody tr').count();
+    expect(newRuleCount).toBeGreaterThan(initialRuleCount);
+  });
+
+  test('edit rule opens pre-filled form', async ({ page }) => {
+    await page.goto(APP_URL);
+    
+    await page.waitForSelector('.server-table tbody tr');
+    await page.locator('.server-table tbody tr').first().click();
+    
+    await page.waitForTimeout(1000);
+    
+    const firstRule = page.locator('.rules-table tbody tr').first();
+    const editBtn = firstRule.locator('.edit-rule-btn');
+    await editBtn.click();
+    
+    await page.waitForTimeout(500);
+    
+    const drawer = page.locator('#drawer');
+    await expect(drawer).toHaveClass(/active/);
+    
+    const nameField = page.locator('#ruleName');
+    const nameValue = await nameField.inputValue();
+    expect(nameValue.length).toBeGreaterThan(0);
+  });
+
+  test('delete rule shows confirmation', async ({ page }) => {
+    await page.goto(APP_URL);
+    
+    await page.waitForSelector('.server-table tbody tr');
+    await page.locator('.server-table tbody tr').first().click();
+    
+    await page.waitForTimeout(1000);
+    
+    page.on('dialog', dialog => dialog.dismiss());
+    
+    const firstRule = page.locator('.rules-table tbody tr').first();
+    const deleteBtn = firstRule.locator('.delete-rule-btn');
+    await deleteBtn.click();
+    
+    await page.waitForTimeout(500);
+  });
+
+  test('toggle rule is clickable', async ({ page }) => {
+    await page.goto(APP_URL);
+    
+    await page.waitForSelector('.server-table tbody tr');
+    await page.locator('.server-table tbody tr').first().click();
+    
+    await page.waitForTimeout(1000);
+    
+    const firstRule = page.locator('.rules-table tbody tr').first();
+    const toggleSwitch = firstRule.locator('.toggle-switch');
+    
+    await expect(toggleSwitch).toBeVisible();
+  });
+
+  test('latency type switching works', async ({ page }) => {
+    await page.goto(APP_URL);
+    
+    await page.waitForSelector('.server-table tbody tr');
+    await page.locator('.server-table tbody tr').first().click();
+    
+    await page.waitForTimeout(1000);
+    
+    await page.locator('#createRuleBtn').click();
+    await page.waitForTimeout(500);
+    
+    await page.locator('input[name="action"][value="mock"]').check();
+    
+    await page.locator('input[name="latencyType"][value="fixed"]').check();
+    await expect(page.locator('#latencyValue')).toBeVisible();
+    
+    await page.locator('input[name="latencyType"][value="range"]').check();
+    await expect(page.locator('#latencyMin')).toBeVisible();
+    await expect(page.locator('#latencyMax')).toBeVisible();
+  });
+
+  test('form validates URL in proxy target', async ({ page }) => {
+    await page.goto(APP_URL);
+    
+    await page.waitForSelector('.server-table tbody tr');
+    await page.locator('.server-table tbody tr').first().click();
+    
+    await page.waitForTimeout(1000);
+    
+    await page.locator('#createRuleBtn').click();
+    await page.waitForTimeout(500);
+    
+    await page.fill('#ruleName', 'Invalid URL Test');
+    await page.fill('#rulePriority', '200');
+    await page.fill('#rulePathRegex', '^/test$');
+    await page.locator('input[name="action"][value="proxy"]').check();
+    await page.fill('#proxyTarget', 'not-a-valid-url');
+    
+    await page.locator('#saveRuleBtn').click();
+    await page.waitForTimeout(500);
+    
+    const error = page.locator('.form-error');
+    await expect(error).toBeVisible();
+  });
+
+  test('form validates regex pattern', async ({ page }) => {
+    await page.goto(APP_URL);
+    
+    await page.waitForSelector('.server-table tbody tr');
+    await page.locator('.server-table tbody tr').first().click();
+    
+    await page.waitForTimeout(1000);
+    
+    await page.locator('#createRuleBtn').click();
+    await page.waitForTimeout(500);
+    
+    await page.fill('#ruleName', 'Invalid Regex Test');
+    await page.fill('#rulePriority', '200');
+    await page.fill('#rulePathRegex', '[invalid regex(');
+    
+    await page.locator('#saveRuleBtn').click();
+    await page.waitForTimeout(500);
+    
+    const errors = page.locator('.form-error');
+    const errorCount = await errors.count();
+    expect(errorCount).toBeGreaterThan(0);
+    await expect(page.getByText('Invalid regex pattern')).toBeVisible();
+  });
 });
