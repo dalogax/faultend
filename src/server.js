@@ -30,6 +30,9 @@ app.get('/health', (req, res) => {
   });
 });
 
+// Static file middleware for public assets
+const staticMiddleware = express.static(path.join(__dirname, '../public'));
+
 // Route based on subdomain type
 app.use((req, res, next) => {
   const { routeType } = req;
@@ -38,7 +41,7 @@ app.use((req, res, next) => {
   if (routeType === 'landing') {
     // Serve static files (CSS, JS, SVG, etc.)
     if (req.path.startsWith('/css/') || req.path.startsWith('/js/') || req.path.startsWith('/fonts/') || req.path === '/faultend.svg') {
-      return express.static(path.join(__dirname, '../public'))(req, res, next);
+      return staticMiddleware(req, res, next);
     }
     // Serve landing.html for root path
     if (req.path === '/' || req.path === '/index.html') {
@@ -61,7 +64,7 @@ app.use((req, res, next) => {
   if (routeType === 'app') {
     // Serve static files (CSS, JS, etc.)
     if (req.path.startsWith('/css/') || req.path.startsWith('/js/') || req.path.startsWith('/fonts/') || req.path === '/faultend.svg') {
-      return express.static(path.join(__dirname, '../public'))(req, res, next);
+      return staticMiddleware(req, res, next);
     }
     // Serve app.html for root path
     if (req.path === '/' || req.path === '/index.html' || req.path === '/app.html') {
