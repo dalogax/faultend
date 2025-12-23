@@ -100,10 +100,17 @@ router.post('/servers', (req, res) => {
     const rootDomain = process.env.ROOT_DOMAIN || 'localhost';
     const port = process.env.PORT || 3000;
     
+    // Build URLs based on environment
+    // In production (behind reverse proxy), use standard ports
+    // In development, include explicit port
+    const isLocalhost = rootDomain === 'localhost';
+    const protocol = isLocalhost ? 'http' : 'https';
+    const portSuffix = isLocalhost ? `:${port}` : '';
+    
     res.status(201).json({
       ...customer.metadata,
-      url: `http://${id}.${rootDomain}:${port}`,
-      managementUrl: `http://app.${rootDomain}:${port}?serverId=${id}`
+      url: `${protocol}://${id}.${rootDomain}${portSuffix}`,
+      managementUrl: `${protocol}://app.${rootDomain}${portSuffix}?serverId=${id}`
     });
   } catch (error) {
     console.error('[ADMIN API] Error creating server:', error);
