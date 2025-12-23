@@ -1,5 +1,7 @@
 // Client-Side Router
 
+import { buildSubdomainUrl } from './config.js';
+
 class ViewRouter {
   constructor() {
     this.currentServerId = null;
@@ -161,11 +163,8 @@ class ViewRouter {
     serverInfo.style.display = 'flex';
     serverInfo.querySelector('.server-name').textContent = serverId;
     
-    // Set server URL
-    const port = window.location.port ? `:${window.location.port}` : '';
-    const protocol = window.location.protocol;
-    const rootDomain = window.location.hostname.split('.').slice(1).join('.') || 'localhost';
-    const serverUrl = `${protocol}//${serverId}.${rootDomain}${port}`;
+    // Set server URL using centralized function
+    const serverUrl = buildSubdomainUrl(serverId);
     document.getElementById('serverUrl').textContent = serverUrl;
     
     document.getElementById('settingsBtn').style.display = 'block';

@@ -1,6 +1,6 @@
 // Main Application Entry Point
 
-import { STORAGE_KEYS } from './config.js';
+import { STORAGE_KEYS, buildSubdomainUrl } from './config.js';
 import { fetchServers } from './api.js';
 import { Toast } from './components.js';
 import ViewRouter from './router.js';
@@ -109,14 +109,16 @@ class App {
             </tr>
           </thead>
           <tbody>
-            ${this.servers.map(server => `
+            ${this.servers.map(server => {
+              const serverUrl = buildSubdomainUrl(server.id);
+              return `
               <tr class="server-row" data-server-id="${server.id}">
                 <td class="server-id">${server.id}</td>
-                <td><a href="http://${server.id}.localhost:3000" target="_blank" class="server-url">http://${server.id}.localhost:3000</a></td>
+                <td><a href="${serverUrl}" target="_blank" class="server-url">${serverUrl}</a></td>
                 <td>${server.trafficCount || 0}</td>
                 <td>${server.rulesCount || 0}</td>
               </tr>
-            `).join('')}
+            `}).join('')}
           </tbody>
         </table>
       </div>

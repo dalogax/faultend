@@ -1,6 +1,8 @@
 // Configuration
 
-// Extract base domain from hostname (remove subdomain)
+/**
+ * Extract base domain from hostname (remove subdomain)
+ */
 const getBaseDomain = () => {
   const hostname = window.location.hostname;
   
@@ -15,12 +17,27 @@ const getBaseDomain = () => {
   return parts.length > 2 ? parts.slice(-2).join('.') : hostname;
 };
 
-const port = window.location.port || 3000;
-const baseDomain = getBaseDomain();
+/**
+ * Build a URL for a given subdomain
+ * Centralized URL construction that handles protocol and port correctly
+ * 
+ * @param {string} subdomain - The subdomain (e.g., 'admin', 'app', or server ID)
+ * @returns {string} Complete URL with protocol, subdomain, domain, and port (if applicable)
+ */
+export const buildSubdomainUrl = (subdomain) => {
+  const protocol = window.location.protocol; // http: or https:
+  const port = window.location.port;
+  const baseDomain = getBaseDomain();
+  
+  // Include port only if present
+  const portSuffix = port ? `:${port}` : '';
+  
+  return `${protocol}//${subdomain}.${baseDomain}${portSuffix}`;
+};
 
 export const API_BASE = {
-  admin: `http://admin.${baseDomain}:${port}`,
-  app: `http://app.${baseDomain}:${port}`
+  admin: buildSubdomainUrl('admin'),
+  app: buildSubdomainUrl('app')
 };
 
 export const STORAGE_KEYS = {
