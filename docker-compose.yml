@@ -17,11 +17,11 @@ services:
 
       # HTTP -> HTTPS redirect
       - "traefik.http.routers.faultend-http.entrypoints=http"
-      - "traefik.http.routers.faultend-http.rule=Host(`faultend.com`) || Host(`{subdomain:[a-z0-9-]+}.faultend.com`)"
+      - "traefik.http.routers.faultend-http.rule=Host(`faultend.com`) || HostRegexp(`^[a-z0-9-]+\\.faultend\\.com$`)"
       - "traefik.http.routers.faultend-http.middlewares=faultend-redirect-to-https"
       - "traefik.http.routers.faultend-http.service=faultend"
 
-      # HTTPS root
+      # HTTPS root (requests wildcard cert)
       - "traefik.http.routers.faultend-root.entrypoints=https"
       - "traefik.http.routers.faultend-root.rule=Host(`faultend.com`)"
       - "traefik.http.routers.faultend-root.tls=true"
@@ -31,9 +31,9 @@ services:
       - "traefik.http.routers.faultend-root.middlewares=faultend-gzip"
       - "traefik.http.routers.faultend-root.service=faultend"
 
-      # HTTPS wildcard subdomains (IMPORTANT: Host(), not HostRegexp())
+      # HTTPS wildcard subdomains (no {var:regex} syntax)
       - "traefik.http.routers.faultend-wildcard.entrypoints=https"
-      - "traefik.http.routers.faultend-wildcard.rule=Host(`{subdomain:[a-z0-9-]+}.faultend.com`)"
+      - "traefik.http.routers.faultend-wildcard.rule=HostRegexp(`^[a-z0-9-]+\\.faultend\\.com$`)"
       - "traefik.http.routers.faultend-wildcard.tls=true"
       - "traefik.http.routers.faultend-wildcard.tls.certresolver=letsencrypt"
       - "traefik.http.routers.faultend-wildcard.middlewares=faultend-gzip"
