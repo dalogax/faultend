@@ -1,6 +1,6 @@
 services:
   faultend:
-    image: faultend:local
+    build: .
     restart: unless-stopped
     expose:
       - "3000"
