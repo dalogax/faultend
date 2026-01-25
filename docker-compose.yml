@@ -6,10 +6,6 @@ services:
       - "3000"
     networks:
       - coolify
-
-    environment:
-      - FAULTEND_RULE=Host(`faultend.com`) || HostRegexp(`{subdomain:[a-z0-9-]+}.faultend.com`)
-
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=coolify"
@@ -18,11 +14,11 @@ services:
       - "traefik.http.middlewares.faultend-redirect-to-https.redirectscheme.scheme=https"
 
       - "traefik.http.routers.faultend-http.entrypoints=http"
-      - "traefik.http.routers.faultend-http.rule=${FAULTEND_RULE}"
+      - "traefik.http.routers.faultend-http.rule=Host(`faultend.com`) || HostRegexp(`{subdomain:.+}.faultend.com`)"
       - "traefik.http.routers.faultend-http.middlewares=faultend-redirect-to-https"
 
       - "traefik.http.routers.faultend-https.entrypoints=https"
-      - "traefik.http.routers.faultend-https.rule=${FAULTEND_RULE}"
+      - "traefik.http.routers.faultend-https.rule=Host(`faultend.com`) || HostRegexp(`{subdomain:.+}.faultend.com`)"
       - "traefik.http.routers.faultend-https.tls=true"
       - "traefik.http.routers.faultend-https.tls.certresolver=letsencrypt"
       - "traefik.http.routers.faultend-https.tls.domains[0].main=faultend.com"
