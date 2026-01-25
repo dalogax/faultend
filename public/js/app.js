@@ -179,7 +179,7 @@ class App {
             <div class="form-group">
               <label for="server-id">Server ID *</label>
               <input type="text" id="server-id" required 
-                     pattern="^[a-z][a-z0-9-]*$">
+                     pattern="^[a-z][a-z0-9\-]*$">
               <small>Alphanumeric and hyphens only, must start with letter</small>
               <div class="error-message" id="id-error"></div>
             </div>
@@ -259,7 +259,7 @@ class App {
   }
   
   validateServerId(id) {
-    if (!/^[a-z][a-z0-9-]*$/.test(id)) {
+    if (!/^[a-z][a-z0-9\-]*$/.test(id)) {
       return 'Must start with letter, contain only lowercase letters, numbers, and hyphens';
     }
     return null;
