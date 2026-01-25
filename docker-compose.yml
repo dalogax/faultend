@@ -13,10 +13,16 @@ services:
       - "traefik.http.middlewares.faultend-gzip.compress=true"
       - "traefik.http.middlewares.faultend-redirect-to-https.redirectscheme.scheme=https"
 
+      # Service definition (explicit)
+      - "traefik.http.services.faultend.loadbalancer.server.port=3000"
+
+      # HTTP router
       - "traefik.http.routers.faultend-http.entrypoints=http"
       - "traefik.http.routers.faultend-http.rule=Host(`faultend.com`) || HostRegexp(`{subdomain:.+}.faultend.com`)"
       - "traefik.http.routers.faultend-http.middlewares=faultend-redirect-to-https"
+      - "traefik.http.routers.faultend-http.service=faultend"
 
+      # HTTPS router
       - "traefik.http.routers.faultend-https.entrypoints=https"
       - "traefik.http.routers.faultend-https.rule=Host(`faultend.com`) || HostRegexp(`{subdomain:.+}.faultend.com`)"
       - "traefik.http.routers.faultend-https.tls=true"
@@ -24,8 +30,7 @@ services:
       - "traefik.http.routers.faultend-https.tls.domains[0].main=faultend.com"
       - "traefik.http.routers.faultend-https.tls.domains[0].sans=*.faultend.com"
       - "traefik.http.routers.faultend-https.middlewares=faultend-gzip"
-
-      - "traefik.http.services.faultend.loadbalancer.server.port=3000"
+      - "traefik.http.routers.faultend-https.service=faultend"
 
 networks:
   coolify:
