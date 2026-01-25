@@ -10,35 +10,43 @@ services:
       - "traefik.enable=true"
       - "traefik.docker.network=coolify"
 
-      # Service (backend)
+      # Backend service
       - "traefik.http.services.faultend.loadbalancer.server.port=3000"
 
       # Middlewares
       - "traefik.http.middlewares.faultend-gzip.compress=true"
       - "traefik.http.middlewares.faultend-redirect-to-https.redirectscheme.scheme=https"
 
-      # HTTP router (redirect to HTTPS)
+      # -------------------------
+      # HTTP -> HTTPS redirect
+      # -------------------------
       - "traefik.http.routers.faultend-http.entrypoints=http"
       - "traefik.http.routers.faultend-http.rule=Host(`faultend.com`) || HostRegexp(`{subdomain:.+}.faultend.com`)"
       - "traefik.http.routers.faultend-http.middlewares=faultend-redirect-to-https"
       - "traefik.http.routers.faultend-http.service=faultend"
 
-      # HTTPS router (main)
-      - "traefik.http.routers.faultend-https.entrypoints=https"
-      - "traefik.http.routers.faultend-https.rule=Host(`faultend.com`) || HostRegexp(`{subdomain:.+}.faultend.com`)"
-      - "traefik.http.routers.faultend-https.tls=true"
-      - "traefik.http.routers.faultend-https.tls.certresolver=letsencrypt"
-      - "traefik.http.routers.faultend-https.tls.domains[0].main=faultend.com"
-      - "traefik.http.routers.faultend-https.tls.domains[0].sans=*.faultend.com"
-      - "traefik.http.routers.faultend-https.middlewares=faultend-gzip"
-      - "traefik.http.routers.faultend-https.service=faultend"
+      # -------------------------
+      # HTTPS router for root domain
+      # -------------------------
+      - "traefik.http.routers.faultend-root.entrypoints=https"
+      - "traefik.http.routers.faultend-root.rule=Host(`faultend.com`)"
+      - "traefik.http.routers.faultend-root.tls=true"
+      - "traefik.http.routers.faultend-root.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.faultend-root.tls.domains[0].main=faultend.com"
+      - "traefik.http.routers.faultend-root.tls.domains[0].sans=*.faultend.com"
+      - "traefik.http.routers.faultend-root.middlewares=faultend-gzip"
+      - "traefik.http.routers.faultend-root.service=faultend"
 
-      # TEMP: exact-host router to prove routing works for a subdomain
-      # Remove after testing.
-      - "traefik.http.routers.faultend-test.entrypoints=https"
-      - "traefik.http.routers.faultend-test.rule=Host(`test123.faultend.com`)"
-      - "traefik.http.routers.faultend-test.tls=true"
-      - "traefik.http.routers.faultend-test.service=faultend"
+      # -------------------------
+      # HTTPS router for wildcard subdomains
+      # Use a hostname-safe pattern (recommended over .+)
+      # -------------------------
+      - "traefik.http.routers.faultend-wildcard.entrypoints=https"
+      - "traefik.http.routers.faultend-wildcard.rule=HostRegexp(`{subdomain:[a-z0-9-]+}.faultend.com`)"
+      - "traefik.http.routers.faultend-wildcard.tls=true"
+      - "traefik.http.routers.faultend-wildcard.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.faultend-wildcard.middlewares=faultend-gzip"
+      - "traefik.http.routers.faultend-wildcard.service=faultend"
 
 networks:
   coolify:
