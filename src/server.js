@@ -39,8 +39,8 @@ app.use((req, res, next) => {
   
   // Landing page (no subdomain)
   if (routeType === 'landing') {
-    // Serve static files (CSS, JS, SVG, etc.)
-    if (req.path.startsWith('/css/') || req.path.startsWith('/js/') || req.path.startsWith('/fonts/') || req.path === '/faultend.svg') {
+    // Serve static files (CSS, JS, SVG, images, manifest, etc.)
+    if (req.path.startsWith('/css/') || req.path.startsWith('/js/') || req.path.startsWith('/fonts/') || req.path.startsWith('/img/') || req.path === '/faultend.svg' || req.path === '/site.webmanifest') {
       return staticMiddleware(req, res, next);
     }
     // Serve landing.html for root path
@@ -62,8 +62,8 @@ app.use((req, res, next) => {
   
   // App UI
   if (routeType === 'app') {
-    // Serve static files (CSS, JS, etc.)
-    if (req.path.startsWith('/css/') || req.path.startsWith('/js/') || req.path.startsWith('/fonts/') || req.path === '/faultend.svg') {
+    // Serve static files (CSS, JS, images, manifest, etc.)
+    if (req.path.startsWith('/css/') || req.path.startsWith('/js/') || req.path.startsWith('/fonts/') || req.path.startsWith('/img/') || req.path === '/faultend.svg' || req.path === '/site.webmanifest') {
       return staticMiddleware(req, res, next);
     }
     // Serve app.html for root path

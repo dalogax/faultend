@@ -104,6 +104,8 @@ class App {
             <tr>
               <th>Server ID</th>
               <th>URL</th>
+              <th>Created</th>
+              <th>Last Activity</th>
               <th>Traffic</th>
               <th>Rules</th>
             </tr>
@@ -114,7 +116,9 @@ class App {
               return `
               <tr class="server-row" data-server-id="${server.id}">
                 <td class="server-id">${server.id}</td>
-                <td><a href="${serverUrl}" target="_blank" class="server-url">${serverUrl}</a></td>
+                <td><span class="server-url">${serverUrl}</span></td>
+                <td>${this.formatDate(server.createdAt)}</td>
+                <td>${this.formatDate(server.lastActivity)}</td>
                 <td>${server.trafficCount || 0}</td>
                 <td>${server.rulesCount || 0}</td>
               </tr>
@@ -125,6 +129,31 @@ class App {
     `;
     
     content.innerHTML = table;
+  }
+
+  formatDate(timestamp) {
+    if (!timestamp) return '-';
+    const date = new Date(timestamp);
+    const now = new Date();
+    const diff = now - date;
+    
+    // Less than 1 minute
+    if (diff < 60000) return 'Just now';
+    
+    // Less than 1 hour
+    if (diff < 3600000) {
+      const mins = Math.floor(diff / 60000);
+      return `${mins} min${mins > 1 ? 's' : ''} ago`;
+    }
+    
+    // Less than 24 hours
+    if (diff < 86400000) {
+      const hours = Math.floor(diff / 3600000);
+      return `${hours} hour${hours > 1 ? 's' : ''} ago`;
+    }
+    
+    // Format as date
+    return date.toLocaleDateString();
   }
 
   loadViewData(view) {

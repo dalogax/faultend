@@ -42,7 +42,8 @@ function getAllServers() {
   return Array.from(customers.values()).map(c => ({
     ...c.metadata,
     rulesCount: c.rules.length,
-    trafficCount: c.traffic.length
+    trafficCount: c.traffic.length,
+    lastActivity: c.metadata.lastActivity || null
   }));
 }
 

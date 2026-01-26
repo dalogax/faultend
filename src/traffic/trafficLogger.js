@@ -56,6 +56,9 @@ function logTransaction(serverId, transactionData) {
   
   customer.traffic.push(transaction);
   
+  // Update lastActivity timestamp
+  customer.metadata.lastActivity = transaction.timestamp;
+  
   // Enforce max logs limit (FIFO)
   if (customer.traffic.length > maxLogs) {
     customer.traffic.shift();

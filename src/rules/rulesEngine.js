@@ -12,6 +12,29 @@ function generateRuleId() {
 }
 
 /**
+ * Generate a rule name from path regex
+ * @param {string} pathRegex - The path regex pattern
+ * @param {string} action - The rule action (mock/proxy)
+ * @returns {string} Generated name
+ */
+function generateRuleName(pathRegex, action) {
+  // Simplify regex for display
+  let simplified = pathRegex
+    .replace(/^\^/, '')    // Remove start anchor
+    .replace(/\$$/, '')    // Remove end anchor
+    .replace(/\.\*/g, '*') // Replace .* with *
+    .replace(/\([^)]*\)/g, '*') // Replace groups with *
+    .substring(0, 50);     // Limit length
+  
+  if (!simplified || simplified === '*') {
+    simplified = 'All paths';
+  }
+  
+  const actionLabel = action === 'mock' ? 'Mock' : 'Proxy';
+  return `${actionLabel}: ${simplified}`;
+}
+
+/**
  * Validate rule data
  * @param {Object} ruleData - Rule definition to validate
  * @throws {Error} If validation fails
@@ -19,10 +42,10 @@ function generateRuleId() {
 function validateRule(ruleData) {
   const errors = [];
 
-  // Required fields
-  if (!ruleData.name || typeof ruleData.name !== 'string') {
-    errors.push('name is required and must be a string');
-  } else if (ruleData.name.length > 100) {
+  // Name is optional - auto-generate if not provided
+  if (ruleData.name !== undefined && typeof ruleData.name !== 'string') {
+    errors.push('name must be a string if provided');
+  } else if (ruleData.name && ruleData.name.length > 100) {
     errors.push('name must be 100 characters or less');
   }
 
@@ -166,12 +189,15 @@ function addRule(serverId, ruleData) {
   // Validate rule
   validateRule(ruleData);
 
+  // Auto-generate name if not provided
+  const name = ruleData.name || generateRuleName(ruleData.pathRegex, ruleData.action);
+
   // Create rule with defaults
   const rule = {
     id: ruleData.id || generateRuleId(),
     priority: ruleData.priority,
     enabled: ruleData.enabled !== undefined ? ruleData.enabled : true,
-    name: ruleData.name,
+    name: name,
     method: ruleData.method,
     pathRegex: ruleData.pathRegex,
     action: ruleData.action,

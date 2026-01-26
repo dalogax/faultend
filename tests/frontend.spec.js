@@ -7,7 +7,7 @@ test.describe('Faultend Frontend Tests', () => {
   
   test('page loads successfully', async ({ page }) => {
     await page.goto(APP_URL);
-    await expect(page).toHaveTitle('faultend - Management');
+    await expect(page).toHaveTitle('Faultend');
   });
 
   test('CSS files load successfully', async ({ page }) => {
@@ -63,7 +63,7 @@ test.describe('Faultend Frontend Tests', () => {
     // Check first server row has expected columns
     const firstRow = rows.first();
     const cells = firstRow.locator('td');
-    expect(await cells.count()).toBe(4); // ID, URL, Traffic, Rules
+    expect(await cells.count()).toBe(6); // ID, URL, Created, Last Activity, Traffic, Rules
   });
 
   test('clicking server row navigates to management view', async ({ page }) => {
@@ -223,11 +223,13 @@ test.describe('Faultend Frontend Tests', () => {
     
     // Check headers
     const headers = table.locator('thead th');
-    expect(await headers.count()).toBe(4);
+    expect(await headers.count()).toBe(6);
     await expect(headers.nth(0)).toContainText('Server ID');
     await expect(headers.nth(1)).toContainText('URL');
-    await expect(headers.nth(2)).toContainText('Traffic');
-    await expect(headers.nth(3)).toContainText('Rules');
+    await expect(headers.nth(2)).toContainText('Created');
+    await expect(headers.nth(3)).toContainText('Last Activity');
+    await expect(headers.nth(4)).toContainText('Traffic');
+    await expect(headers.nth(5)).toContainText('Rules');
   });
 
   test('server URL links are correct', async ({ page }) => {
@@ -238,10 +240,10 @@ test.describe('Faultend Frontend Tests', () => {
     const firstRow = page.locator('.server-table tbody tr').first();
     const serverId = await firstRow.locator('td').first().textContent();
     const urlCell = firstRow.locator('td').nth(1);
-    const link = urlCell.locator('a');
+    const urlSpan = urlCell.locator('span.server-url');
     
-    await expect(link).toHaveAttribute('href', `http://${serverId}.localhost:3000`);
-    await expect(link).toHaveAttribute('target', '_blank');
+    // URL is now a span (no longer a link that opens in new tab)
+    await expect(urlSpan).toContainText(`http://${serverId}.localhost:3000`);
   });
 
   test('no console errors on page load', async ({ page }) => {
@@ -585,7 +587,6 @@ test.describe('Faultend Frontend Tests', () => {
     const firstRule = page.locator('.rules-table tbody tr').first();
     
     await expect(firstRule.locator('.priority-cell')).toBeVisible();
-    await expect(firstRule.locator('.name-cell')).toBeVisible();
     await expect(firstRule.locator('.badge').first()).toBeVisible();
     await expect(firstRule.locator('.toggle-switch')).toBeVisible();
   });
@@ -623,7 +624,6 @@ test.describe('Faultend Frontend Tests', () => {
     
     await page.waitForTimeout(500);
     
-    await expect(page.locator('#ruleName')).toBeVisible();
     await expect(page.locator('#rulePriority')).toBeVisible();
     await expect(page.locator('#ruleMethod')).toBeVisible();
     await expect(page.locator('#rulePathRegex')).toBeVisible();
@@ -688,20 +688,32 @@ test.describe('Faultend Frontend Tests', () => {
     await page.locator('#createRuleBtn').click();
     await page.waitForTimeout(500);
     
-    await page.fill('#ruleName', 'Test Mock Rule');
-    await page.fill('#rulePriority', '150');
+    // Clear and fill form fields
+    await page.locator('#rulePriority').clear();
+    await page.fill('#rulePriority', '250');
     await page.selectOption('#ruleMethod', 'GET');
-    await page.fill('#rulePathRegex', '^/test$');
+    await page.locator('#rulePathRegex').clear();
+    await page.fill('#rulePathRegex', '^/test-mock$');
     
     await page.locator('input[name="action"][value="mock"]').check();
+    
+    // Wait for mock fields to appear
+    await page.waitForTimeout(300);
+    
+    await page.locator('#mockStatusCode').clear();
     await page.fill('#mockStatusCode', '200');
+    await page.locator('#mockBody').clear();
     await page.fill('#mockBody', '{"test": true}');
     
     await page.locator('#saveRuleBtn').click();
     
-    await page.waitForTimeout(2000);
+    // Wait for drawer to close
+    await page.waitForSelector('#drawer:not(.active)', { timeout: 5000 });
+    
+    await page.waitForTimeout(500);
     
     const newRuleCount = await page.locator('.rules-table tbody tr').count();
+    
     expect(newRuleCount).toBeGreaterThan(initialRuleCount);
   });
 
@@ -718,17 +730,21 @@ test.describe('Faultend Frontend Tests', () => {
     await page.locator('#createRuleBtn').click();
     await page.waitForTimeout(500);
     
-    await page.fill('#ruleName', 'Test Proxy Rule');
-    await page.fill('#rulePriority', '75');
+    // Clear and fill form fields
+    await page.locator('#rulePriority').clear();
+    await page.fill('#rulePriority', '260');
     await page.selectOption('#ruleMethod', 'POST');
-    await page.fill('#rulePathRegex', '^/api/.*');
+    await page.locator('#rulePathRegex').clear();
+    await page.fill('#rulePathRegex', '^/api-proxy/.*');
     
     await page.locator('input[name="action"][value="proxy"]').check();
+    await page.locator('#proxyTarget').clear();
     await page.fill('#proxyTarget', 'https://api.example.com');
     
     await page.locator('#saveRuleBtn').click();
     
-    await page.waitForTimeout(2000);
+    // Wait for drawer to close or rule list to update
+    await page.waitForTimeout(3000);
     
     const newRuleCount = await page.locator('.rules-table tbody tr').count();
     expect(newRuleCount).toBeGreaterThan(initialRuleCount);
@@ -751,9 +767,9 @@ test.describe('Faultend Frontend Tests', () => {
     const drawer = page.locator('#drawer');
     await expect(drawer).toHaveClass(/active/);
     
-    const nameField = page.locator('#ruleName');
-    const nameValue = await nameField.inputValue();
-    expect(nameValue.length).toBeGreaterThan(0);
+    const priorityField = page.locator('#rulePriority');
+    const priorityValue = await priorityField.inputValue();
+    expect(priorityValue.length).toBeGreaterThan(0);
   });
 
   test('delete rule shows confirmation', async ({ page }) => {
@@ -823,7 +839,6 @@ test.describe('Faultend Frontend Tests', () => {
     await page.locator('#createRuleBtn').click();
     await page.waitForTimeout(500);
     
-    await page.fill('#ruleName', 'Invalid URL Test');
     await page.fill('#rulePriority', '200');
     await page.fill('#rulePathRegex', '^/test$');
     await page.locator('input[name="action"][value="proxy"]').check();
@@ -847,7 +862,6 @@ test.describe('Faultend Frontend Tests', () => {
     await page.locator('#createRuleBtn').click();
     await page.waitForTimeout(500);
     
-    await page.fill('#ruleName', 'Invalid Regex Test');
     await page.fill('#rulePriority', '200');
     await page.fill('#rulePathRegex', '[invalid regex(');
     

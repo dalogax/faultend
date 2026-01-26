@@ -85,7 +85,6 @@ class RulesList {
           <thead>
             <tr>
               <th>Priority</th>
-              <th>Name</th>
               <th>Method</th>
               <th>Path Pattern</th>
               <th>Action</th>
@@ -108,7 +107,6 @@ class RulesList {
     return `
       <tr class="rule-row" data-rule-id="${rule.id}">
         <td class="priority-cell">${rule.priority}</td>
-        <td class="name-cell">${rule.name}</td>
         <td><span class="badge badge-${method.toLowerCase()}">${method}</span></td>
         <td class="path-cell" title="${rule.pathRegex}">${this.truncatePath(rule.pathRegex)}</td>
         <td><span class="badge badge-action-${action}">${action}</span></td>
@@ -264,8 +262,8 @@ class RuleForm {
       return {
         name: '',
         priority: this.suggestPriority(),
-        method: 'GET',
-        pathRegex: '',
+        method: '*',
+        pathRegex: '.*',
         action: 'proxy',
         enabled: true,
         target: '',
@@ -321,12 +319,6 @@ class RuleForm {
     return `
       <div class="form-section">
         <h3>Basic Information</h3>
-        
-        <div class="form-field">
-          <label for="ruleName">Name *</label>
-          <input type="text" id="ruleName" class="input" value="${this.formData.name}" required>
-          ${this.renderError('name')}
-        </div>
         
         <div class="form-row">
           <div class="form-field">
@@ -447,16 +439,8 @@ class RuleForm {
   }
 
   renderAdvancedOptions() {
-    return `
-      <div class="form-section">
-        <details>
-          <summary>Advanced Options</summary>
-          <div class="form-field">
-            <p class="form-hint">Conditions and header manipulation coming in enhanced version</p>
-          </div>
-        </details>
-      </div>
-    `;
+    // Removed until features are implemented
+    return '';
   }
 
   renderError(field) {
@@ -511,7 +495,6 @@ class RuleForm {
     const latencyType = document.querySelector('input[name="latencyType"]:checked')?.value || 'none';
     
     const data = {
-      name: document.getElementById('ruleName').value.trim(),
       priority: parseInt(document.getElementById('rulePriority').value),
       method: document.getElementById('ruleMethod').value,
       pathRegex: document.getElementById('rulePathRegex').value.trim(),
@@ -546,10 +529,6 @@ class RuleForm {
 
   validate(data) {
     this.errors = {};
-
-    if (!data.name) {
-      this.errors.name = 'Name is required';
-    }
 
     if (!data.priority || data.priority < 1) {
       this.errors.priority = 'Priority must be a positive number';
