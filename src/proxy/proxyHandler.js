@@ -8,6 +8,7 @@ function createFaultendProxy(targetUrl) {
   return createProxyMiddleware({
     target: target,
     changeOrigin: config.changeOrigin,
+    xfwd: config.xfwd,
     logLevel: config.logLevel,
     timeout: config.timeout,
     proxyTimeout: config.proxyTimeout,
