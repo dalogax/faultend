@@ -1,6 +1,7 @@
 const express = require('express');
 const { findMatchingRule, executeRule } = require('../rules/rulesEngine');
 const { logTransaction } = require('../traffic/trafficLogger');
+const { customerExists } = require('../storage/storage');
 
 const router = express.Router();
 
@@ -21,6 +22,17 @@ router.use('/', (req, res, next) => {
     return res.status(500).json({
       error: 'Internal Error',
       message: 'Server ID not set. This should be a fault-server route.'
+    });
+  }
+  
+  // Check if server exists
+  if (!customerExists(serverId)) {
+    console.log(`[PROXY ROUTER] Server '${serverId}' does not exist`);
+    return res.status(404).json({
+      error: 'Server Not Found',
+      message: `Fault server '${serverId}' does not exist`,
+      hint: 'Create the server via the admin API before routing traffic to it',
+      serverId: serverId
     });
   }
   

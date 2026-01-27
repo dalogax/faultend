@@ -1,6 +1,6 @@
 
 
-const { ensureServer } = require('../storage/storage');
+const { getServer, ensureServer } = require('../storage/storage');
 
 // Traffic storage configuration
 let maxLogs = 10000; // Maximum number of logs to keep in memory per customer
@@ -48,10 +48,14 @@ function generateId() {
  * Log a new transaction
  * @param {string} serverId - Customer identifier
  * @param {Object} transactionData - Transaction data
- * @returns {Object} - Created transaction
+ * @returns {Object|null} - Created transaction or null if server doesn't exist
  */
 function logTransaction(serverId, transactionData) {
-  const customer = ensureServer(serverId);
+  const customer = getServer(serverId);
+  if (!customer) {
+    console.log(`[TRAFFIC] Cannot log transaction - server '${serverId}' does not exist`);
+    return null;
+  }
   const transaction = new Transaction(transactionData);
   
   customer.traffic.push(transaction);

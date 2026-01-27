@@ -210,6 +210,46 @@ async function runTests() {
   console.log('');
 
   // ===========================================
+  // Section 2.5: Non-Existent Server Protection
+  // ===========================================
+  console.log('Section 2.5: Non-Existent Server Protection');
+  console.log('-'.repeat(70));
+
+  await test('Request to non-existent server returns 404', async () => {
+    const res = await request('GET', '/api/test', null, {}, 'nonexistent-server');
+    assertEqual(res.status, 404, 'Should return 404');
+    assertEqual(res.body.error, 'Server Not Found', 'Should have correct error');
+    assertTrue(res.body.message.includes('does not exist'), 'Should mention server does not exist');
+    assertEqual(res.body.serverId, 'nonexistent-server', 'Should include server ID');
+  });
+
+  await test('Non-existent server does not get auto-created', async () => {
+    // Make request to trigger potential auto-creation
+    await request('GET', '/some/path', null, {}, 'auto-created-test');
+    
+    // Verify server was NOT created
+    const res = await request('GET', '/servers', null, {}, 'admin');
+    assertEqual(res.status, 200, 'Should return 200');
+    assertEqual(res.body.count, 2, 'Should still have only 2 servers');
+    
+    const serverIds = res.body.servers.map(s => s.id);
+    assertTrue(!serverIds.includes('auto-created-test'), 'Should not have auto-created server');
+  });
+
+  await test('Multiple requests to non-existent server stay 404', async () => {
+    const res1 = await request('GET', '/path1', null, {}, 'never-exists');
+    assertEqual(res1.status, 404, 'First request should return 404');
+    
+    const res2 = await request('POST', '/path2', { data: 'test' }, {}, 'never-exists');
+    assertEqual(res2.status, 404, 'Second request should return 404');
+    
+    const res3 = await request('GET', '/path3', null, {}, 'never-exists');
+    assertEqual(res3.status, 404, 'Third request should return 404');
+  });
+
+  console.log('');
+
+  // ===========================================
   // Section 3: Rules API - Per Customer
   // ===========================================
   console.log('Section 3: Rules API - Per Customer Isolation');

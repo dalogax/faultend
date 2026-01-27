@@ -1,6 +1,6 @@
 
 
-const { ensureServer } = require('../storage/storage');
+const { getServer, ensureServer } = require('../storage/storage');
 
 /**
  * Generate unique rule ID
@@ -476,7 +476,10 @@ function matchesConditions(conditions, request) {
  * @returns {Object|null} - Matching rule or null
  */
 function findMatchingRule(serverId, request) {
-  const customer = ensureServer(serverId);
+  const customer = getServer(serverId);
+  if (!customer) {
+    return null; // Server doesn't exist
+  }
   
   // Iterate through rules in priority order (already sorted)
   for (const rule of customer.rules) {
