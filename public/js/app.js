@@ -7,42 +7,77 @@ import ViewRouter from './router.js';
 import DrawerController from './drawer.js';
 import { initTrafficView, loadTrafficData, stopTrafficPolling } from './views/traffic.js';
 import { initRulesView, loadRulesData } from './views/rules.js';
+import { authManager } from './auth.js';
 
 class App {
   constructor() {
     this.router = null;
     this.drawer = null;
     this.servers = [];
+    this.authReady = false;
   }
 
   async init() {
     console.log('Initializing faultend application...');
 
-    // Initialize router
-    this.router = new ViewRouter();
+    await authManager.init();
 
-    // Initialize drawer
+    if (!authManager.isLoggedIn()) {
+      this.showLoginOverlay();
+      return;
+    }
+
+    this.hideLoginOverlay();
+    this.setupUserDisplay();
+
+    this.router = new ViewRouter();
     this.drawer = new DrawerController();
 
-    // Initialize views
     initTrafficView();
     initRulesView();
-    
-    // Load servers
+
     await this.loadServers();
-
-    // Bind server interactions
     this.bindServerSelector();
-
-    // Listen for view changes
     this.bindViewLoad();
 
-    // If we're on the server list view, render it now
     if (this.router.currentServerId === null) {
       this.renderServerList();
     }
 
     console.log('Application initialized');
+  }
+
+  showLoginOverlay() {
+    const overlay = document.getElementById('loginOverlay');
+    if (overlay) {
+      overlay.style.display = 'flex';
+    }
+  }
+
+  hideLoginOverlay() {
+    const overlay = document.getElementById('loginOverlay');
+    if (overlay) {
+      overlay.style.display = 'none';
+    }
+  }
+
+  setupUserDisplay() {
+    const user = authManager.getUser();
+    if (!user) return;
+
+    const userDisplay = document.getElementById('userDisplay');
+    if (userDisplay) {
+      userDisplay.innerHTML = `
+        <span class="user-name">${user.name || user.email}</span>
+        <button id="logoutBtn" class="btn-secondary">Logout</button>
+      `;
+      userDisplay.style.display = 'flex';
+
+      const logoutBtn = document.getElementById('logoutBtn');
+      if (logoutBtn) {
+        logoutBtn.addEventListener('click', () => authManager.signOut());
+      }
+    }
   }
 
   async loadServers() {

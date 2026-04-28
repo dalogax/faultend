@@ -37,9 +37,22 @@
     </div>
     
     <div class="top-bar-right">
+      <div id="userDisplay" style="display: none; align-items: center; gap: 1rem;"></div>
       <button id="settingsBtn" class="btn-secondary" style="display: none;">Settings</button>
     </div>
   </header>
+
+  <div id="loginOverlay" class="login-overlay" style="display: none;">
+    <div class="login-modal">
+      <img src="/faultend.svg" alt="faultend" class="login-logo">
+      <h1>faultend</h1>
+      <p>Sign in to manage your fault servers</p>
+      <a href="/auth/google" class="btn btn-primary login-btn">Sign in with Google</a>
+      <div style="margin-top: var(--space-lg);">
+        <a href="/auth/dev-login" class="text-sm text-gray" style="text-decoration: underline;">Dev Login (local only)</a>
+      </div>
+    </div>
+  </div>
 
   <!-- Main Content Area -->
   <main class="main-content">

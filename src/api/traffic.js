@@ -5,25 +5,11 @@ const {
   filterLogs, 
   clearLogs, 
   getStats 
-} = require('../traffic/trafficLogger');
+} = require('../storage/traffic');
 
 const router = express.Router();
 
-/**
- * GET /servers/:serverId/traffic
- * 
- * Query Parameters:
- * - method: Filter by HTTP method (GET, POST, etc.)
- * - statusCode: Filter by response status code
- * - path: Substring match in request path
- * - regex: Regex pattern to match request path
- * - sinceTimestamp: ISO timestamp - logs after this time
- * - untilTimestamp: ISO timestamp - logs before this time
- * - target: Filter by backend target URL
- * - hasError: 'true' or 'false' - filter by error presence
- * - limit: Maximum number of results (default: all)
- */
-router.get('/', (req, res) => {
+router.get('/', async (req, res) => {
   const serverId = req.serverId;
   
   if (!serverId) {
@@ -37,36 +23,19 @@ router.get('/', (req, res) => {
     method,
     statusCode,
     path,
-    regex,
-    sinceTimestamp,
-    untilTimestamp,
-    target,
-    hasError,
     limit
   } = req.query;
 
-  // Build filter object
   const filters = {};
   
   if (method) filters.method = method.toUpperCase();
   if (statusCode) filters.statusCode = parseInt(statusCode, 10);
   if (path) filters.path = path;
-  if (regex) filters.regex = regex;
-  if (sinceTimestamp) filters.sinceTimestamp = sinceTimestamp;
-  if (untilTimestamp) filters.untilTimestamp = untilTimestamp;
-  if (target) filters.target = target;
-  if (hasError) filters.hasError = hasError === 'true';
+  if (limit) filters.limit = parseInt(limit, 10);
 
-  // Get filtered logs for customer
   let logs = Object.keys(filters).length > 0 
-    ? filterLogs(serverId, filters) 
-    : getAllLogs(serverId);
-
-  // Apply limit if specified
-  if (limit) {
-    const maxResults = parseInt(limit, 10);
-    logs = logs.slice(0, maxResults);
-  }
+    ? await filterLogs(serverId, filters) 
+    : await getAllLogs(serverId);
 
   res.json({
     serverId: serverId,
@@ -75,7 +44,7 @@ router.get('/', (req, res) => {
   });
 });
 
-router.get('/stats', (req, res) => {
+router.get('/stats', async (req, res) => {
   const serverId = req.serverId;
   
   if (!serverId) {
@@ -85,16 +54,11 @@ router.get('/stats', (req, res) => {
     });
   }
   
-  const stats = getStats(serverId);
+  const stats = await getStats(serverId);
   res.json({ serverId, ...stats });
 });
 
-/**
- * GET /servers/:serverId/traffic/:id
- * Get a specific transaction by ID
- * Phase 6.1: Scoped per serverId
- */
-router.get('/:id', (req, res) => {
+router.get('/:id', async (req, res) => {
   const serverId = req.serverId;
   
   if (!serverId) {
@@ -105,7 +69,7 @@ router.get('/:id', (req, res) => {
   }
   
   const { id } = req.params;
-  const log = getLogById(serverId, id);
+  const log = await getLogById(serverId, id);
 
   if (!log) {
     return res.status(404).json({
@@ -117,12 +81,7 @@ router.get('/:id', (req, res) => {
   res.json(log);
 });
 
-/**
- * DELETE /servers/:serverId/traffic
- * Clear all traffic logs
- * Phase 6.1: Scoped per serverId
- */
-router.delete('/', (req, res) => {
+router.delete('/', async (req, res) => {
   const serverId = req.serverId;
   
   if (!serverId) {
@@ -132,7 +91,7 @@ router.delete('/', (req, res) => {
     });
   }
   
-  const clearedCount = clearLogs(serverId);
+  const clearedCount = await clearLogs(serverId);
   
   res.json({
     message: 'All traffic logs cleared',

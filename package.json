@@ -6,7 +6,9 @@
   "scripts": {
     "start": "node src/index.js",
     "dev": "nodemon src/index.js",
-    "test": "node tests/backend.test.js && sleep 2 && playwright test"
+    "test": "node tests/backend.test.js && sleep 2 && playwright test",
+    "migrate": "node src/db/migrate.js",
+    "migrate:reset": "node src/db/migrate.js reset"
   },
   "keywords": [
     "proxy",
@@ -17,15 +19,21 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "connect-pg-simple": "^10.0.0",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
+    "express-session": "^1.19.0",
     "http-proxy-middleware": "2.0.9",
+    "passport": "^0.7.0",
+    "passport-google-oauth20": "^2.0.0",
+    "pg": "^8.20.0",
     "raw-body": "^3.0.2"
   },
   "devDependencies": {
     "@playwright/test": "^1.57.0",
     "@types/node": "^24.10.1",
+    "node-pg-migrate": "^8.0.4",
     "nodemon": "^3.1.11"
   }
 }

@@ -1,37 +1,60 @@
 require('dotenv').config();
 const server = require('./server');
-const { createServer } = require('./storage/storage');
+const { migrate } = require('./db/migrate');
+const { createUser, findUserByGoogleId, createServer, serverExists } = require('./storage/users');
 const { addRule } = require('./rules/rulesEngine');
 
 const PORT = process.env.PORT || 3000;
 const ROOT_DOMAIN = process.env.ROOT_DOMAIN || 'localhost';
 const SAMPLE_DATA = process.env.SAMPLE_DATA === 'true';
 
-// Sample servers for development/testing
 const sampleServers = [
   { id: 'dev-api' },
   { id: 'staging' },
   { id: 'mobile-api' }
 ];
 
-function initSampleData() {
-  console.log('[INIT] Creating sample servers...');
-  sampleServers.forEach(server => {
+async function getOrCreateSampleUser() {
+  let user = await findUserByGoogleId('sample-user-123');
+  if (!user) {
+    user = await createUser({
+      googleId: 'sample-user-123',
+      email: 'sample@faultend.local',
+      name: 'Sample User',
+      avatarUrl: null
+    });
+  }
+  return user;
+}
+
+async function initSampleData() {
+  console.log('[INIT] Creating sample data...');
+  
+  const user = await getOrCreateSampleUser();
+  console.log(`  ✓ Sample user: ${user.email}`);
+  
+  for (const serverData of sampleServers) {
     try {
-      createServer(server.id);
-      console.log(`  ✓ Created server: ${server.id}`);
-    } catch (error) {
-      if (error.message.includes('already exists')) {
-        console.log(`  - Server already exists: ${server.id}`);
+      const exists = await serverExists(serverData.id);
+      if (!exists) {
+        await createServer({
+          serverId: serverData.id,
+          name: serverData.id,
+          description: '',
+          ownerId: user.id
+        });
+        console.log(`  ✓ Created server: ${serverData.id}`);
       } else {
-        console.log(`  ✗ Failed to create ${server.id}: ${error.message}`);
+        console.log(`  - Server already exists: ${serverData.id}`);
       }
+    } catch (error) {
+      console.log(`  ✗ Failed to create ${serverData.id}: ${error.message}`);
     }
-  });
+  }
   
   console.log('[INIT] Creating sample rules...');
   
-  addRule('dev-api', {
+  await addRule('dev-api', {
     priority: 100,
     name: 'Default API Proxy',
     method: '*',
@@ -41,7 +64,7 @@ function initSampleData() {
   });
   console.log('  ✓ dev-api: Default API Proxy');
   
-  addRule('dev-api', {
+  await addRule('dev-api', {
     priority: 110,
     name: 'Mock User 1',
     method: 'GET',
@@ -60,7 +83,7 @@ function initSampleData() {
   });
   console.log('  ✓ dev-api: Mock User 1');
   
-  addRule('dev-api', {
+  await addRule('dev-api', {
     priority: 90,
     name: 'Mock 404',
     method: '*',
@@ -74,7 +97,7 @@ function initSampleData() {
   });
   console.log('  ✓ dev-api: Mock 404 (disabled)');
   
-  addRule('staging', {
+  await addRule('staging', {
     priority: 100,
     name: 'API Proxy',
     method: '*',
@@ -84,7 +107,7 @@ function initSampleData() {
   });
   console.log('  ✓ staging: API Proxy');
   
-  addRule('staging', {
+  await addRule('staging', {
     priority: 120,
     name: 'Dynamic Posts Response',
     method: 'GET',
@@ -103,7 +126,7 @@ function initSampleData() {
   });
   console.log('  ✓ staging: Dynamic Posts Response');
   
-  addRule('staging', {
+  await addRule('staging', {
     priority: 105,
     name: 'Conditional User Mock',
     method: 'GET',
@@ -129,7 +152,7 @@ function initSampleData() {
   });
   console.log('  ✓ staging: Conditional User Mock');
   
-  addRule('mobile-api', {
+  await addRule('mobile-api', {
     priority: 100,
     name: 'Mobile API Proxy',
     method: '*',
@@ -142,47 +165,55 @@ function initSampleData() {
   console.log('[INIT] Sample data initialized\n');
 }
 
-console.log('='.repeat(60));
-console.log('Faultend Proxy Server');
-console.log('='.repeat(60));
-console.log(`Port:            ${PORT}`);
-console.log(`Root Domain:     ${ROOT_DOMAIN}`);
-console.log(`Landing:         http://${ROOT_DOMAIN}:${PORT}`);
-console.log(`Admin API:       http://admin.${ROOT_DOMAIN}:${PORT}/servers`);
-console.log(`User App:        http://app.${ROOT_DOMAIN}:${PORT}`);
-console.log(`Fault Servers:   http://[server-id].${ROOT_DOMAIN}:${PORT}`);
-console.log('='.repeat(60));
-console.log('');
-
-console.log('[INIT] Starting with subdomain-based architecture');
-console.log('[INIT] No fault servers created yet');
-console.log('[INIT] Create fault servers via Admin API');
-
-console.log('');
-
-// Initialize sample data BEFORE starting server if enabled
-if (SAMPLE_DATA) {
-  initSampleData();
+async function start() {
+  console.log('='.repeat(60));
+  console.log('Faultend Proxy Server');
+  console.log('='.repeat(60));
+  console.log(`Port:            ${PORT}`);
+  console.log(`Root Domain:     ${ROOT_DOMAIN}`);
+  console.log(`Landing:         http://${ROOT_DOMAIN}:${PORT}`);
+  console.log(`Admin API:       http://admin.${ROOT_DOMAIN}:${PORT}/servers`);
+  console.log(`User App:        http://app.${ROOT_DOMAIN}:${PORT}`);
+  console.log(`Fault Servers:   http://[server-id].${ROOT_DOMAIN}:${PORT}`);
+  console.log('='.repeat(60));
+  console.log('');
+  
+  try {
+    await migrate();
+    console.log('[INIT] Database migrated successfully');
+  } catch (error) {
+    console.error('[INIT] Database migration failed:', error);
+    process.exit(1);
+  }
+  
+  if (SAMPLE_DATA) {
+    await initSampleData();
+  }
+  
+  server.listen(PORT, () => {
+    console.log('✓ Server is running\n');
+    
+    console.log('Examples:');
+    console.log(`  # Create a fault server`);
+    console.log(`  curl -X POST http://admin.${ROOT_DOMAIN}:${PORT}/servers \\`);
+    console.log(`    -H "Content-Type: application/json" \\`);
+    console.log(`    -d '{"id":"server1"}'`);
+    console.log('');
+    console.log(`  # Create a proxy rule for server1`);
+    console.log(`  curl -X POST http://app.${ROOT_DOMAIN}:${PORT}/servers/server1/rules \\`);
+    console.log(`    -H "Content-Type: application/json" \\`);
+    console.log(`    -d '{"priority":100,"name":"API Proxy","method":"*","pathRegex":".*","action":"proxy","target":"https://jsonplaceholder.typicode.com"}'`);
+    console.log('');
+    console.log(`  # Send request through server1's fault server`);
+    console.log(`  curl http://server1.${ROOT_DOMAIN}:${PORT}/posts/1`);
+    console.log('');
+    console.log(`  # View traffic for server1`);
+    console.log(`  curl http://app.${ROOT_DOMAIN}:${PORT}/servers/server1/traffic`);
+    console.log('');
+  });
 }
 
-server.listen(PORT, () => {
-  console.log(`✓ Server is running\n`);
-  
-  console.log(`Examples:`);
-  console.log(`  # Create a fault server`);
-  console.log(`  curl -X POST http://admin.${ROOT_DOMAIN}:${PORT}/servers \\`);
-  console.log(`    -H "Content-Type: application/json" \\`);
-  console.log(`    -d '{"id":"server1","name":"Server 1","description":"Test instance"}'`);
-  console.log(``);
-  console.log(`  # Create a proxy rule for server1`);
-  console.log(`  curl -X POST http://app.${ROOT_DOMAIN}:${PORT}/servers/server1/rules \\`);
-  console.log(`    -H "Content-Type: application/json" \\`);
-  console.log(`    -d '{"priority":100,"name":"API Proxy","method":"*","pathRegex":".*","action":"proxy","target":"https://jsonplaceholder.typicode.com"}'`);
-  console.log(``);
-  console.log(`  # Send request through server1's fault server`);
-  console.log(`  curl http://server1.${ROOT_DOMAIN}:${PORT}/posts/1`);
-  console.log(``);
-  console.log(`  # View traffic for server1`);
-  console.log(`  curl http://app.${ROOT_DOMAIN}:${PORT}/servers/server1/traffic`);
-  console.log('');
+start().catch(error => {
+  console.error('[INIT] Startup error:', error);
+  process.exit(1);
 });

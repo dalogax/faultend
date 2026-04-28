@@ -1,5 +1,3 @@
-
-
 const express = require('express');
 const router = express.Router();
 const {
@@ -13,10 +11,9 @@ const {
   exportRules
 } = require('../rules/rulesEngine');
 
-// Parse JSON bodies for all rules endpoints
 router.use(express.json());
 
-router.get('/', (req, res) => {
+router.get('/', async (req, res) => {
   const serverId = req.serverId;
   
   if (!serverId) {
@@ -26,11 +23,11 @@ router.get('/', (req, res) => {
     });
   }
   
-  const rules = getAllRules(serverId);
+  const rules = await getAllRules(serverId);
   res.json({ serverId, rules, count: rules.length });
 });
 
-router.get('/:id', (req, res) => {
+router.get('/:id', async (req, res) => {
   const serverId = req.serverId;
   
   if (!serverId) {
@@ -40,7 +37,7 @@ router.get('/:id', (req, res) => {
     });
   }
   
-  const rule = getRuleById(serverId, req.params.id);
+  const rule = await getRuleById(serverId, req.params.id);
   if (!rule) {
     return res.status(404).json({
       error: 'Not Found',
@@ -50,7 +47,7 @@ router.get('/:id', (req, res) => {
   res.json(rule);
 });
 
-router.post('/', (req, res) => {
+router.post('/', async (req, res) => {
   const serverId = req.serverId;
   
   if (!serverId) {
@@ -61,7 +58,7 @@ router.post('/', (req, res) => {
   }
   
   try {
-    const rule = addRule(serverId, req.body);
+    const rule = await addRule(serverId, req.body);
     console.log(`[API] [${serverId}] Created rule: ${rule.name} (${rule.action}, priority: ${rule.priority})`);
     res.status(201).json(rule);
   } catch (error) {
@@ -72,7 +69,7 @@ router.post('/', (req, res) => {
   }
 });
 
-router.put('/:id', (req, res) => {
+router.put('/:id', async (req, res) => {
   const serverId = req.serverId;
   
   if (!serverId) {
@@ -83,7 +80,7 @@ router.put('/:id', (req, res) => {
   }
   
   try {
-    const rule = updateRule(serverId, req.params.id, req.body);
+    const rule = await updateRule(serverId, req.params.id, req.body);
     console.log(`[API] [${serverId}] Updated rule: ${rule.name} (${rule.action}, priority: ${rule.priority})`);
     res.json(rule);
   } catch (error) {
@@ -100,7 +97,7 @@ router.put('/:id', (req, res) => {
   }
 });
 
-router.delete('/:id', (req, res) => {
+router.delete('/:id', async (req, res) => {
   const serverId = req.serverId;
   
   if (!serverId) {
@@ -111,7 +108,7 @@ router.delete('/:id', (req, res) => {
   }
   
   try {
-    deleteRule(serverId, req.params.id);
+    await deleteRule(serverId, req.params.id);
     console.log(`[API] [${serverId}] Deleted rule: ${req.params.id}`);
     res.json({
       message: 'Rule deleted successfully',
@@ -125,12 +122,7 @@ router.delete('/:id', (req, res) => {
   }
 });
 
-/**
- * PATCH /servers/:serverId/rules/:id/toggle
- * Toggle rule enabled state
- * Phase 6.1: Scoped per serverId
- */
-router.patch('/:id/toggle', (req, res) => {
+router.patch('/:id/toggle', async (req, res) => {
   const serverId = req.serverId;
   
   if (!serverId) {
@@ -141,7 +133,7 @@ router.patch('/:id/toggle', (req, res) => {
   }
   
   try {
-    const rule = toggleRule(serverId, req.params.id);
+    const rule = await toggleRule(serverId, req.params.id);
     console.log(`[API] [${serverId}] Toggled rule: ${rule.name} → ${rule.enabled ? 'enabled' : 'disabled'}`);
     res.json({
       id: rule.id,
@@ -156,12 +148,7 @@ router.patch('/:id/toggle', (req, res) => {
   }
 });
 
-/**
- * POST /servers/:serverId/rules/export
- * Export all rules as JSON
- * Phase 6.1: Scoped per serverId
- */
-router.post('/export', (req, res) => {
+router.post('/export', async (req, res) => {
   const serverId = req.serverId;
   
   if (!serverId) {
@@ -171,17 +158,12 @@ router.post('/export', (req, res) => {
     });
   }
   
-  const exportData = exportRules(serverId);
+  const exportData = await exportRules(serverId);
   console.log(`[API] [${serverId}] Exported ${exportData.count} rule(s)`);
   res.json(exportData);
 });
 
-/**
- * POST /servers/:serverId/rules/import
- * Import rules from JSON
- * Phase 6.1: Scoped per serverId
- */
-router.post('/import', (req, res) => {
+router.post('/import', async (req, res) => {
   const serverId = req.serverId;
   
   if (!serverId) {
@@ -201,8 +183,8 @@ router.post('/import', (req, res) => {
       });
     }
 
-    const importedRules = importRules(serverId, rulesArray, mode);
-    const allRules = getAllRules(serverId);
+    const importedRules = await importRules(serverId, rulesArray, mode);
+    const allRules = await getAllRules(serverId);
 
     console.log(`[API] [${serverId}] Imported ${importedRules.length} rule(s) in ${mode} mode (total: ${allRules.length})`);
 

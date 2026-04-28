@@ -1,23 +1,56 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const session = require('express-session');
+const PgSession = require('connect-pg-simple')(session);
+const pool = require('./db/pool');
 const subdomainRouter = require('./middleware/subdomainRouter');
 const proxyRouter = require('./proxy/router');
 const trafficRouter = require('./api/traffic');
 const rulesRouter = require('./api/rules');
 const adminRouter = require('./api/admin');
+const authRouter = require('./auth/routes');
+const collaboratorsRouter = require('./api/collaborators');
+const inviteRouter = require('./api/invite');
+const passport = require('./auth/passport');
+const { authRequired, requireServerAccess, requireOwner } = require('./auth/middleware');
 
 const app = express();
 
-// Enable CORS for all subdomains
+const ROOT_DOMAIN = process.env.ROOT_DOMAIN || 'localhost';
+
 app.use(cors({
-  origin: true, // Allow all origins in development
+  origin: [
+    `http://${ROOT_DOMAIN}`,
+    `https://${ROOT_DOMAIN}`,
+    `http://app.${ROOT_DOMAIN}`,
+    `https://app.${ROOT_DOMAIN}`,
+    `http://admin.${ROOT_DOMAIN}`,
+    `https://admin.${ROOT_DOMAIN}`
+  ],
   credentials: true
 }));
 
 app.use(subdomainRouter);
 
-// Health check endpoint (available on all subdomains)
+app.use(session({
+  store: new PgSession({ pool }),
+  secret: process.env.SESSION_SECRET || 'change-me-in-production',
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    domain: `.${ROOT_DOMAIN}`,
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    maxAge: 30 * 24 * 60 * 60 * 1000
+  },
+  name: 'faultend.sid'
+}));
+
+app.use(passport.initialize());
+app.use(passport.session());
+
 app.get('/health', (req, res) => {
   res.json({ 
     status: 'ok', 
@@ -30,20 +63,15 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Static file middleware for public assets
 const staticMiddleware = express.static(path.join(__dirname, '../public'));
 
-// Route based on subdomain type
 app.use((req, res, next) => {
   const { routeType } = req;
   
-  // Landing page (no subdomain)
   if (routeType === 'landing') {
-    // Serve static files (CSS, JS, SVG, images, manifest, etc.)
     if (req.path.startsWith('/css/') || req.path.startsWith('/js/') || req.path.startsWith('/fonts/') || req.path.startsWith('/img/') || req.path === '/faultend.svg' || req.path === '/site.webmanifest') {
       return staticMiddleware(req, res, next);
     }
-    // Serve landing.html for root path
     if (req.path === '/' || req.path === '/index.html') {
       return res.sendFile(path.join(__dirname, '../public/landing.html'));
     }
@@ -54,62 +82,75 @@ app.use((req, res, next) => {
     });
   }
   
-  // Admin API
   if (routeType === 'admin') {
-    // All non-health routes go to admin router
     return next();
   }
   
-  // App UI
   if (routeType === 'app') {
-    // Serve static files (CSS, JS, images, manifest, etc.)
     if (req.path.startsWith('/css/') || req.path.startsWith('/js/') || req.path.startsWith('/fonts/') || req.path.startsWith('/img/') || req.path === '/faultend.svg' || req.path === '/site.webmanifest') {
       return staticMiddleware(req, res, next);
     }
-    // Serve app.html for root path
     if (req.path === '/' || req.path === '/index.html' || req.path === '/app.html') {
       return res.sendFile(path.join(__dirname, '../public/app.html'));
     }
-    // All other routes go to routers (no /api prefix needed)
     return next();
   }
   
-  // Fault server - proxy all requests
   if (routeType === 'fault-server') {
-    return next(); // Let proxy router handle it
+    return next();
   }
   
   res.status(500).json({ error: 'Unknown route type' });
 });
 
-// Admin API routes (only on admin.*)
+app.use('/auth', authRouter);
+
+app.use(authRequired);
+
 app.use((req, res, next) => {
-  if (req.routeType !== 'admin') {
-    return next();
+  if (req.routeType === 'admin') {
+    return adminRouter(req, res, next);
   }
-  // Mount admin router directly (no /api/admin prefix)
-  adminRouter(req, res, next);
+  next();
 });
 
-// Traffic and Rules APIs (only on app.*) - nested under /servers/:serverId
 app.use('/servers/:serverId/traffic', (req, res, next) => {
   if (req.routeType !== 'app') {
     return next();
   }
-  // serverId already set by subdomainRouter middleware from path
-  trafficRouter(req, res, next);
+  requireServerAccess(req, res, (err) => {
+    if (err) return next(err);
+    trafficRouter(req, res, next);
+  });
 });
 
 app.use('/servers/:serverId/rules', (req, res, next) => {
   if (req.routeType !== 'app') {
     return next();
   }
-  // serverId already set by subdomainRouter middleware from path
-  rulesRouter(req, res, next);
+  requireServerAccess(req, res, (err) => {
+    if (err) return next(err);
+    rulesRouter(req, res, next);
+  });
 });
 
-// Proxy router - handles ALL requests on fault-server subdomains
-// No /proxy prefix - all paths go through rules engine
+app.use('/servers/:serverId/invite', (req, res, next) => {
+  if (req.routeType !== 'app') {
+    return next();
+  }
+  requireOwner(req, res, (err) => {
+    if (err) return next(err);
+    collaboratorsRouter(req, res, next);
+  });
+});
+
+app.use('/invite', (req, res, next) => {
+  if (req.routeType !== 'app') {
+    return next();
+  }
+  inviteRouter(req, res, next);
+});
+
 app.use((req, res, next) => {
   if (req.routeType === 'fault-server') {
     return proxyRouter(req, res, next);
@@ -117,7 +158,6 @@ app.use((req, res, next) => {
   next();
 });
 
-// Global 404 handler
 app.use((req, res) => {
   res.status(404).json({
     error: 'Not Found',
@@ -127,7 +167,6 @@ app.use((req, res) => {
   });
 });
 
-// Global error handler
 app.use((err, req, res, next) => {
   console.error('[SERVER ERROR]', err);
   res.status(500).json({

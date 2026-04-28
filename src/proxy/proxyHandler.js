@@ -1,6 +1,6 @@
 const { createProxyMiddleware } = require('http-proxy-middleware');
 const config = require('./config');
-const { logTransaction } = require('../traffic/trafficLogger');
+const { logTransaction } = require('../storage/traffic');
 
 function createFaultendProxy(targetUrl) {
   const target = targetUrl || config.defaultTarget;
@@ -115,7 +115,6 @@ function createFaultendProxy(targetUrl) {
           parsedBody = `<binary data: ${responseBodySize} bytes>`;
         }
         
-        // Log the complete transaction
         const serverId = req.serverId || 'unknown';
         logTransaction(serverId, {
           request: req.capturedRequest,
@@ -130,7 +129,7 @@ function createFaultendProxy(targetUrl) {
           duration: duration,
           target: req.proxyTarget,
           matchedRule: req.matchedRule || null
-        });
+        }).catch(err => console.error('[PROXY] Log error:', err.message));
       });
     },
     
@@ -139,7 +138,6 @@ function createFaultendProxy(targetUrl) {
       const duration = Date.now() - (req.proxyStartTime || Date.now());
       console.error(`[PROXY ERROR] ${req.method} ${req.url}:`, err.message);
       
-      // Log error transaction
       const serverId = req.serverId || 'unknown';
       logTransaction(serverId, {
         request: req.capturedRequest || {
@@ -168,7 +166,7 @@ function createFaultendProxy(targetUrl) {
           code: err.code,
           stack: err.stack
         }
-      });
+      }).catch(logErr => console.error('[PROXY] Log error:', logErr.message));
       
       // Send error response to client
       res.status(502).json({

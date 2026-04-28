@@ -1,7 +1,7 @@
 const express = require('express');
 const { findMatchingRule, executeRule } = require('../rules/rulesEngine');
-const { logTransaction } = require('../traffic/trafficLogger');
-const { customerExists } = require('../storage/storage');
+const { logTransaction } = require('../storage/traffic');
+const { serverExists } = require('../storage/users');
 
 const router = express.Router();
 
@@ -15,7 +15,7 @@ router.use(express.json({
   }
 }));
 
-router.use('/', (req, res, next) => {
+router.use('/', async (req, res, next) => {
   const serverId = req.serverId;
   
   if (!serverId) {
@@ -25,8 +25,8 @@ router.use('/', (req, res, next) => {
     });
   }
   
-  // Check if server exists
-  if (!customerExists(serverId)) {
+  const exists = await serverExists(serverId);
+  if (!exists) {
     console.log(`[PROXY ROUTER] Server '${serverId}' does not exist`);
     return res.status(404).json({
       error: 'Server Not Found',
@@ -39,20 +39,18 @@ router.use('/', (req, res, next) => {
   const request = {
     method: req.method,
     path: req.path,
-    req: req  // Include Express request for condition evaluation
+    req: req
   };
   
   console.log(`[PROXY ROUTER] [${serverId}] Evaluating rules for ${req.method} ${req.path}`);
   
-  // Find matching rule
-  const rule = findMatchingRule(serverId, request);
+  const rule = await findMatchingRule(serverId, request);
   
   if (!rule) {
     console.log(`[PROXY ROUTER] [${serverId}] No matching rule for ${req.method} ${req.path}`);
     
-    // Log the 502 response to traffic
     const startTime = Date.now();
-    logTransaction(serverId, {
+    await logTransaction(serverId, {
       request: {
         method: req.method,
         url: req.url,
@@ -91,7 +89,6 @@ router.use('/', (req, res, next) => {
   
   console.log(`[PROXY ROUTER] [${serverId}] Matched rule: ${rule.name} (priority: ${rule.priority}, action: ${rule.action})`);
   
-  // Execute the rule (mock or proxy)
   executeRule(serverId, rule, req, res, next);
 });
 

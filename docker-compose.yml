@@ -1,28 +1,41 @@
 services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: faultend
+      POSTGRES_PASSWORD: faultend
+      POSTGRES_DB: faultend
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U faultend -d faultend"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
   faultend:
     build: .
-    restart: unless-stopped
-    expose:
-      - "3000"
-    networks:
-      - coolify
-    labels:
-      - "traefik.enable=true"
-      - "traefik.docker.network=coolify"
-      - "traefik.http.services.faultend.loadbalancer.server.port=3000"
-      - "traefik.http.middlewares.faultend-redirect-to-https.redirectscheme.scheme=https"
-      - "traefik.http.routers.faultend-http.entrypoints=http"
-      - "traefik.http.routers.faultend-http.rule=Host(`faultend.com`) || HostRegexp(`^[a-z0-9-]+\\.faultend\\.com$`)"
-      - "traefik.http.routers.faultend-http.middlewares=faultend-redirect-to-https"
-      - "traefik.http.routers.faultend-http.service=faultend"
-      - "traefik.http.routers.faultend-https.entrypoints=https"
-      - "traefik.http.routers.faultend-https.rule=Host(`faultend.com`) || HostRegexp(`^[a-z0-9-]+\\.faultend\\.com$`)"
-      - "traefik.http.routers.faultend-https.tls=true"
-      - "traefik.http.routers.faultend-https.tls.certresolver=letsencrypt"
-      - "traefik.http.routers.faultend-https.tls.domains[0].main=faultend.com"
-      - "traefik.http.routers.faultend-https.tls.domains[0].sans=*.faultend.com"
-      - "traefik.http.routers.faultend-https.service=faultend"
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: development
+      PORT: 3000
+      ROOT_DOMAIN: localhost
+      DATABASE_URL: postgresql://faultend:faultend@postgres:5432/faultend
+      SESSION_SECRET: local-dev-secret-change-in-production
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      MOCK_AUTH_ENABLED: ${MOCK_AUTH_ENABLED:-true}
+      SAMPLE_DATA: ${SAMPLE_DATA:-true}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./src:/app/src
+      - ./public:/app/public
+      - ./migrations:/app/migrations
 
-networks:
-  coolify:
-    external: true
+volumes:
+  postgres_data:

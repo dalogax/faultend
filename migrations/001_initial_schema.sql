@@ -1,0 +1,83 @@
+-- Initial schema for Faultend Phase 11
+-- Created: April 28, 2026
+
+-- Users table (Google OAuth)
+CREATE TABLE IF NOT EXISTS users (
+  id            BIGSERIAL PRIMARY KEY,
+  google_id     VARCHAR(255) NOT NULL UNIQUE,
+  email         VARCHAR(255) NOT NULL UNIQUE,
+  name          VARCHAR(255),
+  avatar_url    TEXT,
+  created_at    TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Servers table (fault servers)
+CREATE TABLE IF NOT EXISTS servers (
+  id            BIGSERIAL PRIMARY KEY,
+  server_id     VARCHAR(255) NOT NULL UNIQUE,
+  name          VARCHAR(255),
+  description   TEXT,
+  owner_id      BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  invite_token  VARCHAR(255) UNIQUE,
+  created_at    TIMESTAMPTZ DEFAULT NOW(),
+  updated_at    TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Rules table
+CREATE TABLE IF NOT EXISTS rules (
+  id            BIGSERIAL PRIMARY KEY,
+  server_id     BIGINT NOT NULL REFERENCES servers(id) ON DELETE CASCADE,
+  priority      INTEGER NOT NULL,
+  enabled       BOOLEAN DEFAULT true,
+  name          VARCHAR(255),
+  method        VARCHAR(10) NOT NULL,
+  path_regex    VARCHAR(500) NOT NULL,
+  action        VARCHAR(10) NOT NULL CHECK (action IN ('mock', 'proxy')),
+  target        TEXT,
+  mock_response JSONB,
+  conditions    JSONB DEFAULT '[]',
+  request_headers JSONB DEFAULT '{}',
+  created_at    TIMESTAMPTZ DEFAULT NOW(),
+  updated_at    TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Traffic table
+CREATE TABLE IF NOT EXISTS traffic (
+  id            BIGSERIAL PRIMARY KEY,
+  server_id     BIGINT NOT NULL REFERENCES servers(id) ON DELETE CASCADE,
+  request_id    VARCHAR(255),
+  timestamp     TIMESTAMPTZ DEFAULT NOW(),
+  request       JSONB NOT NULL,
+  response      JSONB,
+  duration      INTEGER,
+  target        TEXT,
+  matched_rule_id BIGINT REFERENCES rules(id) ON DELETE SET NULL,
+  error         TEXT,
+  created_at    TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Server collaborators table
+CREATE TABLE IF NOT EXISTS server_collaborators (
+  id            BIGSERIAL PRIMARY KEY,
+  server_id     BIGINT NOT NULL REFERENCES servers(id) ON DELETE CASCADE,
+  user_id       BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  created_at    TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(server_id, user_id)
+);
+
+-- Indexes
+CREATE INDEX IF NOT EXISTS idx_traffic_server_id ON traffic(server_id);
+CREATE INDEX IF NOT EXISTS idx_traffic_timestamp ON traffic(timestamp DESC);
+CREATE INDEX IF NOT EXISTS idx_rules_server_id ON rules(server_id);
+CREATE INDEX IF NOT EXISTS idx_collaborators_server_id ON server_collaborators(server_id);
+CREATE INDEX IF NOT EXISTS idx_collaborators_user_id ON server_collaborators(user_id);
+CREATE INDEX IF NOT EXISTS idx_servers_owner_id ON servers(owner_id);
+
+-- Session table (for connect-pg-simple)
+CREATE TABLE IF NOT EXISTS "session" (
+  "sid" varchar NOT NULL COLLATE "default",
+  "sess" json NOT NULL,
+  "expire" timestamp(6) NOT NULL,
+  CONSTRAINT "session_pkey" PRIMARY KEY ("sid")
+);
+CREATE INDEX IF NOT EXISTS "IDX_session_expire" ON "session" ("expire");

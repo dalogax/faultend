@@ -1,23 +1,22 @@
-
-
 const express = require('express');
 const router = express.Router();
 const {
   getAllServers,
   getServer,
   createServer,
-  deleteServer
+  deleteServer,
+  serverExists
 } = require('../storage/storage');
 
 router.use(express.json());
 
-/**
- * GET /servers
- * List all fault servers
- */
-router.get('/servers', (req, res) => {
+router.get('/servers', async (req, res) => {
   try {
-    const servers = getAllServers();
+    if (!req.user) {
+      return res.status(401).json({ error: 'Unauthorized', message: 'Authentication required' });
+    }
+    
+    const servers = await getAllServers(req.user.id);
     res.json({ 
       servers, 
       count: servers.length 
@@ -31,25 +30,43 @@ router.get('/servers', (req, res) => {
   }
 });
 
-/**
- * GET /servers/:id
- * Get specific fault server details
- */
-router.get('/servers/:id', (req, res) => {
+router.get('/servers/:id', async (req, res) => {
   try {
-    const customer = getServer(req.params.id);
+    if (!req.user) {
+      return res.status(401).json({ error: 'Unauthorized', message: 'Authentication required' });
+    }
     
-    if (!customer) {
+    const server = await getServer(req.params.id);
+    
+    if (!server) {
       return res.status(404).json({
         error: 'Not Found',
         message: `Fault server '${req.params.id}' not found`
       });
     }
     
+    const { canAccessServer, isOwner, getCollaborators } = require('../storage/storage');
+    const hasAccess = await canAccessServer(req.params.id, req.user.id);
+    if (!hasAccess) {
+      return res.status(404).json({
+        error: 'Not Found',
+        message: `Fault server '${req.params.id}' not found`
+      });
+    }
+    
+    const owner = await isOwner(req.params.id, req.user.id);
+    const collaborators = await getCollaborators(req.params.id);
+    
     res.json({
-      ...customer.metadata,
-      rulesCount: customer.rules.length,
-      trafficCount: customer.traffic.length
+      ...server,
+      isOwner: owner,
+      collaborators: collaborators.map(c => ({
+        id: c.id,
+        name: c.name,
+        email: c.email,
+        avatarUrl: c.avatar_url,
+        joinedAt: c.joined_at
+      }))
     });
   } catch (error) {
     console.error('[ADMIN API] Error getting server:', error);
@@ -60,16 +77,13 @@ router.get('/servers/:id', (req, res) => {
   }
 });
 
-/**
- * POST /servers
- * Create new fault server
- * 
- * Body: { id: "customer1", name: "Customer 1", description: "..." }
- */
-router.post('/servers', (req, res) => {
+router.post('/servers', async (req, res) => {
+  if (!req.user) {
+    return res.status(401).json({ error: 'Unauthorized', message: 'Authentication required' });
+  }
+  
   const { id, name, description } = req.body;
   
-  // Validate ID
   if (!id || typeof id !== 'string') {
     return res.status(400).json({
       error: 'Validation Error',
@@ -84,7 +98,6 @@ router.post('/servers', (req, res) => {
     });
   }
   
-  // Reserved subdomains
   const reservedSubdomains = ['admin', 'app', 'www', 'api', 'web'];
   if (reservedSubdomains.includes(id)) {
     return res.status(400).json({
@@ -93,22 +106,31 @@ router.post('/servers', (req, res) => {
     });
   }
   
+  const exists = await serverExists(id);
+  if (exists) {
+    return res.status(409).json({
+      error: 'Conflict',
+      message: `Server '${id}' already exists`
+    });
+  }
+  
   try {
-    const customer = createServer(id, { name, description });
+    const server = await createServer({ 
+      serverId: id, 
+      name: name || id, 
+      description: description || '', 
+      ownerId: req.user.id 
+    });
     console.log(`[ADMIN API] Created fault server: ${id}`);
     
     const rootDomain = process.env.ROOT_DOMAIN || 'localhost';
     const port = process.env.PORT || 3000;
-    
-    // Build URLs based on environment
-    // In production (behind reverse proxy), use standard ports
-    // In development, include explicit port
     const isLocalhost = rootDomain === 'localhost';
     const protocol = isLocalhost ? 'http' : 'https';
     const portSuffix = isLocalhost ? `:${port}` : '';
     
     res.status(201).json({
-      ...customer.metadata,
+      ...server,
       url: `${protocol}://${id}.${rootDomain}${portSuffix}`,
       managementUrl: `${protocol}://app.${rootDomain}${portSuffix}?serverId=${id}`
     });
@@ -129,13 +151,22 @@ router.post('/servers', (req, res) => {
   }
 });
 
-/**
- * DELETE /servers/:id
- * Delete fault server and all its data
- */
-router.delete('/servers/:id', (req, res) => {
+router.delete('/servers/:id', async (req, res) => {
   try {
-    deleteServer(req.params.id);
+    if (!req.user) {
+      return res.status(401).json({ error: 'Unauthorized', message: 'Authentication required' });
+    }
+    
+    const { isOwner } = require('../storage/storage');
+    const owner = await isOwner(req.params.id, req.user.id);
+    if (!owner) {
+      return res.status(403).json({
+        error: 'Forbidden',
+        message: 'Only the server owner can delete it'
+      });
+    }
+    
+    await deleteServer(req.params.id);
     console.log(`[ADMIN API] Deleted fault server: ${req.params.id}`);
     
     res.json({

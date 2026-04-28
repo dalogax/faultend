@@ -9,6 +9,7 @@ async function request(url, options = {}) {
   try {
     const response = await fetch(url, {
       ...options,
+      credentials: 'include',
       headers: {
         'Content-Type': 'application/json',
         ...options.headers
@@ -146,12 +147,51 @@ export async function exportRules(serverId) {
   });
 }
 
-/**
- * App API - Import rules
- */
 export async function importRules(serverId, importData) {
   return request(`${API_BASE.app}/servers/${serverId}/rules/import`, {
     method: 'POST',
     body: JSON.stringify(importData)
+  });
+}
+
+export async function fetchMe() {
+  return request(`${API_BASE.app}/auth/me`);
+}
+
+export async function logout() {
+  return request(`${API_BASE.app}/auth/logout`, {
+    method: 'POST'
+  });
+}
+
+export async function generateInvite(serverId) {
+  return request(`${API_BASE.app}/servers/${serverId}/invite`, {
+    method: 'POST'
+  });
+}
+
+export async function revokeInvite(serverId) {
+  return request(`${API_BASE.app}/servers/${serverId}/invite`, {
+    method: 'DELETE'
+  });
+}
+
+export async function fetchCollaborators(serverId) {
+  return request(`${API_BASE.app}/servers/${serverId}/invite/collaborators`);
+}
+
+export async function removeCollaborator(serverId, userId) {
+  return request(`${API_BASE.app}/servers/${serverId}/invite/collaborators/${userId}`, {
+    method: 'DELETE'
+  });
+}
+
+export async function previewInvite(token) {
+  return request(`${API_BASE.app}/invite/${token}`);
+}
+
+export async function acceptInvite(token) {
+  return request(`${API_BASE.app}/invite/${token}`, {
+    method: 'POST'
   });
 }
