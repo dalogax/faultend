@@ -1,20 +1,4 @@
 services:
-  postgres:
-    image: postgres:16-alpine
-    environment:
-      POSTGRES_USER: faultend
-      POSTGRES_PASSWORD: faultend
-      POSTGRES_DB: faultend
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U faultend -d faultend"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-    networks:
-      - coolify
-
   faultend:
     build: .
     restart: unless-stopped
@@ -23,15 +7,12 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=3000
-      - ROOT_DOMAIN=faultend.com
-      - DATABASE_URL=postgresql://faultend:faultend@postgres:5432/faultend
+      - ROOT_DOMAIN=${ROOT_DOMAIN:-faultend.com}
+      - DATABASE_URL=${DATABASE_URL}
       - SESSION_SECRET=${SESSION_SECRET}
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
       - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
-      - SAMPLE_DATA=false
-    depends_on:
-      postgres:
-        condition: service_healthy
+      - SAMPLE_DATA=${SAMPLE_DATA:-false}
     networks:
       - coolify
     labels:
@@ -50,9 +31,6 @@ services:
       - "traefik.http.routers.faultend-https.tls.domains[0].main=faultend.com"
       - "traefik.http.routers.faultend-https.tls.domains[0].sans=*.faultend.com"
       - "traefik.http.routers.faultend-https.service=faultend"
-
-volumes:
-  postgres_data:
 
 networks:
   coolify:
