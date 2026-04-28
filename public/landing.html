@@ -379,7 +379,7 @@
     <p class="hero-subtitle">
       A lightweight proxy that helps you validate how your mobile and web applications handle unreliable backends
     </p>
-    <a href="https://app.faultend.com" class="hero-cta">Get Started Free</a>
+    <a href="#" class="hero-cta" id="hero-cta">Try it now</a>
     <div class="scroll-indicator">Scroll to explore ↓</div>
   </section>
 
@@ -492,7 +492,7 @@
       <p class="cta-description">
         Start testing your application's resilience in minutes
       </p>
-      <a href="https://app.faultend.com" class="cta-button">Get Started Free</a>
+      <a href="#" class="cta-button" id="cta-button">Try it now</a>
     </div>
   </section>
 
@@ -550,6 +550,11 @@
       step.style.transitionDelay = `${index * 0.15}s`;
       observer.observe(step);
     });
+
+    // Set up CTA buttons with dynamic host
+    const appUrl = `${window.location.protocol}//app.${window.location.host.replace(/^[^.]+\./, '')}`;
+    document.getElementById('hero-cta').href = appUrl;
+    document.getElementById('cta-button').href = appUrl;
 
     // Smooth scroll for links
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {

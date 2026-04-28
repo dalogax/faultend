@@ -11,3 +11,8 @@ data/rules.json
 /blob-report/
 /playwright/.cache/
 /playwright/.auth/
+
+# Local verification scripts & screenshots
+scripts/
+*.png
+*.jpg
