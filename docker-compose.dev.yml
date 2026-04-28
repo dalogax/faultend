@@ -1,0 +1,41 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: faultend
+      POSTGRES_PASSWORD: faultend
+      POSTGRES_DB: faultend
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U faultend -d faultend"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  faultend:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: development
+      PORT: 3000
+      ROOT_DOMAIN: localhost
+      DATABASE_URL: postgresql://faultend:faultend@postgres:5432/faultend
+      SESSION_SECRET: local-dev-secret-change-in-production
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      MOCK_AUTH_ENABLED: ${MOCK_AUTH_ENABLED:-true}
+      SAMPLE_DATA: ${SAMPLE_DATA:-true}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./src:/app/src
+      - ./public:/app/public
+      - ./migrations:/app/migrations
+
+volumes:
+  postgres_data:

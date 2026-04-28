@@ -628,11 +628,11 @@ app.use(cors({
 
 ### Docker Compose (Recommended)
 
-A `docker-compose.yml` is provided for local development with PostgreSQL:
+A `docker-compose.dev.yml` is provided for local development with PostgreSQL:
 
 ```bash
 # Start everything (postgres + app)
-docker compose up
+docker compose -f docker-compose.dev.yml up
 
 # The app will auto-run migrations on startup
 # Access at: http://app.localhost:3000
