@@ -1,6 +1,7 @@
 require('dotenv').config();
 const server = require('./server');
-const { migrate } = require('./db/migrate');
+const { migrateWithRetry } = require('./db/migrate');
+const { testConnection } = require('./db/pool');
 const { createUser, findUserByGoogleId, createServer, serverExists } = require('./storage/users');
 const { addRule } = require('./rules/rulesEngine');
 
@@ -179,10 +180,15 @@ async function start() {
   console.log('');
   
   try {
-    await migrate();
+    console.log('[INIT] Testing database connection...');
+    await testConnection();
+    console.log('[INIT] Database connection established');
+    
+    await migrateWithRetry();
     console.log('[INIT] Database migrated successfully');
   } catch (error) {
-    console.error('[INIT] Database migration failed:', error);
+    console.error('[INIT] Database setup failed:', error);
+    console.error('[INIT] DATABASE_URL:', process.env.DATABASE_URL ? '***configured***' : '***MISSING***');
     process.exit(1);
   }
   

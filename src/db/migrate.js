@@ -20,6 +20,23 @@ async function migrate() {
   }
 }
 
+async function migrateWithRetry(retries = 3, delay = 3000) {
+  for (let i = 0; i < retries; i++) {
+    try {
+      await migrate();
+      return;
+    } catch (error) {
+      console.error(`[MIGRATE] Migration failed (attempt ${i + 1}/${retries}):`, error.message);
+      if (i < retries - 1) {
+        console.log(`[MIGRATE] Retrying in ${delay}ms...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      } else {
+        throw error;
+      }
+    }
+  }
+}
+
 async function reset() {
   const client = await pool.connect();
   
@@ -51,4 +68,4 @@ if (require.main === module) {
   }
 }
 
-module.exports = { migrate, reset };
+module.exports = { migrate, migrateWithRetry, reset };
