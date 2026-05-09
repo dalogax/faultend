@@ -198,8 +198,8 @@ async function start() {
     await migrateWithRetry();
     console.log('[INIT] Database migrated successfully');
   } catch (error) {
-    console.error('[INIT] Database setup failed:', error);
-    process.exit(1);
+    console.error('[INIT] Database setup failed:', error.message);
+    console.log('[INIT] Continuing without database - auth and persistence features disabled');
   }
   
   if (SAMPLE_DATA) {
