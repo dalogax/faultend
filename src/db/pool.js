@@ -17,7 +17,7 @@ async function testConnection(retries = 5, delay = 2000) {
       console.log(`[DB] Connection successful (attempt ${i + 1}/${retries})`);
       return true;
     } catch (error) {
-      console.error(`[DB] Connection failed (attempt ${i + 1}/${retries}):`, error.message);
+      console.error(`[DB] Connection failed (attempt ${i + 1}/${retries}):`, error.message || error);
       if (i < retries - 1) {
         console.log(`[DB] Retrying in ${delay}ms...`);
         await new Promise(resolve => setTimeout(resolve, delay));

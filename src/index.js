@@ -179,6 +179,17 @@ async function start() {
   console.log('='.repeat(60));
   console.log('');
   
+  console.log('[INIT] Environment Variables:');
+  console.log('  NODE_ENV:', process.env.NODE_ENV || '***MISSING***');
+  console.log('  PORT:', process.env.PORT || '***MISSING***');
+  console.log('  ROOT_DOMAIN:', process.env.ROOT_DOMAIN || '***MISSING***');
+  console.log('  DATABASE_URL:', process.env.DATABASE_URL ? '***configured***' : '***MISSING***');
+  console.log('  SESSION_SECRET:', process.env.SESSION_SECRET ? '***configured***' : '***MISSING***');
+  console.log('  GOOGLE_CLIENT_ID:', process.env.GOOGLE_CLIENT_ID ? '***configured***' : '***MISSING***');
+  console.log('  GOOGLE_CLIENT_SECRET:', process.env.GOOGLE_CLIENT_SECRET ? '***configured***' : '***MISSING***');
+  console.log('  SAMPLE_DATA:', process.env.SAMPLE_DATA || '***MISSING***');
+  console.log('');
+  
   try {
     console.log('[INIT] Testing database connection...');
     await testConnection();
@@ -188,7 +199,6 @@ async function start() {
     console.log('[INIT] Database migrated successfully');
   } catch (error) {
     console.error('[INIT] Database setup failed:', error);
-    console.error('[INIT] DATABASE_URL:', process.env.DATABASE_URL ? '***configured***' : '***MISSING***');
     process.exit(1);
   }
   
