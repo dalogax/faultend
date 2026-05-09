@@ -13,8 +13,11 @@ services:
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
       - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
       - SAMPLE_DATA=${SAMPLE_DATA:-false}
+    networks:
+      - coolify
     labels:
       - "traefik.enable=true"
+      - "traefik.docker.network=coolify"
       - "traefik.http.services.faultend.loadbalancer.server.port=3000"
       - "traefik.http.middlewares.faultend-redirect-to-https.redirectscheme.scheme=https"
       - "traefik.http.routers.faultend-http.entrypoints=http"
@@ -28,3 +31,7 @@ services:
       - "traefik.http.routers.faultend-https.tls.domains[0].main=faultend.com"
       - "traefik.http.routers.faultend-https.tls.domains[0].sans=*.faultend.com"
       - "traefik.http.routers.faultend-https.service=faultend"
+
+networks:
+  coolify:
+    external: true
