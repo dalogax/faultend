@@ -1,0 +1,30 @@
+services:
+  faultend:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - ROOT_DOMAIN
+      - DATABASE_URL
+      - SESSION_SECRET
+      - GOOGLE_CLIENT_ID
+      - GOOGLE_CLIENT_SECRET
+      - SAMPLE_DATA
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.services.faultend.loadbalancer.server.port=3000"
+      - "traefik.http.middlewares.faultend-redirect-to-https.redirectscheme.scheme=https"
+      - "traefik.http.routers.faultend-http.entrypoints=http"
+      - "traefik.http.routers.faultend-http.rule=Host(`faultend.com`) || HostRegexp(`^[a-z0-9-]+\\.faultend\\.com$`)"
+      - "traefik.http.routers.faultend-http.middlewares=faultend-redirect-to-https"
+      - "traefik.http.routers.faultend-http.service=faultend"
+      - "traefik.http.routers.faultend-https.entrypoints=https"
+      - "traefik.http.routers.faultend-https.rule=Host(`faultend.com`) || HostRegexp(`^[a-z0-9-]+\\.faultend\\.com$`)"
+      - "traefik.http.routers.faultend-https.tls=true"
+      - "traefik.http.routers.faultend-https.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.faultend-https.tls.domains[0].main=faultend.com"
+      - "traefik.http.routers.faultend-https.tls.domains[0].sans=*.faultend.com"
+      - "traefik.http.routers.faultend-https.service=faultend"
