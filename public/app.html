@@ -48,9 +48,15 @@
       <h1>faultend</h1>
       <p>Sign in to manage your fault servers</p>
       <a href="/auth/google" class="btn btn-primary login-btn">Sign in with Google</a>
-      <div style="margin-top: var(--space-lg);">
+      <div id="devLoginLink" style="margin-top: var(--space-lg); display: none;">
         <a href="/auth/dev-login" class="text-sm text-gray" style="text-decoration: underline;">Dev Login (local only)</a>
       </div>
+      <script>
+        // Only show dev login on localhost
+        if (window.location.hostname === 'localhost' || window.location.hostname.endsWith('.localhost')) {
+          document.getElementById('devLoginLink').style.display = 'block';
+        }
+      </script>
     </div>
   </div>
 
