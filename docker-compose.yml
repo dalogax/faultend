@@ -4,12 +4,3 @@ services:
     restart: unless-stopped
     ports:
       - "3000:3000"
-    environment:
-      - NODE_ENV=production
-      - PORT=3000
-      - ROOT_DOMAIN
-      - DATABASE_URL
-      - SESSION_SECRET
-      - GOOGLE_CLIENT_ID
-      - GOOGLE_CLIENT_SECRET
-      - SAMPLE_DATA
