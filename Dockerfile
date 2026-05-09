@@ -30,4 +30,4 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD node -e "require('http').get('http://localhost:3000/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
 
 # Start application
-CMD ["node", "src/index.js"]
+CMD ["sh", "-c", "echo '[DEBUG] .env file contents:' && cat .env 2>/dev/null || echo '[DEBUG] No .env file found' && echo '[DEBUG] Environment variables:' && env | sort && echo '' && node src/index.js"]
