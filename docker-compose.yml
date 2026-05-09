@@ -7,9 +7,9 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=3000
-      - ROOT_DOMAIN=${ROOT_DOMAIN:-faultend.com}
-      - DATABASE_URL=${DATABASE_URL}
-      - SESSION_SECRET=${SESSION_SECRET}
-      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
-      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
-      - SAMPLE_DATA=${SAMPLE_DATA:-false}
+      - ROOT_DOMAIN
+      - DATABASE_URL
+      - SESSION_SECRET
+      - GOOGLE_CLIENT_ID
+      - GOOGLE_CLIENT_SECRET
+      - SAMPLE_DATA
