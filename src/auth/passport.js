@@ -4,10 +4,14 @@ const { findUserByGoogleId, createUser } = require('../storage/users');
 if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
   const GoogleStrategy = require('passport-google-oauth20').Strategy;
   
+  const ROOT_DOMAIN = process.env.ROOT_DOMAIN || 'localhost';
+  const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http';
+  const callbackURL = `${protocol}://${ROOT_DOMAIN}/auth/google/callback`;
+  
   passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    callbackURL: '/auth/google/callback',
+    callbackURL,
     scope: ['profile', 'email']
   }, async (accessToken, refreshToken, profile, done) => {
     try {
