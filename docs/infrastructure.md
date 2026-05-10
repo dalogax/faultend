@@ -129,7 +129,7 @@ dig app.<YOUR_DOMAIN> A +short
 
 # Verify endpoints are publicly reachable
 curl -s -o /dev/null -w "%{http_code}" https://<YOUR_DOMAIN>
-curl -s -o /dev/null -w "%{http_code}" https://app.<YOUR_DOMAIN>/servers
+curl -s -o /dev/null -w "%{http_code}" https://app.<YOUR_DOMAIN>/api/servers
 curl -s -o /dev/null -w "%{http_code}" https://app.<YOUR_DOMAIN>
 
 # Verify Cloudflare token (requires valid token in .env)

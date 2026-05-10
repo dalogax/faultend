@@ -100,7 +100,7 @@ Faultend/
 │   │   ├── templateEngine.js   # Template variable rendering
 │   │   └── rulesManager.js     # Placeholder for future enhancements
 │   ├── api/
-│   │   ├── admin.js            # Fault server management API
+│   │   ├── servers.js          # Fault server management API
 │   │   ├── traffic.js          # Traffic API endpoints
 │   │   └── rules.js            # Rules management API
 │   └── storage/

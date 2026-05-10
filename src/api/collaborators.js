@@ -35,7 +35,7 @@ router.post('/', async (req, res) => {
     const portSuffix = isLocalhost ? `:${port}` : '';
     
     res.json({
-      inviteUrl: `${protocol}://app.${rootDomain}${portSuffix}/invite/${token}`
+      inviteUrl: `${protocol}://app.${rootDomain}${portSuffix}/api/invite/${token}`
     });
   } catch (error) {
     console.error('[COLLABORATION] Error generating invite:', error);

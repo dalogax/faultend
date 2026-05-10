@@ -9,7 +9,7 @@ async function authRequired(req, res, next) {
     return res.status(401).json({
       error: 'Unauthorized',
       message: 'Authentication required',
-      loginUrl: '/auth/google'
+      loginUrl: '/api/auth/google'
     });
   }
   
@@ -22,7 +22,7 @@ async function authRequired(req, res, next) {
       return res.status(401).json({
         error: 'Unauthorized',
         message: 'User no longer exists',
-        loginUrl: '/auth/google'
+        loginUrl: '/api/auth/google'
       });
     }
     

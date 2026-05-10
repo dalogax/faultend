@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 const APP_URL = 'http://app.localhost:3000';
 
 async function login(page) {
-  await page.goto(`${APP_URL}/auth/dev-login`);
+  await page.goto(`${APP_URL}/api/auth/dev-login`);
   await page.waitForURL(APP_URL);
 }
 

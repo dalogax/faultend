@@ -32,16 +32,19 @@ cd faultend
 # Install dependencies
 npm install
 
-# Start with sample data and hot-reload (uses .env)
+# Run tests - first backend then frontend - auto-starts mock deps.
+npm test
+
+# Start server
 npm run dev
 
-# Or start without sample data
-npm start
+# Access UI
+open http://app.localhost:3000
 ```
 
 ### Access Points (Local)
 - **App UI:** `http://app.localhost:3000`
-- **Admin API:** `http://app.localhost:3000/servers`
+- **API:** `http://app.localhost:3000/api`
 - **Proxy (any server ID):** `http://<server-id>.localhost:3000`
 
 > Local development relies on wildcard DNS resolution for `*.localhost`. If your OS does not support this, add entries to `/etc/hosts` (e.g., `127.0.0.1 app.localhost dev-api.localhost`).
@@ -50,9 +53,9 @@ npm start
 - Server starts on port 3000
 - If `SAMPLE_DATA=true`: creates 3 test servers (`dev-api`, `staging`, `mobile-api`) with 7 sample rules
 - All API endpoints functional at subdomain routes:
-  - `http://app.localhost:3000/servers` – Admin API
-  - `http://app.localhost:3000/servers/:id/rules` – Rules API
-  - `http://app.localhost:3000/servers/:id/traffic` – Traffic API
+  - `http://app.localhost:3000/api/servers` – Servers API
+  - `http://app.localhost:3000/api/servers/:id/rules` – Rules API
+  - `http://app.localhost:3000/api/servers/:id/traffic` – Traffic API
   - `http://[server-id].localhost:3000/` – Fault server proxy
 - UI accessible at `http://app.localhost:3000`
 - Traffic viewer functional with real-time updates
@@ -113,7 +116,7 @@ npm run test:frontend
 ```
 
 ### What Tests Cover
-- **Backend:** Traffic API, Rules API, Admin API, proxy routing, rules engine, templates
+- **Backend:** Traffic API, Rules API, Servers API, proxy routing, rules engine, templates
 - **Frontend:** Server management, traffic viewer, rules CRUD, drawer interactions, export/import
 
 ### Adding Tests
@@ -173,7 +176,7 @@ There is no formal versioning pipeline yet. Releases are implicit:
    ```bash
     curl -s https://<YOUR_DOMAIN>/health
     curl -s https://app.<YOUR_DOMAIN>
-    curl -s https://app.<YOUR_DOMAIN>/servers
+    curl -s https://app.<YOUR_DOMAIN>/api/servers
    ```
 
 If you want to add Git tags for versioning:

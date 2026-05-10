@@ -6,36 +6,36 @@ This document describes the HTTP API endpoints, data models, template functions,
 
 ## API Endpoints
 
-### Admin API (`admin.*` subdomain)
+### Servers API (`app.*` subdomain)
 
 | Method | Path | Description |
 |--------|------|-------------|
-| `GET`    | `/servers`           | List all fault servers |
-| `POST`   | `/servers`           | Create fault server |
-| `GET`    | `/servers/:id`       | Get specific server |
-| `DELETE` | `/servers/:id`       | Delete server |
+| `GET`    | `/api/servers`           | List all fault servers |
+| `POST`   | `/api/servers`           | Create fault server |
+| `GET`    | `/api/servers/:id`       | Get specific server |
+| `DELETE` | `/api/servers/:id`       | Delete server |
 
 ### Rules API (`app.*` subdomain)
 
 | Method | Path | Description |
 |--------|------|-------------|
-| `GET`    | `/servers/:serverId/rules`              | List rules |
-| `POST`   | `/servers/:serverId/rules`              | Create rule |
-| `GET`    | `/servers/:serverId/rules/:id`          | Get rule |
-| `PUT`    | `/servers/:serverId/rules/:id`          | Update rule |
-| `DELETE` | `/servers/:serverId/rules/:id`          | Delete rule |
-| `PATCH`  | `/servers/:serverId/rules/:id/toggle`   | Toggle rule |
-| `POST`   | `/servers/:serverId/rules/export`       | Export rules |
-| `POST`   | `/servers/:serverId/rules/import`       | Import rules |
+| `GET`    | `/api/servers/:serverId/rules`              | List rules |
+| `POST`   | `/api/servers/:serverId/rules`              | Create rule |
+| `GET`    | `/api/servers/:serverId/rules/:id`          | Get rule |
+| `PUT`    | `/api/servers/:serverId/rules/:id`          | Update rule |
+| `DELETE` | `/api/servers/:serverId/rules/:id`          | Delete rule |
+| `PATCH`  | `/api/servers/:serverId/rules/:id/toggle`   | Toggle rule |
+| `POST`   | `/api/servers/:serverId/rules/export`       | Export rules |
+| `POST`   | `/api/servers/:serverId/rules/import`       | Import rules |
 
 ### Traffic API (`app.*` subdomain)
 
 | Method | Path | Description |
 |--------|------|-------------|
-| `GET`    | `/servers/:serverId/traffic`       | Get traffic logs |
-| `GET`    | `/servers/:serverId/traffic/:id`   | Get specific log |
-| `GET`    | `/servers/:serverId/traffic/stats` | Get statistics |
-| `DELETE` | `/servers/:serverId/traffic`       | Clear logs |
+| `GET`    | `/api/servers/:serverId/traffic`       | Get traffic logs |
+| `GET`    | `/api/servers/:serverId/traffic/:id`   | Get specific log |
+| `GET`    | `/api/servers/:serverId/traffic/stats` | Get statistics |
+| `DELETE` | `/api/servers/:serverId/traffic`       | Clear logs |
 
 ---
 
@@ -43,31 +43,31 @@ This document describes the HTTP API endpoints, data models, template functions,
 
 ```bash
 # Get all traffic logs
-curl http://localhost:3000/api/traffic
+curl http://localhost:3000/api/servers/:serverId/traffic
 
 # Filter by method
-curl http://localhost:3000/api/traffic?method=POST
+curl http://localhost:3000/api/servers/:serverId/traffic?method=POST
 
 # Filter by status code
-curl http://localhost:3000/api/traffic?statusCode=200
+curl http://localhost:3000/api/servers/:serverId/traffic?statusCode=200
 
 # Filter by path substring
-curl http://localhost:3000/api/traffic?path=users
+curl http://localhost:3000/api/servers/:serverId/traffic?path=users
 
 # Filter by regex pattern
-curl http://localhost:3000/api/traffic?regex=posts
+curl http://localhost:3000/api/servers/:serverId/traffic?regex=posts
 
 # Filter by timestamp range
-curl http://localhost:3000/api/traffic?sinceTimestamp=2025-11-29T10:00:00Z
+curl http://localhost:3000/api/servers/:serverId/traffic?sinceTimestamp=2025-11-29T10:00:00Z
 
 # Filter by error presence
-curl http://localhost:3000/api/traffic?hasError=true
+curl http://localhost:3000/api/servers/:serverId/traffic?hasError=true
 
 # Get statistics
-curl http://localhost:3000/api/traffic/stats
+curl http://localhost:3000/api/servers/:serverId/traffic/stats
 
 # Clear all logs
-curl -X DELETE http://localhost:3000/api/traffic
+curl -X DELETE http://localhost:3000/api/servers/:serverId/traffic
 ```
 
 ---

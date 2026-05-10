@@ -14,11 +14,11 @@ function subdomainRouter(req, res, next) {
     req.serverId = subdomain;
   }
   
-  // For app routes, extract serverId from path: /servers/:serverId/...
+  // For app routes, extract serverId from path: /api/servers/:serverId/...
   // This enables the UI to manage multiple servers from one subdomain
   if (routeType === 'app') {
-    // Extract serverId from path like /servers/server1/rules
-    const serverPathMatch = req.url.match(/^\/servers\/([^\/\?]+)/);
+    // Extract serverId from path like /api/servers/server1/rules
+    const serverPathMatch = req.url.match(/^\/api\/servers\/([^\/\?]+)/);
     if (serverPathMatch) {
       req.serverId = serverPathMatch[1];
     }

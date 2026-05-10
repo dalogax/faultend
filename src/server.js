@@ -8,7 +8,7 @@ const subdomainRouter = require('./middleware/subdomainRouter');
 const proxyRouter = require('./proxy/router');
 const trafficRouter = require('./api/traffic');
 const rulesRouter = require('./api/rules');
-const adminRouter = require('./api/admin');
+const serversRouter = require('./api/servers');
 const authRouter = require('./auth/routes');
 const collaboratorsRouter = require('./api/collaborators');
 const inviteRouter = require('./api/invite');
@@ -98,18 +98,18 @@ app.use((req, res, next) => {
   res.status(500).json({ error: 'Unknown route type' });
 });
 
-app.use('/auth', rateLimit, authRouter);
+app.use('/api/auth', rateLimit, authRouter);
 
 app.use(authRequired);
 
-app.use((req, res, next) => {
+app.use('/api', (req, res, next) => {
   if (req.routeType === 'app') {
-    return adminRouter(req, res, next);
+    return serversRouter(req, res, next);
   }
   next();
 });
 
-app.use('/servers/:serverId/traffic', (req, res, next) => {
+app.use('/api/servers/:serverId/traffic', (req, res, next) => {
   if (req.routeType !== 'app') {
     return next();
   }
@@ -119,7 +119,7 @@ app.use('/servers/:serverId/traffic', (req, res, next) => {
   });
 });
 
-app.use('/servers/:serverId/rules', (req, res, next) => {
+app.use('/api/servers/:serverId/rules', (req, res, next) => {
   if (req.routeType !== 'app') {
     return next();
   }
@@ -129,7 +129,7 @@ app.use('/servers/:serverId/rules', (req, res, next) => {
   });
 });
 
-app.use('/servers/:serverId/invite', (req, res, next) => {
+app.use('/api/servers/:serverId/invite', (req, res, next) => {
   if (req.routeType !== 'app') {
     return next();
   }
@@ -139,7 +139,7 @@ app.use('/servers/:serverId/invite', (req, res, next) => {
   });
 });
 
-app.use('/invite', (req, res, next) => {
+app.use('/api/invite', (req, res, next) => {
   if (req.routeType !== 'app') {
     return next();
   }

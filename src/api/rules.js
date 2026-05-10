@@ -19,7 +19,7 @@ router.get('/', async (req, res) => {
   if (!serverId) {
     return res.status(400).json({
       error: 'Bad Request',
-      message: 'Server ID required. Access via /servers/:serverId/rules'
+      message: 'Server ID required. Access via /api/servers/:serverId/rules'
     });
   }
   

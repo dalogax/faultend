@@ -11,6 +11,6 @@
 - [milestone-08.md](./milestones/milestone-08.md) — Frontend - Real-time Traffic Viewer
 - [milestone-09.md](./milestones/milestone-09.md) — Frontend - Rules Management Interface
 - [milestone-10.md](./milestones/milestone-10.md) — Frontend - Server Management & Configuration
-- [milestone-10-9.md](./milestones/milestone-10-9.md) — Admin API for Server Management
+- [milestone-10-9.md](./milestones/milestone-10-9.md) — Servers API for Server Management
 - [milestone-10-10.md](./milestones/milestone-10-10.md) — Subdomain Routing & Landing Page
 - [milestone-11.md](./milestones/milestone-11.md) — Authentication, Persistence & Collaboration

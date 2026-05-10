@@ -22,7 +22,7 @@ router.get('/servers', async (req, res) => {
       count: servers.length 
     });
   } catch (error) {
-    console.error('[ADMIN API] Error listing servers:', error);
+    console.error('[SERVERS API] Error listing servers:', error);
     res.status(500).json({
       error: 'Internal Server Error',
       message: error.message
@@ -69,7 +69,7 @@ router.get('/servers/:id', async (req, res) => {
       }))
     });
   } catch (error) {
-    console.error('[ADMIN API] Error getting server:', error);
+    console.error('[SERVERS API] Error getting server:', error);
     res.status(500).json({
       error: 'Internal Server Error',
       message: error.message
@@ -121,7 +121,7 @@ router.post('/servers', async (req, res) => {
       description: description || '', 
       ownerId: req.user.id 
     });
-    console.log(`[ADMIN API] Created fault server: ${id}`);
+    console.log(`[SERVERS API] Created fault server: ${id}`);
     
     const rootDomain = process.env.ROOT_DOMAIN || 'localhost';
     const port = process.env.PORT || 3000;
@@ -135,7 +135,7 @@ router.post('/servers', async (req, res) => {
       managementUrl: `${protocol}://app.${rootDomain}${portSuffix}?serverId=${id}`
     });
   } catch (error) {
-    console.error('[ADMIN API] Error creating server:', error);
+    console.error('[SERVERS API] Error creating server:', error);
     
     if (error.message.includes('already exists')) {
       return res.status(409).json({
@@ -167,14 +167,14 @@ router.delete('/servers/:id', async (req, res) => {
     }
     
     await deleteServer(req.params.id);
-    console.log(`[ADMIN API] Deleted fault server: ${req.params.id}`);
+    console.log(`[SERVERS API] Deleted fault server: ${req.params.id}`);
     
     res.json({
       message: 'Fault server deleted successfully',
       id: req.params.id
     });
   } catch (error) {
-    console.error('[ADMIN API] Error deleting server:', error);
+    console.error('[SERVERS API] Error deleting server:', error);
     
     if (error.message.includes('not found')) {
       return res.status(404).json({

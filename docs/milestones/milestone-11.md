@@ -10,7 +10,7 @@
 
 This milestone transformed Faultend from a single-user, in-memory tool into a **multi-user, persistent, collaborative platform**. Three core capabilities were introduced:
 
-1. **Authentication** — Google OAuth 2.0 login protecting the admin UI and admin API
+1. **Authentication** — Google OAuth 2.0 login protecting the app UI and API
 2. **Persistence** — PostgreSQL replacing in-memory storage
 3. **Collaboration** — Server owners can share servers with other logged-in users via invite links
 
@@ -103,8 +103,8 @@ MOCK_AUTH_ENABLED=false   # Never true in production
 
 - Landing: https://faultend.com
 - App: https://app.faultend.com
-- OAuth callback: https://app.faultend.com/auth/google/callback
-- Admin API: https://app.faultend.com/api/*
+- OAuth callback: https://app.faultend.com/api/auth/google/callback
+- API: https://app.faultend.com/api/*
 
 ---
 
@@ -122,7 +122,7 @@ If issues arise in production:
 
 **Current setup is sufficient** for this phase. Rationale:
 - Session cookie uses `SameSite: 'lax'` — not sent on cross-origin POSTs
-- CORS is restricted to app/admin subdomains only
+- CORS is restricted to the app subdomain only
 - All state-changing operations use POST/PUT/DELETE (no GET mutations)
 - No sensitive actions can be triggered via simple links
 

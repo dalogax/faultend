@@ -24,21 +24,6 @@ Route REST + JSON traffic through Faultend to inspect requests/responses in real
 - **Export/Import**: Share configurations as JSON files
 - **Real-Time Inspection**: See all traffic with full request/response bodies
 
-## Quick Start
-
-```bash
-# Install dependencies
-npm install
-
-# Start server
-npm run dev
-
-# Access UI
-open http://app.localhost:3000
-```
-
-## Architecture
-
 ```mermaid
 flowchart LR
     A -->|request A| P
@@ -52,14 +37,15 @@ flowchart LR
     P --> C[Real Backend]
 ```
 
-**Rules-based routing**: No hardcoded backends. Each rule either:
+**Rules-based routing**: Each rule either:
 - **Mocks** a response (custom status, body, latency)
 - **Proxies** to a specified backend URL
 
-**Subdomain architecture**:
-- `admin.localhost` - Manage fault servers
-- `app.localhost` - Configure rules and view traffic
-- `[server-id].localhost` - Isolated proxy instances
+**Hosts by scope**:
+- `domain` - Landing page
+- `app.domain/api` - Headless app - manage fault servers through API
+- `app.domain` - Admin UI - Configure rules and view traffic
+- `[server-id].domain` - Isolated proxy instances
 
 ## Tech Stack
 
@@ -69,4 +55,4 @@ flowchart LR
 
 ---
 
-Built to make resilience testing accessible, fast, and practical.
+Built to make app's resilience testing accessible, fast, and practical.

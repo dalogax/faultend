@@ -111,7 +111,7 @@ Transform Faultend from single-instance proxy to multi-tenant SaaS-ready platfor
 ### Architecture Overview:
 - **Root Domain Configuration:** Configurable via `ROOT_DOMAIN` env var (e.g., `localhost` for dev, `faultend.com` for production)
 - **Landing Page:** `[ROOT_DOMAIN]` (no subdomain) → Static landing page explaining the service
-- **Admin API:** `admin.[ROOT_DOMAIN]` → Management API for creating/deleting fault servers
+- **Servers API:** `app.[ROOT_DOMAIN]/api` → Management API for creating/deleting fault servers
 - **User App:** `app.[ROOT_DOMAIN]` → Main UI for managing rules and viewing traffic (current frontend)
 - **Fault Servers:** `[customer-id].[ROOT_DOMAIN]` → Customer-specific proxy instances (e.g., `customer1.localhost`, `companyB.localhost`)
 
@@ -119,7 +119,7 @@ Transform Faultend from single-instance proxy to multi-tenant SaaS-ready platfor
 - Remove `/proxy` URL prefix - all requests to fault servers are proxied directly
 - Subdomain detection middleware in Express
 - Multi-tenant data isolation (rules and traffic scoped per customer-id)
-- Admin API for fault server lifecycle management (create, list, delete)
+- Servers API for fault server lifecycle management (create, list, delete)
 - Enhanced frontend to work at `app.[ROOT_DOMAIN]` subdomain
 - DNS wildcard support (`*.[ROOT_DOMAIN]`)
 
@@ -213,7 +213,7 @@ Complete server management with creation, export/import configuration, and delet
 - Server creation form on landing page
 - Config view UI (`public/js/views/config.js`) with export/import
 - JSON validation and import preview
-- Integration with Admin API (`POST /servers`, `DELETE /servers/:id`)
+- Integration with Servers API (`POST /api/servers`, `DELETE /api/servers/:id`)
 - Integration with Rules API (`GET /servers/:id/rules`, `POST /servers/:id/rules/import`)
 - Toast notifications for all operations
 

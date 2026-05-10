@@ -7,7 +7,7 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
   const ROOT_DOMAIN = process.env.ROOT_DOMAIN || 'localhost';
   const isLocalhost = ROOT_DOMAIN === 'localhost' || ROOT_DOMAIN.endsWith('.localhost');
   const protocol = isLocalhost ? 'http' : 'https';
-  const callbackURL = `${protocol}://app.${ROOT_DOMAIN}/auth/google/callback`;
+  const callbackURL = `${protocol}://app.${ROOT_DOMAIN}/api/auth/google/callback`;
   
   passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID,

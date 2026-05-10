@@ -21,7 +21,7 @@ All routing decisions are made based on the subdomain in the `Host` header:
 | Subdomain Pattern | Purpose | Routes To | Example |
 |------------------|---------|-----------|---------|
 | `[ROOT_DOMAIN]` (no subdomain) | Landing page | Static HTML landing page | `localhost` or `faultend.com` |
-| `admin.[ROOT_DOMAIN]` | Admin API | Admin API routes | `admin.localhost` or `admin.faultend.com` |
+| `app.[ROOT_DOMAIN]` | Servers API | Servers API routes | `app.localhost` or `app.faultend.com` |
 | `app.[ROOT_DOMAIN]` | User Application | Current frontend UI | `app.localhost` or `app.faultend.com` |
 | `[customer-id].[ROOT_DOMAIN]` | Fault Server | Proxy with customer rules | `customer1.localhost`, `acme.faultend.com` |
 
@@ -47,7 +47,7 @@ ROOT_DOMAIN=faultend.com        # Production
 
 # Specific records (optional, for clarity)
 faultend.com.         IN    A    123.45.67.89
-admin.faultend.com.   IN    A    123.45.67.89
+app.faultend.com.   IN    A    123.45.67.89
 app.faultend.com.     IN    A    123.45.67.89
 ```
 
@@ -143,11 +143,11 @@ function getSubdomain(req) {
 /**
  * Determine routing type based on subdomain
  * @param {string} subdomain
- * @returns {'landing'|'admin'|'app'|'fault-server'}
+ * @returns {'landing'|'app'|'app'|'fault-server'}
  */
 function getRouteType(subdomain) {
   if (!subdomain || subdomain === '') return 'landing';
-  if (subdomain === 'admin') return 'admin';
+  if (subdomain === 'app') return 'app';
   if (subdomain === 'app') return 'app';
   return 'fault-server';
 }
@@ -157,7 +157,7 @@ module.exports = { getSubdomain, getRouteType };
 
 **Tests Required:**
 - ✅ `localhost` → subdomain: `''`, type: `'landing'`
-- ✅ `admin.localhost` → subdomain: `'admin'`, type: `'admin'`
+- ✅ `app.localhost` → subdomain: `'app'`, type: `'app'`
 - ✅ `app.localhost` → subdomain: `'app'`, type: `'app'`
 - ✅ `customer1.localhost` → subdomain: `'customer1'`, type: `'fault-server'`
 - ✅ `acme.faultend.com` → subdomain: `'acme'`, type: `'fault-server'`
@@ -507,9 +507,9 @@ router.post('/', (req, res) => {
 
 ---
 
-### Task 8: Create Admin API for Fault Server Management
+### Task 8: Create Servers API for Fault Server Management
 
-**File:** `src/api/admin.js` (NEW)
+**File:** `src/api/servers.js` (NEW)
 
 **Purpose:** Manage fault server lifecycle (create, list, delete)
 
@@ -527,7 +527,7 @@ const {
 router.use(express.json());
 
 /**
- * GET /api/admin/servers
+ * GET /api/servers
  * List all fault servers
  */
 router.get('/servers', (req, res) => {
@@ -536,7 +536,7 @@ router.get('/servers', (req, res) => {
 });
 
 /**
- * GET /api/admin/servers/:id
+ * GET /api/servers/:id
  * Get specific fault server details
  */
 router.get('/servers/:id', (req, res) => {
@@ -557,7 +557,7 @@ router.get('/servers/:id', (req, res) => {
 });
 
 /**
- * POST /api/admin/servers
+ * POST /api/servers
  * Create new fault server
  * 
  * Body: { id: "customer1", name: "Customer 1", description: "..." }
@@ -590,7 +590,7 @@ router.post('/servers', (req, res) => {
 });
 
 /**
- * DELETE /api/admin/servers/:id
+ * DELETE /api/servers/:id
  * Delete fault server and all its data
  */
 router.delete('/servers/:id', (req, res) => {
@@ -676,7 +676,7 @@ const subdomainRouter = require('./middleware/subdomainRouter');
 const proxyRouter = require('./proxy/router');
 const trafficRouter = require('./api/traffic');
 const rulesRouter = require('./api/rules');
-const adminRouter = require('./api/admin');
+const serversRouter = require('./api/servers');
 
 const app = express();
 
@@ -706,18 +706,18 @@ app.use((req, res, next) => {
     }
     return res.status(404).json({
       error: 'Not Found',
-      message: 'Landing page only. Use admin.* for management, app.* for UI, or [customer].* for fault servers.'
+      message: 'Landing page only. Use app.* for management, app.* for UI, or [customer].* for fault servers.'
     });
   }
   
-  // Admin API
-  if (routeType === 'admin') {
+  // Servers API
+  if (routeType === 'app') {
     if (req.path.startsWith('/api/admin')) {
       return next(); // Let admin router handle it
     }
     return res.status(404).json({
       error: 'Not Found',
-      message: 'Admin API routes start with /api/admin/*'
+      message: 'Servers API routes start with /api/admin/*'
     });
   }
   
@@ -740,16 +740,16 @@ app.use((req, res, next) => {
   res.status(500).json({ error: 'Unknown route type' });
 });
 
-// Admin API routes (only on admin.*)
+// Servers API routes (only on app.*)
 app.use('/api/admin', (req, res, next) => {
-  if (req.routeType !== 'admin') {
+  if (req.routeType !== 'app') {
     return res.status(403).json({
       error: 'Forbidden',
-      message: 'Admin API only accessible on admin subdomain'
+      message: 'Servers API only accessible on app subdomain'
     });
   }
   next();
-}, adminRouter);
+}, serversRouter);
 
 // Traffic and Rules APIs (only on app.*)
 app.use('/api/traffic', (req, res, next) => {
@@ -856,7 +856,7 @@ module.exports = app;
   
   <h2>Quick Start</h2>
   <div class="box">
-    <p><strong>Admin Panel:</strong> <a href="" id="admin-link">Loading...</a></p>
+    <p><strong>Admin Panel:</strong> <a href="" id="app-link">Loading...</a></p>
     <p><strong>User App:</strong> <a href="" id="app-link">Loading...</a></p>
   </div>
   
@@ -874,8 +874,8 @@ module.exports = app;
   <script>
     const rootDomain = window.location.hostname;
     const port = window.location.port ? `:${window.location.port}` : '';
-    document.getElementById('admin-link').href = `http://admin.${rootDomain}${port}/api/admin/servers`;
-    document.getElementById('admin-link').textContent = `admin.${rootDomain}`;
+    document.getElementById('app-link').href = `http://app.${rootDomain}${port}/api/servers`;
+    document.getElementById('app-link').textContent = `app.${rootDomain}`;
     document.getElementById('app-link').href = `http://app.${rootDomain}${port}`;
     document.getElementById('app-link').textContent = `app.${rootDomain}`;
   </script>
@@ -909,7 +909,7 @@ console.log('='.repeat(60));
 console.log(`Port:            ${PORT}`);
 console.log(`Root Domain:     ${ROOT_DOMAIN}`);
 console.log(`Landing:         http://${ROOT_DOMAIN}:${PORT}`);
-console.log(`Admin API:       http://admin.${ROOT_DOMAIN}:${PORT}/api/admin/servers`);
+console.log(`Servers API:       http://app.${ROOT_DOMAIN}:${PORT}/api/servers`);
 console.log(`User App:        http://app.${ROOT_DOMAIN}:${PORT}`);
 console.log(`Fault Servers:   http://[customer-id].${ROOT_DOMAIN}:${PORT}`);
 console.log('='.repeat(60));
@@ -918,7 +918,7 @@ console.log('='.repeat(60));
 
 console.log(`Examples:`);
 console.log(`  # Create fault server`);
-console.log(`  curl -X POST http://admin.${ROOT_DOMAIN}:${PORT}/api/admin/servers \\`);
+console.log(`  curl -X POST http://app.${ROOT_DOMAIN}:${PORT}/api/servers \\`);
 console.log(`    -H "Content-Type: application/json" \\`);
 console.log(`    -d '{"id":"customer1","name":"Customer 1"}'`);
 console.log(``);
@@ -975,9 +975,9 @@ function request(method, path, body = null, headers = {}, subdomain = 'customer1
 
 **New Tests Required:**
 1. ✅ Subdomain detection (landing, admin, app, fault-server)
-2. ✅ Admin API - Create fault server
-3. ✅ Admin API - List fault servers
-4. ✅ Admin API - Delete fault server
+2. ✅ Servers API - Create fault server
+3. ✅ Servers API - List fault servers
+4. ✅ Servers API - Delete fault server
 5. ✅ Multi-tenant isolation (customer1 rules don't affect customer2)
 6. ✅ Fault server proxying without /proxy prefix
 7. ✅ App subdomain serves frontend
@@ -1003,15 +1003,15 @@ function request(method, path, body = null, headers = {}, subdomain = 'customer1
 
 **Coverage:**
 1. End-to-end subdomain routing
-2. Admin API workflows
+2. Servers API workflows
 3. Multi-tenant data isolation
 4. Proxy functionality without /proxy prefix
-5. API access control (app.* vs admin.* vs fault-server.*)
+5. API access control (app.* vs app.* vs fault-server.*)
 
 ### Manual Testing Checklist
 
 - [ ] Landing page loads on `http://localhost:3000`
-- [ ] Admin API accessible on `http://admin.localhost:3000/api/admin/servers`
+- [ ] Servers API accessible on `http://app.localhost:3000/api/servers`
 - [ ] Create fault server via admin API
 - [ ] App UI loads on `http://app.localhost:3000`
 - [ ] Fault server proxies requests on `http://customer1.localhost:3000/*`
@@ -1032,7 +1032,7 @@ function request(method, path, body = null, headers = {}, subdomain = 'customer1
 2. **API Access:**
    - Traffic API: Now on `http://app.localhost:3000/api/traffic?customerId=customer1`
    - Rules API: Now on `http://app.localhost:3000/api/rules?customerId=customer1`
-   - Admin API: Now on `http://admin.localhost:3000/api/admin/servers`
+   - Servers API: Now on `http://app.localhost:3000/api/servers`
 
 3. **Multi-Tenant Data:**
    - All existing rules and traffic will be migrated to a default customer
@@ -1131,14 +1131,14 @@ services:
 Phase 6.1 is complete when:
 
 1. ✅ Subdomain routing works for all types (landing, admin, app, fault-server)
-2. ✅ Admin API can create/list/delete fault servers
+2. ✅ Servers API can create/list/delete fault servers
 3. ✅ Multi-tenant data isolation works (rules and traffic scoped per customer)
 4. ✅ No `/proxy` prefix required - requests to `customer1.localhost:3000/users` work
 5. ✅ All existing tests updated and passing
 6. ✅ New integration tests for multi-tenancy passing
 7. ✅ Landing page displays on root domain
 8. ✅ App UI works on `app.*` subdomain
-9. ✅ Admin API works on `admin.*` subdomain
+9. ✅ Servers API works on `app.*` subdomain
 10. ✅ Documentation updated in README.md and agents.md
 
 ---

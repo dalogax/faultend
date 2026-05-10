@@ -1,7 +1,5 @@
 # Faultend Development Context
 
-**Last Updated:** May 10, 2026
-
 **Faultend** is a lightweight proxy tool designed to help developers and testers validate the resilience of mobile and web applications against unreliable backend behavior.
 
 ---
@@ -32,18 +30,8 @@
 | **GitHub Repo** | `https://github.com/dalogax/faultend` |
 | **Production Domain** | `https://faultend.com` |
 | **App UI** | `https://app.faultend.com` |
-| **Admin API** | `https://app.faultend.com/api/*` (same subdomain as app) |
+| **API** | `https://app.faultend.com/api/*` |
 
 ---
 
-## High-Level Constraints
-
-- **Subdomain Architecture:** All routing via subdomains (`app.*` / `[server-id].*`). `admin.*` redirects to `app.*`.
-- **No `/api` prefix:** API endpoints live on the `app` subdomain directly.
-- **Rules-Based Routing:** All proxy/mock behavior is configured through prioritized rules.
-- **Authentication:** Google OAuth 2.0 with server-side sessions. Proxy endpoints remain public.
-- **Persistence:** PostgreSQL for users, servers, rules, traffic, and sessions.
-- **Content Type:** Focus on JSON; other content types are supported but not optimized.
-- **Environment:** Use `.env` for configuration (`DATABASE_URL`, `SESSION_SECRET`, `GOOGLE_CLIENT_ID`, etc.).
-
-**Secrets & Credentials:** All passwords, API tokens, and deployment credentials are stored in `.env` at the repository root. `.env` is gitignored and must never be committed or pasted into any markdown file.
+**Secrets & Credentials:** All passwords, API tokens, and deployment credentials are stored in `.env` at the repository root. `.env` is gitignored and must never be committed or pasted into any markdown file. `.env.example` will be an example `.env` without credentials and only variables that are relative to the general application, not the specific deployment and infrastructure chosen by the main project site.

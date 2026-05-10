@@ -168,7 +168,7 @@ app.[ROOT_DOMAIN]
 
 **2. Server Selector Component**
 - Dropdown showing all available fault servers
-- Fetches from Admin API: `GET http://admin.[ROOT_DOMAIN]/servers`
+- Fetches from API: `GET http://app.[ROOT_DOMAIN]/api/servers`
 - Displays server ID
 - Persists selection in localStorage
 - Auto-selects if only one server exists
@@ -464,26 +464,24 @@ public/
 
 ## API Integration (Phase 7)
 
-### Admin API Calls
+### API Calls
 
 **Fetch Servers:**
 ```javascript
-// GET http://admin.localhost:3000/servers
+// GET http://app.localhost:3000/api/servers
 const servers = await fetchServers();
 // Returns: [{ id: 'server1', name: 'Test', description: '...' }, ...]
 ```
 
-### App API Calls (Prepared for Phase 8-10)
-
 **Traffic API:**
 ```javascript
-// GET http://app.localhost:3000/servers/:serverId/traffic
+// GET http://app.localhost:3000/api/servers/:serverId/traffic
 const traffic = await fetchTraffic(serverId);
 ```
 
 **Rules API:**
 ```javascript
-// GET http://app.localhost:3000/servers/:serverId/rules
+// GET http://app.localhost:3000/api/servers/:serverId/rules
 const rules = await fetchRules(serverId);
 ```
 
@@ -492,7 +490,6 @@ const rules = await fetchRules(serverId);
 **config.js:**
 ```javascript
 export const API_BASE = {
-  admin: `http://admin.${window.location.hostname}:${window.location.port}`,
   app: `http://app.${window.location.hostname}:${window.location.port}`
 };
 ```
@@ -513,7 +510,7 @@ async function request(url, options = {}) {
 }
 
 export async function fetchServers() {
-  return request(`${API_BASE.admin}/servers`);
+  return request(`${API_BASE.app}/api/servers`);
 }
 ```
 

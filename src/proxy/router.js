@@ -31,7 +31,7 @@ router.use('/', async (req, res, next) => {
     return res.status(404).json({
       error: 'Server Not Found',
       message: `Fault server '${serverId}' does not exist`,
-      hint: 'Create the server via the admin API before routing traffic to it',
+      hint: 'Create the server via the app UI before routing traffic to it',
       serverId: serverId
     });
   }
@@ -68,7 +68,7 @@ router.use('/', async (req, res, next) => {
         body: {
           error: 'No matching rule',
           message: `No proxy or mock rule configured for ${req.method} ${req.path}`,
-          hint: `Configure routing rules for customer '${serverId}' via the admin panel`,
+          hint: `Configure routing rules for server '${serverId}' via the app UI`,
           serverId: serverId
         },
         bodySize: 0,

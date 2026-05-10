@@ -107,13 +107,13 @@ async function resetDatabase() {
 }
 
 async function login() {
-  const res = await request('GET', '/auth/dev-login', null, {}, 'app');
+  const res = await request('GET', '/api/auth/dev-login', null, {}, 'app');
   assertEqual(res.status, 302, 'Dev login should redirect');
   assertTrue(sessionCookie, 'Session cookie should be set');
 }
 
 async function logout() {
-  const res = await request('POST', '/auth/logout', null, {}, 'app');
+  const res = await request('POST', '/api/auth/logout', null, {}, 'app');
   assertEqual(res.status, 200, 'Logout should succeed');
   sessionCookie = null;
 }
@@ -144,7 +144,7 @@ async function runTests() {
 
   await test('Protected endpoints return 401 without auth', async () => {
     sessionCookie = null;
-    const res = await request('GET', '/servers', null, {}, 'app');
+    const res = await request('GET', '/api/servers', null, {}, 'app');
     assertEqual(res.status, 401, 'Should require auth');
   });
 
@@ -154,14 +154,14 @@ async function runTests() {
   });
 
   await test('Auth me returns user when logged in', async () => {
-    const res = await request('GET', '/auth/me', null, {}, 'app');
+    const res = await request('GET', '/api/auth/me', null, {}, 'app');
     assertEqual(res.status, 200, 'Should return user');
     assertTrue(res.body.email, 'Should have email');
   });
 
   await test('Logout clears session', async () => {
     await logout();
-    const res = await request('GET', '/auth/me', null, {}, 'app');
+    const res = await request('GET', '/api/auth/me', null, {}, 'app');
     assertEqual(res.status, 401, 'Should be logged out');
   });
 
@@ -171,26 +171,26 @@ async function runTests() {
 
   await test('Create server requires auth', async () => {
     sessionCookie = null;
-    const res = await request('POST', '/servers', { id: 'server1' }, {}, 'app');
+    const res = await request('POST', '/api/servers', { id: 'server1' }, {}, 'app');
     assertEqual(res.status, 401, 'Should require auth');
   });
 
   await test('Create server when authenticated', async () => {
     await login();
-    const res = await request('POST', '/servers', { id: 'test-server', name: 'Test Server' }, {}, 'app');
+    const res = await request('POST', '/api/servers', { id: 'test-server', name: 'Test Server' }, {}, 'app');
     assertEqual(res.status, 201, 'Should create server');
     assertEqual(res.body.server_id, 'test-server', 'Should return server ID');
   });
 
   await test('List servers returns only owned servers', async () => {
-    const res = await request('GET', '/servers', null, {}, 'app');
+    const res = await request('GET', '/api/servers', null, {}, 'app');
     assertEqual(res.status, 200, 'Should return servers');
     assertTrue(Array.isArray(res.body.servers), 'Should be array');
     assertTrue(res.body.servers.length > 0, 'Should have at least one server');
   });
 
   await test('Get server requires access', async () => {
-    const res = await request('GET', '/servers/test-server', null, {}, 'app');
+    const res = await request('GET', '/api/servers/test-server', null, {}, 'app');
     assertEqual(res.status, 200, 'Owner should have access');
   });
 
@@ -210,7 +210,7 @@ async function runTests() {
 
   await test('Create rule requires auth', async () => {
     sessionCookie = null;
-    const res = await request('POST', '/servers/test-server/rules', {
+    const res = await request('POST', '/api/servers/test-server/rules', {
       priority: 100,
       method: '*',
       pathRegex: '.*',
@@ -222,7 +222,7 @@ async function runTests() {
 
   await test('Create rule when authenticated', async () => {
     await login();
-    const res = await request('POST', '/servers/test-server/rules', {
+    const res = await request('POST', '/api/servers/test-server/rules', {
       priority: 100,
       method: '*',
       pathRegex: '.*',
@@ -233,7 +233,7 @@ async function runTests() {
   });
 
   await test('List rules requires access', async () => {
-    const res = await request('GET', '/servers/test-server/rules', null, {}, 'app');
+    const res = await request('GET', '/api/servers/test-server/rules', null, {}, 'app');
     assertEqual(res.status, 200, 'Should return rules');
     assertTrue(Array.isArray(res.body.rules), 'Should be array');
   });
@@ -244,19 +244,19 @@ async function runTests() {
 
   await test('Invite endpoints require auth', async () => {
     sessionCookie = null;
-    const res = await request('POST', '/servers/test-server/invite', {}, {}, 'app');
+    const res = await request('POST', '/api/servers/test-server/invite', {}, {}, 'app');
     assertEqual(res.status, 401, 'Should require auth');
   });
 
   await test('Generate invite link as owner', async () => {
     await login();
-    const res = await request('POST', '/servers/test-server/invite', {}, {}, 'app');
+    const res = await request('POST', '/api/servers/test-server/invite', {}, {}, 'app');
     assertEqual(res.status, 200, 'Should generate invite');
     assertTrue(res.body.inviteUrl, 'Should have invite URL');
   });
 
   await test('Get collaborators as owner', async () => {
-    const res = await request('GET', '/servers/test-server/invite/collaborators', null, {}, 'app');
+    const res = await request('GET', '/api/servers/test-server/invite/collaborators', null, {}, 'app');
     assertEqual(res.status, 200, 'Should return collaborators');
     assertTrue(Array.isArray(res.body.collaborators), 'Should be array');
   });

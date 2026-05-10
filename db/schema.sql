@@ -1,6 +1,61 @@
 -- Initial schema for Faultend Phase 11
 -- Created: April 28, 2026
 
+-- Migration: Fix rules.id type from BIGSERIAL/BIGINT to VARCHAR(255)
+-- for databases created before the schema was updated to use string IDs.
+DO $$
+DECLARE
+    fk_constraint TEXT;
+BEGIN
+    IF EXISTS (
+        SELECT 1 FROM information_schema.tables
+        WHERE table_name = 'rules'
+    ) AND EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'rules' AND column_name = 'id'
+        AND data_type != 'character varying'
+    ) THEN
+        SELECT tc.constraint_name INTO fk_constraint
+        FROM information_schema.table_constraints tc
+        JOIN information_schema.constraint_column_usage ccu
+            ON tc.constraint_name = ccu.constraint_name
+        WHERE tc.table_name = 'traffic'
+            AND tc.constraint_type = 'FOREIGN KEY'
+            AND ccu.table_name = 'rules'
+            AND ccu.column_name = 'id';
+
+        IF fk_constraint IS NOT NULL THEN
+            EXECUTE format('ALTER TABLE traffic DROP CONSTRAINT %I', fk_constraint);
+        END IF;
+
+        ALTER TABLE rules ALTER COLUMN id DROP DEFAULT;
+        ALTER TABLE rules ALTER COLUMN id TYPE VARCHAR(255);
+        DROP SEQUENCE IF EXISTS rules_id_seq;
+
+        IF EXISTS (
+            SELECT 1 FROM information_schema.tables
+            WHERE table_name = 'traffic'
+        ) AND EXISTS (
+            SELECT 1 FROM information_schema.columns
+            WHERE table_name = 'traffic' AND column_name = 'matched_rule_id'
+            AND data_type != 'character varying'
+        ) THEN
+            ALTER TABLE traffic ALTER COLUMN matched_rule_id TYPE VARCHAR(255);
+        END IF;
+
+        IF EXISTS (
+            SELECT 1 FROM information_schema.tables
+            WHERE table_name = 'traffic'
+        ) AND NOT EXISTS (
+            SELECT 1 FROM information_schema.table_constraints
+            WHERE table_name = 'traffic' AND constraint_name = 'fk_traffic_matched_rule'
+        ) THEN
+            ALTER TABLE traffic ADD CONSTRAINT fk_traffic_matched_rule
+                FOREIGN KEY (matched_rule_id) REFERENCES rules(id) ON DELETE SET NULL;
+        END IF;
+    END IF;
+END $$;
+
 -- Users table (Google OAuth)
 CREATE TABLE IF NOT EXISTS users (
   id            BIGSERIAL PRIMARY KEY,
