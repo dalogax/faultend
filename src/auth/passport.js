@@ -5,7 +5,8 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
   const GoogleStrategy = require('passport-google-oauth20').Strategy;
   
   const ROOT_DOMAIN = process.env.ROOT_DOMAIN || 'localhost';
-  const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http';
+  const isLocalhost = ROOT_DOMAIN === 'localhost' || ROOT_DOMAIN.endsWith('.localhost');
+  const protocol = isLocalhost ? 'http' : 'https';
   const callbackURL = `${protocol}://app.${ROOT_DOMAIN}/auth/google/callback`;
   
   passport.use(new GoogleStrategy({
