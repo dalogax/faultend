@@ -14,6 +14,7 @@ const collaboratorsRouter = require('./api/collaborators');
 const inviteRouter = require('./api/invite');
 const passport = require('./auth/passport');
 const { authRequired, requireServerAccess, requireOwner } = require('./auth/middleware');
+const { rateLimit } = require('./middleware/rateLimit');
 
 const app = express();
 
@@ -24,9 +25,7 @@ app.use(cors({
     `http://${ROOT_DOMAIN}`,
     `https://${ROOT_DOMAIN}`,
     `http://app.${ROOT_DOMAIN}`,
-    `https://app.${ROOT_DOMAIN}`,
-    `http://admin.${ROOT_DOMAIN}`,
-    `https://admin.${ROOT_DOMAIN}`
+    `https://app.${ROOT_DOMAIN}`
   ],
   credentials: true
 }));
@@ -39,7 +38,7 @@ app.use(session({
   resave: false,
   saveUninitialized: false,
   cookie: {
-    domain: `.${ROOT_DOMAIN}`,
+    domain: ROOT_DOMAIN === 'localhost' ? undefined : `.${ROOT_DOMAIN}`,
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
@@ -69,7 +68,7 @@ app.use((req, res, next) => {
   const { routeType } = req;
   
   if (routeType === 'landing') {
-    if (req.path.startsWith('/css/') || req.path.startsWith('/js/') || req.path.startsWith('/fonts/') || req.path.startsWith('/img/') || req.path === '/faultend.svg' || req.path === '/site.webmanifest') {
+    if (req.path.startsWith('/css/') || req.path.startsWith('/js/') || req.path.startsWith('/fonts/') || req.path.startsWith('/img/') || req.path === '/img/faultend.svg' || req.path === '/site.webmanifest') {
       return staticMiddleware(req, res, next);
     }
     if (req.path === '/' || req.path === '/index.html') {
@@ -77,17 +76,13 @@ app.use((req, res, next) => {
     }
     return res.status(404).json({
       error: 'Not Found',
-      message: 'Landing page only. Use admin.* for management, app.* for UI, or [server].* for fault servers.',
+      message: 'Landing page only. Use app.* for UI or [server].* for fault servers.',
       availableRoutes: ['/health']
     });
   }
   
-  if (routeType === 'admin') {
-    return next();
-  }
-  
   if (routeType === 'app') {
-    if (req.path.startsWith('/css/') || req.path.startsWith('/js/') || req.path.startsWith('/fonts/') || req.path.startsWith('/img/') || req.path === '/faultend.svg' || req.path === '/site.webmanifest') {
+    if (req.path.startsWith('/css/') || req.path.startsWith('/js/') || req.path.startsWith('/fonts/') || req.path.startsWith('/img/') || req.path === '/img/faultend.svg' || req.path === '/site.webmanifest') {
       return staticMiddleware(req, res, next);
     }
     if (req.path === '/' || req.path === '/index.html' || req.path === '/app.html') {
@@ -103,12 +98,12 @@ app.use((req, res, next) => {
   res.status(500).json({ error: 'Unknown route type' });
 });
 
-app.use('/auth', authRouter);
+app.use('/auth', rateLimit, authRouter);
 
 app.use(authRequired);
 
 app.use((req, res, next) => {
-  if (req.routeType === 'admin') {
+  if (req.routeType === 'app') {
     return adminRouter(req, res, next);
   }
   next();

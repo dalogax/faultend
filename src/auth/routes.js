@@ -12,12 +12,20 @@ router.get('/google', (req, res, next) => {
 router.get('/google/callback',
   passport.authenticate('google', { failureRedirect: '/?error=auth_failed' }),
   async (req, res) => {
-    req.session.userId = req.user.id;
+    const userId = req.user.id;
     const redirectTo = req.session.redirectTo || '/';
-    delete req.session.redirectTo;
-    req.session.save((err) => {
-      if (err) console.error('[AUTH] Session save error:', err);
-      res.redirect(redirectTo);
+    
+    req.session.regenerate((err) => {
+      if (err) {
+        console.error('[AUTH] Session regenerate error:', err);
+        return res.redirect('/?error=session_error');
+      }
+      
+      req.session.userId = userId;
+      req.session.save((err) => {
+        if (err) console.error('[AUTH] Session save error:', err);
+        res.redirect(redirectTo);
+      });
     });
   }
 );

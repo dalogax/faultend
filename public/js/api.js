@@ -37,7 +37,7 @@ async function request(url, options = {}) {
  */
 export async function fetchServers() {
   try {
-    const response = await request(`${API_BASE.admin}/servers`);
+    const response = await request(`${API_BASE.app}/servers`);
     // API returns {servers: [...], count: n}
     return response.servers || [];
   } catch (error) {
@@ -53,7 +53,7 @@ export async function fetchServers() {
  * Admin API - Create a fault server
  */
 export async function createServer(serverData) {
-  return request(`${API_BASE.admin}/servers`, {
+  return request(`${API_BASE.app}/servers`, {
     method: 'POST',
     body: JSON.stringify(serverData)
   });
@@ -63,7 +63,7 @@ export async function createServer(serverData) {
  * Admin API - Delete a fault server
  */
 export async function deleteServer(serverId) {
-  return request(`${API_BASE.admin}/servers/${serverId}`, {
+  return request(`${API_BASE.app}/servers/${serverId}`, {
     method: 'DELETE'
   });
 }

@@ -13,7 +13,7 @@ RUN npm ci --only=production
 # Copy application code
 COPY src/ ./src/
 COPY public/ ./public/
-COPY migrations/ ./migrations/
+COPY db/schema.sql ./db/schema.sql
 
 # Create data directory for persistence
 RUN mkdir -p /app/data && \

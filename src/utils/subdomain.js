@@ -7,7 +7,6 @@
  * 
  * Examples:
  * - localhost → ''
- * - admin.localhost → 'admin'
  * - app.localhost → 'app'
  * - customer1.localhost → 'customer1'
  * - acme.faultend.com → 'acme'
@@ -59,11 +58,10 @@ function getSubdomain(req) {
 /**
  * Determine routing type based on subdomain
  * @param {string} subdomain - Subdomain extracted from request
- * @returns {'landing'|'admin'|'app'|'fault-server'} Route type
+ * @returns {'landing'|'app'|'fault-server'} Route type
  * 
  * Examples:
  * - '' → 'landing'
- * - 'admin' → 'admin'
  * - 'app' → 'app'
  * - 'customer1' → 'fault-server'
  * - 'acme' → 'fault-server'
@@ -71,9 +69,6 @@ function getSubdomain(req) {
 function getRouteType(subdomain) {
   if (!subdomain || subdomain === '') {
     return 'landing';
-  }
-  if (subdomain === 'admin') {
-    return 'admin';
   }
   if (subdomain === 'app') {
     return 'app';

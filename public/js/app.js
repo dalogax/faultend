@@ -151,10 +151,10 @@ class App {
           </thead>
           <tbody>
             ${this.servers.map(server => {
-              const serverUrl = buildSubdomainUrl(server.id);
+              const serverUrl = buildSubdomainUrl(server.server_id);
               return `
-              <tr class="server-row" data-server-id="${server.id}">
-                <td class="server-id">${server.id}</td>
+              <tr class="server-row" data-server-id="${server.server_id}">
+                <td class="server-id">${server.server_id}</td>
                 <td><span class="server-url">${serverUrl}</span></td>
                 <td>${this.formatDate(server.createdAt)}</td>
                 <td>${this.formatDate(server.lastActivity)}</td>

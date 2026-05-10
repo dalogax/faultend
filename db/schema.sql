@@ -25,7 +25,7 @@ CREATE TABLE IF NOT EXISTS servers (
 
 -- Rules table
 CREATE TABLE IF NOT EXISTS rules (
-  id            BIGSERIAL PRIMARY KEY,
+  id            VARCHAR(255) PRIMARY KEY,
   server_id     BIGINT NOT NULL REFERENCES servers(id) ON DELETE CASCADE,
   priority      INTEGER NOT NULL,
   enabled       BOOLEAN DEFAULT true,
@@ -51,7 +51,7 @@ CREATE TABLE IF NOT EXISTS traffic (
   response      JSONB,
   duration      INTEGER,
   target        TEXT,
-  matched_rule_id BIGINT REFERENCES rules(id) ON DELETE SET NULL,
+  matched_rule_id VARCHAR(255) REFERENCES rules(id) ON DELETE SET NULL,
   error         TEXT,
   created_at    TIMESTAMPTZ DEFAULT NOW()
 );

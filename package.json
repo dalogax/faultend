@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node src/index.js",
     "dev": "nodemon src/index.js",
-    "test": "node tests/backend.test.js && sleep 2 && playwright test",
+    "test": "node scripts/test-with-docker.js",
+    "test:direct": "node tests/backend.test.js && sleep 2 && playwright test",
     "migrate": "node src/db/migrate.js",
     "migrate:reset": "node src/db/migrate.js reset"
   },

@@ -1,5 +1,5 @@
 
-# <img src="public/faultend.svg" alt="Faultend" height="32"> Faultend
+# <img src="public/img/faultend.svg" alt="Faultend" height="32"> Faultend
 
 A lightweight proxy for testing application resilience against unreliable backends.
 
@@ -65,7 +65,7 @@ flowchart LR
 
 - **Backend**: Node.js, Express, http-proxy-middleware
 - **Frontend**: Vanilla HTML/CSS/JavaScript
-- **Storage**: In-memory (SQLite/persistence planned)
+- **Storage**: PostgreSQL with connect-pg-simple sessions
 
 ---
 

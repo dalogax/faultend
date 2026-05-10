@@ -109,7 +109,7 @@ Faultend/
 ├── public/                     # Static frontend files
 │   ├── landing.html            # Landing page
 │   ├── app.html                # Main app UI
-│   ├── faultend.svg            # Logo (48px)
+│   ├── img/faultend.svg       # Logo (48px)
 │   ├── css/
 │   │   ├── reset.css           # CSS reset
 │   │   ├── variables.css       # Design system tokens

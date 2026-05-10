@@ -2,6 +2,8 @@ process.env.SAMPLE_DATA = 'false';
 process.env.ROOT_DOMAIN = 'localhost';
 process.env.PORT = '3001';
 process.env.DATABASE_URL = process.env.DATABASE_URL || 'postgresql://localhost:5432/faultend_test';
+process.env.MOCK_AUTH_ENABLED = 'true';
+process.env.SESSION_SECRET = 'test-secret-key';
 
 const http = require('http');
 const pool = require('../src/db/pool');
@@ -104,24 +106,21 @@ async function resetDatabase() {
   await migrate();
 }
 
-async function createTestUser() {
-  const { createUser } = require('../src/storage/users');
-  return createUser({
-    googleId: 'test-google-id-123',
-    email: 'test@faultend.local',
-    name: 'Test User',
-    avatarUrl: null
-  });
+async function login() {
+  const res = await request('GET', '/auth/dev-login', null, {}, 'app');
+  assertEqual(res.status, 302, 'Dev login should redirect');
+  assertTrue(sessionCookie, 'Session cookie should be set');
 }
 
-async function loginAsUser(user) {
-  const { session } = require('../src/server');
-  session.userId = user.id;
+async function logout() {
+  const res = await request('POST', '/auth/logout', null, {}, 'app');
+  assertEqual(res.status, 200, 'Logout should succeed');
+  sessionCookie = null;
 }
 
 async function runTests() {
   console.log('='.repeat(70));
-  console.log('Faultend Phase 11 Integration Tests');
+  console.log('Faultend Integration Tests');
   console.log('='.repeat(70));
   console.log('');
 
@@ -135,34 +134,64 @@ async function runTests() {
   await wait(1000);
   console.log('Test server running.\n');
 
-  const testUser = await createTestUser();
-  console.log(`Test user created: ${testUser.email} (ID: ${testUser.id})\n`);
-
-  const loginRes = await request('POST', '/auth/me', null, {}, 'app');
-  
   console.log('Section 1: Authentication');
   console.log('-'.repeat(70));
 
-  await test('Auth endpoints are accessible without login', async () => {
+  await test('Health check is public', async () => {
     const res = await request('GET', '/health', null, {}, 'app');
     assertEqual(res.status, 200, 'Health check should work');
   });
 
   await test('Protected endpoints return 401 without auth', async () => {
     sessionCookie = null;
-    const res = await request('GET', '/servers', null, {}, 'admin');
+    const res = await request('GET', '/servers', null, {}, 'app');
     assertEqual(res.status, 401, 'Should require auth');
-    sessionCookie = 'faultend.sid=test-session';
+  });
+
+  await test('Dev login creates session', async () => {
+    await login();
+    assertTrue(sessionCookie, 'Session cookie should be set');
+  });
+
+  await test('Auth me returns user when logged in', async () => {
+    const res = await request('GET', '/auth/me', null, {}, 'app');
+    assertEqual(res.status, 200, 'Should return user');
+    assertTrue(res.body.email, 'Should have email');
+  });
+
+  await test('Logout clears session', async () => {
+    await logout();
+    const res = await request('GET', '/auth/me', null, {}, 'app');
+    assertEqual(res.status, 401, 'Should be logged out');
   });
 
   console.log('');
-  console.log('Section 2: Server Management with Auth');
+  console.log('Section 2: Server Management');
   console.log('-'.repeat(70));
 
   await test('Create server requires auth', async () => {
     sessionCookie = null;
-    const res = await request('POST', '/servers', { id: 'server1' }, {}, 'admin');
+    const res = await request('POST', '/servers', { id: 'server1' }, {}, 'app');
     assertEqual(res.status, 401, 'Should require auth');
+  });
+
+  await test('Create server when authenticated', async () => {
+    await login();
+    const res = await request('POST', '/servers', { id: 'test-server', name: 'Test Server' }, {}, 'app');
+    assertEqual(res.status, 201, 'Should create server');
+    assertEqual(res.body.server_id, 'test-server', 'Should return server ID');
+  });
+
+  await test('List servers returns only owned servers', async () => {
+    const res = await request('GET', '/servers', null, {}, 'app');
+    assertEqual(res.status, 200, 'Should return servers');
+    assertTrue(Array.isArray(res.body.servers), 'Should be array');
+    assertTrue(res.body.servers.length > 0, 'Should have at least one server');
+  });
+
+  await test('Get server requires access', async () => {
+    const res = await request('GET', '/servers/test-server', null, {}, 'app');
+    assertEqual(res.status, 200, 'Owner should have access');
   });
 
   console.log('');
@@ -170,19 +199,66 @@ async function runTests() {
   console.log('-'.repeat(70));
 
   await test('Proxy health check is public', async () => {
-    const res = await request('GET', '/health', null, {}, 'server1');
+    const res = await request('GET', '/health', null, {}, 'test-server');
     assertEqual(res.status, 200, 'Health check should work without auth');
     assertEqual(res.body.routeType, 'fault-server', 'Should detect fault-server route');
   });
 
   console.log('');
-  console.log('Section 4: Collaboration');
+  console.log('Section 4: Rules');
+  console.log('-'.repeat(70));
+
+  await test('Create rule requires auth', async () => {
+    sessionCookie = null;
+    const res = await request('POST', '/servers/test-server/rules', {
+      priority: 100,
+      method: '*',
+      pathRegex: '.*',
+      action: 'proxy',
+      target: 'https://jsonplaceholder.typicode.com'
+    }, {}, 'app');
+    assertEqual(res.status, 401, 'Should require auth');
+  });
+
+  await test('Create rule when authenticated', async () => {
+    await login();
+    const res = await request('POST', '/servers/test-server/rules', {
+      priority: 100,
+      method: '*',
+      pathRegex: '.*',
+      action: 'proxy',
+      target: 'https://jsonplaceholder.typicode.com'
+    }, {}, 'app');
+    assertEqual(res.status, 201, 'Should create rule');
+  });
+
+  await test('List rules requires access', async () => {
+    const res = await request('GET', '/servers/test-server/rules', null, {}, 'app');
+    assertEqual(res.status, 200, 'Should return rules');
+    assertTrue(Array.isArray(res.body.rules), 'Should be array');
+  });
+
+  console.log('');
+  console.log('Section 5: Collaboration');
   console.log('-'.repeat(70));
 
   await test('Invite endpoints require auth', async () => {
     sessionCookie = null;
-    const res = await request('POST', '/servers/server1/invite', {}, {}, 'app');
+    const res = await request('POST', '/servers/test-server/invite', {}, {}, 'app');
     assertEqual(res.status, 401, 'Should require auth');
+  });
+
+  await test('Generate invite link as owner', async () => {
+    await login();
+    const res = await request('POST', '/servers/test-server/invite', {}, {}, 'app');
+    assertEqual(res.status, 200, 'Should generate invite');
+    assertTrue(res.body.inviteUrl, 'Should have invite URL');
+  });
+
+  await test('Get collaborators as owner', async () => {
+    const res = await request('GET', '/servers/test-server/invite/collaborators', null, {}, 'app');
+    assertEqual(res.status, 200, 'Should return collaborators');
+    assertTrue(Array.isArray(res.body.collaborators), 'Should be array');
   });
 
   console.log('');

@@ -1,30 +1,27 @@
 # Faultend Development Context
 
-**Last Updated:** April 28, 2026
+**Last Updated:** May 10, 2026
 
 **Faultend** is a lightweight proxy tool designed to help developers and testers validate the resilience of mobile and web applications against unreliable backend behavior.
 
 ---
 
-## Documentation Index
+## Agent Directives
 
-This file is the central index for AI assistants working on Faultend. Detailed information has been split into focused documents below:
+> **Before performing ANY action related to a domain below, read the linked document first.**
 
-| Document | Purpose |
-|----------|---------|
-| **[Overview](./docs/overview.md)** | What Faultend is, core concept, key features, proxy-as-rule decision, deployment model |
-| **[Workflow](./docs/workflow.md)** | Step-by-step use case workflow for testing with Faultend |
-| **[Architecture](./docs/architecture.md)** | Backend/frontend tech stack, architecture flow diagram, directory structure, key technical decisions |
-| **[Features](./docs/features.md)** | Detailed list of user-facing and backend capabilities |
-| **[API Reference](./docs/api-reference.md)** | HTTP endpoints, data models, template functions, export format |
-| **[Testing](./docs/testing.md)** | Test suite details, running commands, coverage summary |
-| **[Development Workflow](./docs/development.md)** | Local setup, branching, PR workflow, code style, repo hygiene |
-| **[Deployment Guide](./docs/deployment.md)** | How to deploy, restart, rollback, and troubleshoot production |
-| **[Infrastructure & Operations](./docs/infrastructure.md)** | Server details, Coolify, Traefik, Cloudflare DNS, networking |
-| **[README.md](./README.md)** | User-facing quick start and feature overview |
-| **[INSTALL.md](./INSTALL.md)** | Generic installation instructions for self-hosting with Traefik |
-
-**Secrets & Credentials:** All passwords, API tokens, and deployment credentials are stored in `.env` at the repository root. `.env` is gitignored and must never be committed or pasted into any markdown file.
+| Before you... | Read this | Why |
+|---------------|-----------|-----|
+| **Modify code** (backend, frontend, API, routing) | [Architecture](./docs/architecture.md) | Codebase structure, tech stack, routing logic, subdomain system |
+| **Add or change a feature** | [Features](./docs/features.md) | Existing capabilities, what's in/out of scope, user-facing behavior |
+| **Change how traffic is proxied or mocked** | [Workflow](./docs/workflow.md) | End-to-end user flow, how rules are evaluated, traffic lifecycle |
+| **Add, remove, or modify an API endpoint** | [API Reference](./docs/api-reference.md) | Endpoint patterns, data models, auth requirements, response formats |
+| **Write or modify tests** | [Testing](./docs/testing.md) | Test structure, running commands, coverage areas, mocking strategy |
+| **Set up local development environment** | [Development Workflow](./docs/development.md) | Local setup, dependencies, branching, PR workflow, code style |
+| **Deploy to production or troubleshoot a deployment** | [Deployment Guide](./docs/deployment.md) | Deploy pipeline, environment variables, health checks, rollback |
+| **Provision infrastructure or debug networking/DNS** | [Infrastructure & Operations](./docs/infrastructure.md) | Server details, Coolify, Traefik, Cloudflare, networking topology |
+| **Install on a new server or self-host** | [Installation Guide](./docs/installation.md) | Generic self-hosting instructions with Traefik, domain requirements |
+| **Understand the product and its purpose** | [Overview](./docs/overview.md) | Core concept, key features, deployment model, target users |
 
 ---
 
@@ -35,17 +32,18 @@ This file is the central index for AI assistants working on Faultend. Detailed i
 | **GitHub Repo** | `https://github.com/dalogax/faultend` |
 | **Production Domain** | `https://faultend.com` |
 | **App UI** | `https://app.faultend.com` |
-| **Admin API** | `https://admin.faultend.com` |
-| **Coolify Dashboard** | `https://coolify.dalogax.com` |
-| **Server IP** | `158.101.198.12` |
+| **Admin API** | `https://app.faultend.com/api/*` (same subdomain as app) |
 
 ---
 
 ## High-Level Constraints
 
-- **Subdomain Architecture:** All routing via subdomains (`admin` / `app` / `[server-id]`)
-- **No `/api` prefix:** Subdomain provides the API context
-- **Rules-Based Routing:** All proxy/mock behavior is configured through prioritized rules
-- **Data Limit:** In-memory storage limited to 1000 transactions per server
-- **Content Type:** Focus on JSON; other content types are supported but not optimized
-- **Environment:** Use `.env` for configuration (`SAMPLE_DATA`, `ROOT_DOMAIN`, `PORT`)
+- **Subdomain Architecture:** All routing via subdomains (`app.*` / `[server-id].*`). `admin.*` redirects to `app.*`.
+- **No `/api` prefix:** API endpoints live on the `app` subdomain directly.
+- **Rules-Based Routing:** All proxy/mock behavior is configured through prioritized rules.
+- **Authentication:** Google OAuth 2.0 with server-side sessions. Proxy endpoints remain public.
+- **Persistence:** PostgreSQL for users, servers, rules, traffic, and sessions.
+- **Content Type:** Focus on JSON; other content types are supported but not optimized.
+- **Environment:** Use `.env` for configuration (`DATABASE_URL`, `SESSION_SECRET`, `GOOGLE_CLIENT_ID`, etc.).
+
+**Secrets & Credentials:** All passwords, API tokens, and deployment credentials are stored in `.env` at the repository root. `.env` is gitignored and must never be committed or pasted into any markdown file.

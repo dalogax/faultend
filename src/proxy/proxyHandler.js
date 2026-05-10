@@ -80,38 +80,35 @@ function createFaultendProxy(targetUrl) {
       const duration = Date.now() - req.proxyStartTime;
       console.log(`[PROXY] ← ${proxyRes.statusCode} ${req.method} ${req.url} (${duration}ms)`);
       
-      // Capture response body
       let responseBody = [];
       let responseBodySize = 0;
+      let logged = false;
       
-      proxyRes.on('data', (chunk) => {
-        responseBody.push(chunk);
-        responseBodySize += chunk.length;
-      });
-      
-      proxyRes.on('end', () => {
-        // Combine chunks and parse body
+      function doLog() {
+        if (logged) return;
+        logged = true;
+        
         const bodyBuffer = Buffer.concat(responseBody);
         const bodyString = bodyBuffer.toString('utf8');
         
         let parsedBody = null;
         const contentType = proxyRes.headers['content-type'] || '';
+        const contentEncoding = proxyRes.headers['content-encoding'] || '';
         
         const maxBodySize = 10 * 1024 * 1024;
         if (responseBodySize > maxBodySize) {
           parsedBody = `<response too large: ${responseBodySize} bytes>`;
+        } else if (contentEncoding && contentEncoding !== 'identity') {
+          parsedBody = `<compressed data: ${responseBodySize} bytes (${contentEncoding})>`;
         } else if (contentType.includes('application/json')) {
-          // Try to parse JSON responses
           try {
             parsedBody = JSON.parse(bodyString);
           } catch (e) {
-            // Not valid JSON, store as string
             parsedBody = bodyString;
           }
         } else if (contentType.includes('text/')) {
           parsedBody = bodyString;
         } else {
-          // Binary data - store metadata only
           parsedBody = `<binary data: ${responseBodySize} bytes>`;
         }
         
@@ -130,7 +127,14 @@ function createFaultendProxy(targetUrl) {
           target: req.proxyTarget,
           matchedRule: req.matchedRule || null
         }).catch(err => console.error('[PROXY] Log error:', err.message));
+      }
+      
+      proxyRes.on('data', (chunk) => {
+        responseBody.push(chunk);
+        responseBodySize += chunk.length;
       });
+      
+      proxyRes.on('end', doLog);
     },
     
     // Error handling

@@ -173,7 +173,7 @@ async function start() {
   console.log(`Port:            ${PORT}`);
   console.log(`Root Domain:     ${ROOT_DOMAIN}`);
   console.log(`Landing:         http://${ROOT_DOMAIN}:${PORT}`);
-  console.log(`Admin API:       http://admin.${ROOT_DOMAIN}:${PORT}/servers`);
+  console.log(`Admin API:       http://app.${ROOT_DOMAIN}:${PORT}/servers`);
   console.log(`User App:        http://app.${ROOT_DOMAIN}:${PORT}`);
   console.log(`Fault Servers:   http://[server-id].${ROOT_DOMAIN}:${PORT}`);
   console.log('='.repeat(60));
@@ -210,8 +210,8 @@ async function start() {
     console.log('✓ Server is running\n');
     
     console.log('Examples:');
-    console.log(`  # Create a fault server`);
-    console.log(`  curl -X POST http://admin.${ROOT_DOMAIN}:${PORT}/servers \\`);
+  console.log(`  # Create a fault server`);
+  console.log(`  curl -X POST http://app.${ROOT_DOMAIN}:${PORT}/servers \\`);
     console.log(`    -H "Content-Type: application/json" \\`);
     console.log(`    -d '{"id":"server1"}'`);
     console.log('');

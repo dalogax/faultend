@@ -8,10 +8,10 @@ This document covers how to develop Faultend locally, manage the repository, and
 
 | Property | Value |
 |----------|-------|
-| **GitHub URL** | `https://github.com/dalogax/faultend` |
+| **GitHub URL** | `https://github.com/<YOUR_USERNAME>/faultend` |
 | **Default Branch** | `main` |
-| **Clone URL (HTTPS)** | `https://github.com/dalogax/faultend.git` |
-| **Clone URL (SSH)** | `git@github.com:dalogax/faultend.git` |
+| **Clone URL (HTTPS)** | `https://github.com/<YOUR_USERNAME>/faultend.git` |
+| **Clone URL (SSH)** | `git@github.com:<YOUR_USERNAME>/faultend.git` |
 
 ---
 
@@ -26,7 +26,7 @@ This document covers how to develop Faultend locally, manage the repository, and
 
 ```bash
 # Clone the repository
-git clone https://github.com/dalogax/faultend.git
+git clone https://github.com/<YOUR_USERNAME>/faultend.git
 cd faultend
 
 # Install dependencies
@@ -41,16 +41,16 @@ npm start
 
 ### Access Points (Local)
 - **App UI:** `http://app.localhost:3000`
-- **Admin API:** `http://admin.localhost:3000/servers`
+- **Admin API:** `http://app.localhost:3000/servers`
 - **Proxy (any server ID):** `http://<server-id>.localhost:3000`
 
-> Local development relies on wildcard DNS resolution for `*.localhost`. If your OS does not support this, add entries to `/etc/hosts` (e.g., `127.0.0.1 app.localhost admin.localhost dev-api.localhost`).
+> Local development relies on wildcard DNS resolution for `*.localhost`. If your OS does not support this, add entries to `/etc/hosts` (e.g., `127.0.0.1 app.localhost dev-api.localhost`).
 
 ### Expected Output
 - Server starts on port 3000
 - If `SAMPLE_DATA=true`: creates 3 test servers (`dev-api`, `staging`, `mobile-api`) with 7 sample rules
 - All API endpoints functional at subdomain routes:
-  - `http://admin.localhost:3000/servers` – Admin API
+  - `http://app.localhost:3000/servers` – Admin API
   - `http://app.localhost:3000/servers/:id/rules` – Rules API
   - `http://app.localhost:3000/servers/:id/traffic` – Traffic API
   - `http://[server-id].localhost:3000/` – Fault server proxy
@@ -171,9 +171,9 @@ There is no formal versioning pipeline yet. Releases are implicit:
 2. Coolify detects the push and deploys
 3. Verify production health:
    ```bash
-   curl -s https://faultend.com/health
-   curl -s https://app.faultend.com
-   curl -s https://admin.faultend.com/servers
+    curl -s https://<YOUR_DOMAIN>/health
+    curl -s https://app.<YOUR_DOMAIN>
+    curl -s https://app.<YOUR_DOMAIN>/servers
    ```
 
 If you want to add Git tags for versioning:

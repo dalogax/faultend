@@ -869,7 +869,7 @@ module.exports = app;
   </ol>
   
   <h2>Documentation</h2>
-  <p>Visit <a href="https://github.com/dalogax/Faultend">GitHub</a> for full documentation.</p>
+  <p>Visit <a href="https://github.com/<YOUR_USERNAME>/faultend">GitHub</a> for full documentation.</p>
   
   <script>
     const rootDomain = window.location.hostname;

@@ -21,7 +21,7 @@ const getBaseDomain = () => {
  * Build a URL for a given subdomain
  * Centralized URL construction that handles protocol and port correctly
  * 
- * @param {string} subdomain - The subdomain (e.g., 'admin', 'app', or server ID)
+ * @param {string} subdomain - The subdomain (e.g., 'app', or server ID)
  * @returns {string} Complete URL with protocol, subdomain, domain, and port (if applicable)
  */
 export const buildSubdomainUrl = (subdomain) => {
@@ -36,7 +36,6 @@ export const buildSubdomainUrl = (subdomain) => {
 };
 
 export const API_BASE = {
-  admin: buildSubdomainUrl('admin'),
   app: buildSubdomainUrl('app')
 };
 

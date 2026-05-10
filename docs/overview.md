@@ -45,8 +45,7 @@ Unlike traditional proxies with a single hardcoded backend URL, Faultend treats 
 
 ### Subdomain Architecture
 - Wildcard DNS: `*.localhost` (dev) or `*.faultend.com` (prod)
-- **Admin subdomain** (`admin.*`) – Fault server lifecycle management
-- **App subdomain** (`app.*`) – UI for managing rules and viewing traffic
+- **App subdomain** (`app.*`) – UI and server management API
 - **Fault server subdomains** (`[server-id].*`) – Isolated proxy instances
 - Each fault server has isolated rules and traffic logs
 - No `/api` prefix – subdomain provides context
@@ -54,14 +53,14 @@ Unlike traditional proxies with a single hardcoded backend URL, Faultend treats 
 ### SaaS Model
 - Single Faultend deployment serves multiple isolated fault servers
 - Each server accessible at `[server-id].faultend.com`
-- Managed via admin API at `admin.faultend.com`
+- Managed via app UI at `app.faultend.com`
 - Complete data isolation between servers
 
 ---
 
 ## Constraints & Important Notes
 
-- **Subdomain Architecture:** All routing via subdomains (`admin` / `app` / `[server-id]`)
+- **Subdomain Architecture:** All routing via subdomains (`app` / `[server-id]`)
 - **No `/api` prefix:** Subdomain provides the API context
 - **Rules-Based Routing:** All proxy/mock behavior is configured through prioritized rules
 - **Data Limit:** In-memory storage limited to 1000 transactions per server

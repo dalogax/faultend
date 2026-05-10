@@ -17,7 +17,7 @@ function generateInviteToken() {
 
 router.post('/', async (req, res) => {
   try {
-    const { serverId } = req.params;
+    const serverId = req.serverId;
     const userId = req.session.userId;
     
     const owner = await isOwner(serverId, userId);
@@ -45,7 +45,7 @@ router.post('/', async (req, res) => {
 
 router.delete('/', async (req, res) => {
   try {
-    const { serverId } = req.params;
+    const serverId = req.serverId;
     const userId = req.session.userId;
     
     const owner = await isOwner(serverId, userId);
@@ -63,7 +63,7 @@ router.delete('/', async (req, res) => {
 
 router.get('/collaborators', async (req, res) => {
   try {
-    const { serverId } = req.params;
+    const serverId = req.serverId;
     const userId = req.session.userId;
     
     const { canAccessServer } = require('../storage/users');
@@ -82,7 +82,8 @@ router.get('/collaborators', async (req, res) => {
 
 router.delete('/collaborators/:userId', async (req, res) => {
   try {
-    const { serverId, userId: collaboratorId } = req.params;
+    const serverId = req.serverId;
+    const { userId: collaboratorId } = req.params;
     const userId = req.session.userId;
     
     const owner = await isOwner(serverId, userId);

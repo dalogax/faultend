@@ -8,9 +8,9 @@ This document describes the infrastructure stack, networking, and external servi
 
 | Property | Value |
 |----------|-------|
-| **Public IP** | `158.101.198.12` |
+| **Public IP** | `<YOUR_SERVER_IP>` |
 | **OS / Platform** | Linux VPS (ARM64, inferred from deployment environment) |
-| **Control Panel** | [Coolify](https://coolify.io/) self-hosted at `https://coolify.dalogax.com` |
+| **Control Panel** | [Coolify](https://coolify.io/) self-hosted at `<YOUR_COOLIFY_URL>` |
 | **Reverse Proxy** | Traefik v3 (managed by Coolify) |
 | **Docker Network** | `coolify` (external, created by Coolify) |
 
@@ -25,11 +25,11 @@ All inbound traffic arrives on **TCP 80/443**, is terminated by Traefik, and rou
 
 | Record | Type | Target / Value | Proxied |
 |--------|------|----------------|---------|
-| `faultend.com` | A | `158.101.198.12` | No (DNS-only) |
-| `*.faultend.com` | A | `158.101.198.12` (wildcard) | No (DNS-only) |
-| `_acme-challenge.faultend.com` | TXT | `P5r5jn8Lptiwyr1mUJ0uE6d-Xs02RRFnzp151l7-8-s` | No |
+| `<YOUR_DOMAIN>` | A | `<YOUR_SERVER_IP>` | No (DNS-only) |
+| `*.<YOUR_DOMAIN>` | A | `<YOUR_SERVER_IP>` (wildcard) | No (DNS-only) |
+| `_acme-challenge.<YOUR_DOMAIN>` | TXT | `<ACME_CHALLENGE_VALUE>` | No |
 
-Subdomains like `admin.faultend.com` and `app.faultend.com` resolve through the wildcard A record. All records point directly to the server IP without Cloudflare proxying (orange cloud off).
+Subdomains like `app.<YOUR_DOMAIN>` resolve through the wildcard A record. All records point directly to the server IP without Cloudflare proxying (orange cloud off).
 
 **Cloudflare Nameservers:**
 - `chris.ns.cloudflare.com`
@@ -39,10 +39,10 @@ Cloudflare account credentials and API token are stored in `.env` under `CLOUDFL
 
 | Property | Value |
 |----------|-------|
-| **Zone ID** | `da29ec6bdaa27a513f1396112db2a27e` (stored in `.env`) |
-| **Account ID** | `da0165703c771665ec555dc70b4f05cf` (stored in `.env`) |
+| **Zone ID** | `<CLOUDFLARE_ZONE_ID>` (stored in `.env`) |
+| **Account ID** | `<CLOUDFLARE_ACCOUNT_ID>` (stored in `.env`) |
 
-> **Token Validation:** The Cloudflare API token is active and can read zone data. It has been verified to retrieve DNS records for `faultend.com`.
+> **Token Validation:** The Cloudflare API token is active and can read zone data. It has been verified to retrieve DNS records for `<YOUR_DOMAIN>`.
 
 ---
 
@@ -51,7 +51,7 @@ Cloudflare account credentials and API token are stored in `.env` under `CLOUDFL
 Coolify is the primary deployment platform. It manages the Docker container, Traefik routing, SSL certificates, and environment variables.
 
 ### Access
-- **URL:** `https://coolify.dalogax.com/login`
+- **URL:** `<YOUR_COOLIFY_URL>/login`
 - **Credentials:** Stored in `.env` (`COOLIFY_EMAIL`, `COOLIFY_PASSWORD`)
 - **Auth Method:** Web UI uses session cookies (`coolify_session`, `XSRF-TOKEN`)
 - **API Auth:** Requires a dedicated API token generated inside Coolify at **Keys & Tokens > API tokens**. The UI password does not work for API calls.
@@ -59,10 +59,10 @@ Coolify is the primary deployment platform. It manages the Docker container, Tra
 ### Project Details
 | Property | Value |
 |----------|-------|
-| **Project ID** | `ug08gw04w04s08gwg88cs48c` |
-| **Environment ID** | `a40gkgww08kgsgc0kcoscww0` |
-| **Application Name** | `faultend` |
-| **Direct Link** | `https://coolify.dalogax.com/project/ug08gw04w04s08gwg88cs48c/environment/a40gkgww08kgsgc0kcoscww0` |
+| **Project ID** | `<COOLIFY_PROJECT_ID>` |
+| **Environment ID** | `<COOLIFY_ENVIRONMENT_ID>` |
+| **Application Name** | `<COOLIFY_APPLICATION_NAME>` |
+| **Direct Link** | `<YOUR_COOLIFY_URL>/project/<COOLIFY_PROJECT_ID>/environment/<COOLIFY_ENVIRONMENT_ID>` |
 
 ### What Coolify Manages
 - Building the Docker image from the repo
@@ -73,7 +73,7 @@ Coolify is the primary deployment platform. It manages the Docker container, Tra
 - Environment variable injection into the container
 
 ### Checking Status via Web UI
-1. Log in to `https://coolify.dalogax.com/login`
+1. Log in to `<YOUR_COOLIFY_URL>/login`
 2. Navigate to the project link above
 3. Click on the `faultend` application tile
 4. Review:
@@ -91,11 +91,11 @@ Traefik is provisioned by Coolify and routes traffic based on Docker labels defi
 
 ### Key Labels
 - **HTTP → HTTPS redirect** on all matching hosts
-- **Host rule:** `faultend.com` + regex for subdomains (`^[a-z0-9-]+\.faultend\.com$`)
-- **TLS:** Let's Encrypt certificate resolver with wildcard SAN (`*.faultend.com`)
+- **Host rule:** `<YOUR_DOMAIN>` + regex for subdomains (`^[a-z0-9-]+\.<YOUR_DOMAIN>$`)
+- **TLS:** Let's Encrypt certificate resolver with wildcard SAN (`*.<YOUR_DOMAIN>`)
 - **Entrypoints:** `http` (80) and `https` (443)
 
-This means any valid subdomain (e.g., `admin.faultend.com`, `app.faultend.com`, `myserver.faultend.com`) automatically reaches the Faultend container, and the application itself handles subdomain-based routing.
+This means any valid subdomain (e.g., `app.<YOUR_DOMAIN>`, `myserver.<YOUR_DOMAIN>`) automatically reaches the Faultend container, and the application itself handles subdomain-based routing.
 
 ---
 
@@ -124,14 +124,13 @@ See `Dockerfile` and `docker-compose.yml` in the repository root for full config
 
 ```bash
 # Verify DNS resolution
-dig faultend.com A +short
-dig admin.faultend.com A +short
-dig app.faultend.com A +short
+dig <YOUR_DOMAIN> A +short
+dig app.<YOUR_DOMAIN> A +short
 
 # Verify endpoints are publicly reachable
-curl -s -o /dev/null -w "%{http_code}" https://faultend.com
-curl -s -o /dev/null -w "%{http_code}" https://admin.faultend.com/servers
-curl -s -o /dev/null -w "%{http_code}" https://app.faultend.com
+curl -s -o /dev/null -w "%{http_code}" https://<YOUR_DOMAIN>
+curl -s -o /dev/null -w "%{http_code}" https://app.<YOUR_DOMAIN>/servers
+curl -s -o /dev/null -w "%{http_code}" https://app.<YOUR_DOMAIN>
 
 # Verify Cloudflare token (requires valid token in .env)
 # curl -s -X GET "https://api.cloudflare.com/client/v4/user/tokens/verify" \

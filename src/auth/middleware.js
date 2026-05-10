@@ -1,19 +1,40 @@
-const { canAccessServer, isOwner } = require('../storage/users');
+const { canAccessServer, isOwner, findUserById } = require('../storage/users');
 
-function authRequired(req, res, next) {
+async function authRequired(req, res, next) {
   if (req.routeType === 'landing' || req.routeType === 'fault-server') {
     return next();
   }
   
-  if (req.session && req.session.userId) {
-    return next();
+  if (!req.session || !req.session.userId) {
+    return res.status(401).json({
+      error: 'Unauthorized',
+      message: 'Authentication required',
+      loginUrl: '/auth/google'
+    });
   }
   
-  return res.status(401).json({
-    error: 'Unauthorized',
-    message: 'Authentication required',
-    loginUrl: '/auth/google'
-  });
+  try {
+    const user = await findUserById(req.session.userId);
+    if (!user) {
+      req.session.destroy((err) => {
+        if (err) console.error('[AUTH] Failed to destroy invalid session:', err);
+      });
+      return res.status(401).json({
+        error: 'Unauthorized',
+        message: 'User no longer exists',
+        loginUrl: '/auth/google'
+      });
+    }
+    
+    req.user = user;
+    next();
+  } catch (error) {
+    console.error('[AUTH] Error verifying user:', error);
+    return res.status(500).json({
+      error: 'Internal Server Error',
+      message: 'Failed to verify authentication'
+    });
+  }
 }
 
 async function requireServerAccess(req, res, next) {

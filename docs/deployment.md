@@ -29,7 +29,7 @@ Coolify is configured to deploy from the Git repository. The typical flow is:
 5. Traefik continues routing traffic once the health check passes.
 
 ### Manual Redeploy (via Coolify UI)
-1. Log in to `https://coolify.dalogax.com/login` (credentials in `.env`).
+1. Log in to `<YOUR_COOLIFY_URL>/login` (credentials in `.env`).
 2. Navigate to the project: `Project > Environment > faultend`
 3. Click the **Redeploy** or **Restart** button on the application tile.
 4. Watch the **Deployments** tab for build logs.
@@ -39,7 +39,7 @@ If an API token has been generated inside Coolify (see [Infrastructure](./infras
 
 ```bash
 # Example: restart application by UUID
-curl -X GET "https://coolify.dalogax.com/api/v1/applications/{uuid}/restart" \
+curl -X GET "<YOUR_COOLIFY_URL>/api/v1/applications/{uuid}/restart" \
   -H "Authorization: Bearer <COOLIFY_API_TOKEN>"
 ```
 
@@ -53,7 +53,7 @@ Coolify injects environment variables into the running container. The production
 
 | Variable | Production Value | Purpose |
 |----------|------------------|---------|
-| `ROOT_DOMAIN` | `faultend.com` | Subdomain routing base domain |
+| `ROOT_DOMAIN` | `<YOUR_DOMAIN>` | Subdomain routing base domain |
 | `PORT` | `3000` | Internal listening port |
 | `SAMPLE_DATA` | `false` | Do not populate sample data in prod |
 
@@ -72,8 +72,8 @@ The `docker-compose.yml` in the repo root is used by Coolify for deployment. Key
 - **Restart:** `unless-stopped`
 - **Traefik labels** define:
   - HTTP → HTTPS redirect
-  - Host matching for `faultend.com` and any subdomain
-  - Let's Encrypt wildcard certificate (`*.faultend.com`)
+  - Host matching for `<YOUR_DOMAIN>` and any subdomain
+  - Let's Encrypt wildcard certificate (`*.<YOUR_DOMAIN>`)
 
 If you modify `docker-compose.yml`, commit and push to `main`, then redeploy via Coolify.
 
@@ -82,13 +82,13 @@ If you modify `docker-compose.yml`, commit and push to `main`, then redeploy via
 ## SSL / Certificates
 
 - **Provider:** Let's Encrypt (via Traefik's ACME integration)
-- **Wildcard:** Enabled for `*.faultend.com`
+- **Wildcard:** Enabled for `*.<YOUR_DOMAIN>`
 - **Auto-renewal:** Handled automatically by Traefik; no manual intervention required
 - **Validation:** HTTP-01 challenge (standard)
 
 If certificate issues occur:
 1. Check Traefik logs in Coolify's **Server > Proxy** section.
-2. Verify DNS A records point to the server IP (`158.101.198.12`).
+2. Verify DNS A records point to the server IP (`<YOUR_SERVER_IP>`).
 3. Ensure port 443 is open on the server firewall.
 
 ---
