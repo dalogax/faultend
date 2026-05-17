@@ -36,9 +36,9 @@ class AuthManager {
     window.location.reload();
   }
 
-  getLoginUrl() {
+  getLoginUrl(provider = 'google') {
     const redirectTo = encodeURIComponent(window.location.pathname + window.location.hash);
-    return `/api/auth/google?redirectTo=${redirectTo}`;
+    return `/api/auth/${provider}?redirectTo=${redirectTo}`;
   }
 
   onChange(callback) {

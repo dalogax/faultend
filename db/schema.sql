@@ -56,10 +56,22 @@ BEGIN
     END IF;
 END $$;
 
--- Users table (Google OAuth)
+-- Migration: Make google_id nullable for multi-provider auth
+DO $$
+BEGIN
+    IF EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'users' AND column_name = 'google_id'
+        AND is_nullable = 'NO'
+    ) THEN
+        ALTER TABLE users ALTER COLUMN google_id DROP NOT NULL;
+    END IF;
+END $$;
+
+-- Users table (OAuth providers)
 CREATE TABLE IF NOT EXISTS users (
   id            BIGSERIAL PRIMARY KEY,
-  google_id     VARCHAR(255) NOT NULL UNIQUE,
+  google_id     VARCHAR(255) UNIQUE,
   email         VARCHAR(255) NOT NULL UNIQUE,
   name          VARCHAR(255),
   avatar_url    TEXT,
@@ -120,6 +132,16 @@ CREATE TABLE IF NOT EXISTS server_collaborators (
   UNIQUE(server_id, user_id)
 );
 
+-- User OAuth providers table (for multi-provider auth)
+CREATE TABLE IF NOT EXISTS user_oauth_providers (
+  id          BIGSERIAL PRIMARY KEY,
+  user_id     BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  provider    VARCHAR(20) NOT NULL,
+  provider_id VARCHAR(255) NOT NULL,
+  created_at  TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(provider, provider_id)
+);
+
 -- Indexes
 CREATE INDEX IF NOT EXISTS idx_traffic_server_id ON traffic(server_id);
 CREATE INDEX IF NOT EXISTS idx_traffic_timestamp ON traffic(timestamp DESC);
@@ -127,6 +149,8 @@ CREATE INDEX IF NOT EXISTS idx_rules_server_id ON rules(server_id);
 CREATE INDEX IF NOT EXISTS idx_collaborators_server_id ON server_collaborators(server_id);
 CREATE INDEX IF NOT EXISTS idx_collaborators_user_id ON server_collaborators(user_id);
 CREATE INDEX IF NOT EXISTS idx_servers_owner_id ON servers(owner_id);
+CREATE INDEX IF NOT EXISTS idx_user_oauth_providers_user_id ON user_oauth_providers(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_oauth_providers_provider ON user_oauth_providers(provider, provider_id);
 
 -- Session table (for connect-pg-simple)
 CREATE TABLE IF NOT EXISTS "session" (

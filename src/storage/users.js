@@ -1,20 +1,44 @@
 const pool = require('../db/pool');
 
-async function createUser({ googleId, email, name, avatarUrl }) {
+async function createUser({ email, name, avatarUrl }) {
   const result = await pool.query(
-    'INSERT INTO users (google_id, email, name, avatar_url) VALUES ($1, $2, $3, $4) RETURNING *',
-    [googleId, email, name, avatarUrl]
+    'INSERT INTO users (email, name, avatar_url) VALUES ($1, $2, $3) RETURNING *',
+    [email, name, avatarUrl]
   );
   return result.rows[0];
 }
 
-async function findUserByGoogleId(googleId) {
-  const result = await pool.query('SELECT * FROM users WHERE google_id = $1', [googleId]);
+async function findUserById(id) {
+  const result = await pool.query('SELECT * FROM users WHERE id = $1', [id]);
   return result.rows[0] || null;
 }
 
-async function findUserById(id) {
-  const result = await pool.query('SELECT * FROM users WHERE id = $1', [id]);
+async function findUserByEmail(email) {
+  const result = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
+  return result.rows[0] || null;
+}
+
+async function findUserByProvider(provider, providerId) {
+  const result = await pool.query(
+    `SELECT u.* FROM users u
+     JOIN user_oauth_providers uop ON u.id = uop.user_id
+     WHERE uop.provider = $1 AND uop.provider_id = $2`,
+    [provider, providerId]
+  );
+  return result.rows[0] || null;
+}
+
+async function linkProvider(userId, provider, providerId) {
+  await pool.query(
+    `INSERT INTO user_oauth_providers (user_id, provider, provider_id)
+     VALUES ($1, $2, $3)
+     ON CONFLICT (provider, provider_id) DO NOTHING`,
+    [userId, provider, providerId]
+  );
+}
+
+async function findUserByGoogleId(googleId) {
+  const result = await pool.query('SELECT * FROM users WHERE google_id = $1', [googleId]);
   return result.rows[0] || null;
 }
 
@@ -165,6 +189,9 @@ module.exports = {
   createUser,
   findUserByGoogleId,
   findUserById,
+  findUserByEmail,
+  findUserByProvider,
+  linkProvider,
   createServer,
   getServer,
   getServerById,
