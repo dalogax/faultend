@@ -35,7 +35,7 @@ This milestone transformed Faultend from a single-user, in-memory tool into a **
 | Task | Status |
 |------|--------|
 | Auth middleware validates user exists in DB | ✅ Done — `authRequired` now fetches user from DB, destroys session if invalid |
-| Rate limiting on auth endpoints | ✅ Done — simple in-memory rate limiter, 10 req/min per IP, 429 with Retry-After |
+| Rate limiting on auth endpoints | ❌ Removed — delegated to Cloudflare CDN WAF |
 | Session regeneration after OAuth | ✅ Done — Google callback now regenerates session to prevent fixation |
 | CSRF protection evaluation | ✅ Done — current setup sufficient: SameSite=lax, CORS restricted, no state-changing GETs |
 
@@ -127,6 +127,23 @@ If issues arise in production:
 - No sensitive actions can be triggered via simple links
 
 If the app adds sensitive GET endpoints or expands to third-party integrations, explicit CSRF tokens should be added.
+
+---
+
+## Rate Limiting Decision (May 2026)
+
+**Removed in favor of Cloudflare CDN WAF.**
+
+The in-memory rate limiter (10 req/min per IP) was removed because:
+- It doesn't work correctly behind proxies — all requests appeared to come from the same internal IP
+- OAuth flows naturally require multiple requests in quick succession
+- Cloudflare already provides DDoS protection and rate limiting at the edge
+- In-memory limits don't scale across multiple server instances
+
+**Current protection:**
+- Cloudflare WAF handles DDoS and bot protection
+- Session-based auth prevents automated abuse of API endpoints
+- If needed, per-user rate limits can be added later using Redis
 
 ---
 

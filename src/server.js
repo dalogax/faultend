@@ -14,7 +14,7 @@ const collaboratorsRouter = require('./api/collaborators');
 const inviteRouter = require('./api/invite');
 const passport = require('./auth/passport');
 const { authRequired, requireServerAccess, requireOwner } = require('./auth/middleware');
-const { rateLimit } = require('./middleware/rateLimit');
+
 
 const app = express();
 
@@ -102,7 +102,7 @@ app.use((req, res, next) => {
   res.status(500).json({ error: 'Unknown route type' });
 });
 
-app.use('/api/auth', rateLimit, authRouter);
+app.use('/api/auth', authRouter);
 
 app.use(authRequired);
 
