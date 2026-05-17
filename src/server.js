@@ -20,6 +20,10 @@ const app = express();
 
 const ROOT_DOMAIN = process.env.ROOT_DOMAIN || 'localhost';
 
+if (process.env.NODE_ENV === 'production') {
+  app.set('trust proxy', true);
+}
+
 app.use(cors({
   origin: [
     `http://${ROOT_DOMAIN}`,

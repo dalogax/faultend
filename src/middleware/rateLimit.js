@@ -1,9 +1,9 @@
 const requestCounts = new Map();
 const WINDOW_MS = 60 * 1000;
-const MAX_REQUESTS = 10;
+const MAX_REQUESTS = 20;
 
 function rateLimit(req, res, next) {
-  const key = req.ip || req.connection.remoteAddress || 'unknown';
+  const key = req.ip || req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.connection.remoteAddress || 'unknown';
   const now = Date.now();
   
   const record = requestCounts.get(key);
