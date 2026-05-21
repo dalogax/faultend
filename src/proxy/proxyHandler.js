@@ -1,4 +1,4 @@
-const { createProxyMiddleware } = require('http-proxy-middleware');
+const { createProxyMiddleware, responseInterceptor } = require('http-proxy-middleware');
 const config = require('./config');
 const { logTransaction } = require('../storage/traffic');
 
@@ -197,6 +197,118 @@ function executeProxy(targetUrl, req, res, next) {
 }
 
 /**
+ * Execute proxy with a response transform applied before sending.
+ * Buffers the entire proxy response so the transform function can
+ * inspect and mutate { status, headers, body } before it is sent.
+ */
+function executeProxyWithTransform(targetUrl, req, res, next, runTransform, transformCode) {
+  const target = targetUrl || config.defaultTarget;
+
+  const proxyMiddleware = createProxyMiddleware({
+    target,
+    changeOrigin: config.changeOrigin,
+    selfHandleResponse: true,
+    logLevel: config.logLevel,
+    timeout: config.timeout,
+    proxyTimeout: config.proxyTimeout,
+
+    onProxyReq: (proxyReq, req) => {
+      console.log(`[PROXY+TRANSFORM] → ${req.method} ${req.url} → ${target}`);
+      req.proxyStartTime = Date.now();
+      req.proxyTarget = target;
+
+      if (req.matchedRule && req.matchedRule.modifyRequestHeaders) {
+        const modifications = req.matchedRule.modifyRequestHeaders;
+        if (modifications.remove) modifications.remove.forEach(h => proxyReq.removeHeader(h));
+        if (modifications.set) Object.entries(modifications.set).forEach(([k, v]) => proxyReq.setHeader(k, v));
+        if (modifications.add) Object.entries(modifications.add).forEach(([k, v]) => { if (!proxyReq.getHeader(k)) proxyReq.setHeader(k, v); });
+      }
+
+      if (req.body && Object.keys(req.body).length > 0 && ['POST', 'PUT', 'PATCH'].includes(req.method)) {
+        const bodyData = JSON.stringify(req.body);
+        proxyReq.setHeader('Content-Type', 'application/json');
+        proxyReq.setHeader('Content-Length', Buffer.byteLength(bodyData));
+        proxyReq.write(bodyData);
+      }
+
+      req.capturedRequest = {
+        method: req.method, url: req.url, path: req.path,
+        headers: req.headers, query: req.query,
+        body: req.rawBody || req.body || null,
+        bodySize: req.rawBodySize || (req.body ? Buffer.byteLength(JSON.stringify(req.body)) : 0),
+        contentType: req.headers['content-type'] || null
+      };
+    },
+
+    onProxyRes: responseInterceptor(async (responseBuffer, proxyRes, req, res) => {
+      const duration = Date.now() - req.proxyStartTime;
+      const contentType = proxyRes.headers['content-type'] || '';
+
+      let parsedBody;
+      try {
+        const bodyStr = responseBuffer.toString('utf8');
+        parsedBody = contentType.includes('application/json') ? JSON.parse(bodyStr) : bodyStr;
+      } catch (e) {
+        parsedBody = responseBuffer.toString('utf8');
+      }
+
+      let responseObj = {
+        status: proxyRes.statusCode,
+        headers: { ...proxyRes.headers },
+        body: parsedBody
+      };
+
+      try {
+        responseObj = runTransform(transformCode, responseObj);
+        console.log(`[PROXY+TRANSFORM] Transform applied for ${req.url}`);
+      } catch (e) {
+        console.error(`[PROXY+TRANSFORM] Transform error:`, e.message);
+      }
+
+      // Apply transformed status and headers
+      res.status(responseObj.status);
+      Object.entries(responseObj.headers).forEach(([k, v]) => {
+        if (!['transfer-encoding', 'content-encoding'].includes(k.toLowerCase())) {
+          res.setHeader(k, v);
+        }
+      });
+
+      const responseBody = typeof responseObj.body === 'object'
+        ? JSON.stringify(responseObj.body)
+        : String(responseObj.body);
+
+      res.setHeader('content-type', 'application/json');
+      res.setHeader('content-length', Buffer.byteLength(responseBody));
+
+      const { logTransaction } = require('../storage/traffic');
+      logTransaction(req.serverId || 'unknown', {
+        request: req.capturedRequest,
+        response: {
+          statusCode: responseObj.status,
+          statusMessage: proxyRes.statusMessage,
+          headers: responseObj.headers,
+          body: responseObj.body,
+          bodySize: Buffer.byteLength(responseBody),
+          contentType: 'application/json'
+        },
+        duration,
+        target: req.proxyTarget,
+        matchedRule: req.matchedRule || null
+      }).catch(err => console.error('[PROXY+TRANSFORM] Log error:', err.message));
+
+      return Buffer.from(responseBody);
+    }),
+
+    onError: (err, req, res) => {
+      console.error(`[PROXY+TRANSFORM ERROR] ${req.method} ${req.url}:`, err.message);
+      res.status(502).json({ error: 'Proxy Error', message: err.message });
+    }
+  });
+
+  proxyMiddleware(req, res, next);
+}
+
+/**
  * Middleware to capture request body by buffering it completely
  * Must be applied before the proxy middleware
  */
@@ -247,5 +359,6 @@ function bodyCaptureMiddleware(req, res, next) {
 
 module.exports = {
   createFaultendProxy,
-  executeProxy
+  executeProxy,
+  executeProxyWithTransform
 };

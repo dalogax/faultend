@@ -37,8 +37,8 @@ async function addRule(serverId, ruleData) {
   const name = ruleData.name || generateRuleName(ruleData.pathRegex, ruleData.action);
   
   const result = await pool.query(
-    `INSERT INTO rules (id, server_id, priority, enabled, name, method, path_regex, action, target, mock_response, conditions, request_headers)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+    `INSERT INTO rules (id, server_id, priority, enabled, name, method, path_regex, action, target, mock_response, conditions, request_headers, transform)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
      RETURNING *`,
     [
       ruleId,
@@ -52,7 +52,8 @@ async function addRule(serverId, ruleData) {
       ruleData.target || null,
       ruleData.mockResponse ? JSON.stringify(ruleData.mockResponse) : null,
       ruleData.conditions ? JSON.stringify(ruleData.conditions) : '[]',
-      ruleData.requestHeaders ? JSON.stringify(ruleData.requestHeaders) : '{}'
+      ruleData.requestHeaders ? JSON.stringify(ruleData.requestHeaders) : '{}',
+      ruleData.transform || null
     ]
   );
   
@@ -67,13 +68,13 @@ async function updateRule(serverId, ruleId, updates) {
   if (!existing) throw new Error(`Rule with ID '${ruleId}' not found`);
   
   const merged = { ...existing, ...updates, id: ruleId };
-  
+
   await pool.query(
-    `UPDATE rules 
-     SET priority = $1, enabled = $2, name = $3, method = $4, path_regex = $5, 
+    `UPDATE rules
+     SET priority = $1, enabled = $2, name = $3, method = $4, path_regex = $5,
          action = $6, target = $7, mock_response = $8, conditions = $9, request_headers = $10,
-         updated_at = NOW()
-     WHERE id = $11 AND server_id = $12`,
+         transform = $11, updated_at = NOW()
+     WHERE id = $12 AND server_id = $13`,
     [
       merged.priority,
       merged.enabled,
@@ -85,6 +86,7 @@ async function updateRule(serverId, ruleId, updates) {
       merged.mockResponse ? JSON.stringify(merged.mockResponse) : null,
       merged.conditions ? JSON.stringify(merged.conditions) : '[]',
       merged.requestHeaders ? JSON.stringify(merged.requestHeaders) : '{}',
+      merged.transform || null,
       ruleId,
       server.id
     ]
@@ -175,11 +177,15 @@ function ruleFromRow(row, serverId) {
   if (row.action === 'proxy' && row.target) {
     rule.target = row.target;
   }
-  
+
   if (row.action === 'mock' && row.mock_response) {
     rule.mockResponse = typeof row.mock_response === 'string' ? JSON.parse(row.mock_response) : row.mock_response;
   }
-  
+
+  if (row.transform) {
+    rule.transform = row.transform;
+  }
+
   return rule;
 }
 
