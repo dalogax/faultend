@@ -143,8 +143,8 @@ class App {
             <tr>
               <th>Server ID</th>
               <th>URL</th>
+              <th>Role</th>
               <th>Created</th>
-              <th>Last Activity</th>
               <th>Traffic</th>
               <th>Rules</th>
             </tr>
@@ -152,14 +152,22 @@ class App {
           <tbody>
             ${this.servers.map(server => {
               const serverUrl = buildSubdomainUrl(server.server_id);
+              let roleBadge;
+              if (server.is_owner) {
+                roleBadge = '<span class="badge badge-owner">owner</span>';
+              } else if (server.is_admin) {
+                roleBadge = '<span class="badge badge-admin">admin</span>';
+              } else {
+                roleBadge = '<span class="badge badge-shared">shared</span>';
+              }
               return `
               <tr class="server-row" data-server-id="${server.server_id}">
                 <td class="server-id">${server.server_id}</td>
                 <td><span class="server-url">${serverUrl}</span></td>
-                <td>${this.formatDate(server.createdAt)}</td>
-                <td>${this.formatDate(server.lastActivity)}</td>
-                <td>${server.trafficCount || 0}</td>
-                <td>${server.rulesCount || 0}</td>
+                <td>${roleBadge}</td>
+                <td>${this.formatDate(server.created_at)}</td>
+                <td>${server.traffic_count || 0}</td>
+                <td>${server.rules_count || 0}</td>
               </tr>
             `}).join('')}
           </tbody>
@@ -334,7 +342,7 @@ class App {
   }
   
   async checkServerIdExists(id) {
-    return this.servers.some(s => s.id === id);
+    return this.servers.some(s => s.server_id === id);
   }
   
   showError(elementId, message) {
