@@ -142,6 +142,7 @@ class App {
               <th>Server ID</th>
               <th>URL</th>
               <th>Role</th>
+              <th>Shared</th>
               <th>Created</th>
               <th>Traffic</th>
               <th>Rules</th>
@@ -158,11 +159,14 @@ class App {
               } else {
                 roleBadge = '<span class="badge badge-shared">shared</span>';
               }
+              const sharedCount = parseInt(server.collaborators_count) || 0;
+              const sharedCell = sharedCount > 0 ? sharedCount : 'No';
               return `
               <tr class="server-row" data-server-id="${server.server_id}">
                 <td class="server-id">${server.server_id}</td>
                 <td><span class="server-url">${serverUrl}</span></td>
                 <td>${roleBadge}</td>
+                <td>${sharedCell}</td>
                 <td>${this.formatDate(server.created_at)}</td>
                 <td>${server.traffic_count || 0}</td>
                 <td>${server.rules_count || 0}</td>

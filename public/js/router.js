@@ -52,8 +52,8 @@ class ViewRouter {
 
       <div class="settings-section">
         <h3>Sharing</h3>
-        <p>Invite others to collaborate on this server.</p>
         ${canAdmin ? `
+          <p>Invite others to collaborate on this server.</p>
           <div id="inviteLinkContainer" style="display: none; margin-bottom: var(--space-md);">
             <code id="inviteLink" style="display: block; padding: var(--space-sm); background: var(--color-background); margin-bottom: var(--space-sm); word-break: break-all;"></code>
             <button id="copyInviteBtn" class="btn-secondary">Copy Link</button>
