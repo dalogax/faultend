@@ -225,6 +225,9 @@ class RuleForm {
 
   initializeFormData() {
     if (this.existingRule) {
+      const latencySource = this.existingRule.action === 'proxy'
+        ? this.existingRule.latency
+        : this.existingRule.mockResponse?.latency;
       return {
         name: this.existingRule.name,
         priority: this.existingRule.priority,
@@ -235,10 +238,10 @@ class RuleForm {
         target: this.existingRule.target || '',
         mockStatusCode: this.existingRule.mockResponse?.statusCode || 200,
         mockBody: JSON.stringify(this.existingRule.mockResponse?.body || {}, null, 2),
-        latencyType: this.getLatencyType(this.existingRule.mockResponse?.latency),
-        latencyValue: this.getLatencyValue(this.existingRule.mockResponse?.latency),
-        latencyMin: this.existingRule.mockResponse?.latency?.min || 100,
-        latencyMax: this.existingRule.mockResponse?.latency?.max || 500,
+        latencyType: this.getLatencyType(latencySource),
+        latencyValue: this.getLatencyValue(latencySource),
+        latencyMin: latencySource?.min || 100,
+        latencyMax: latencySource?.max || 500,
         conditions: this.existingRule.conditions || []
       };
     } else if (this.trafficLog) {
@@ -381,57 +384,63 @@ class RuleForm {
             ${this.renderError('target')}
           </div>
         </div>
-        
+
         <div id="mockFields" class="conditional-fields" style="display: ${this.formData.action === 'mock' ? 'block' : 'none'}">
           <div class="form-field">
             <label for="mockStatusCode">Status Code *</label>
             <input type="number" id="mockStatusCode" class="input" value="${this.formData.mockStatusCode}" min="100" max="599">
             ${this.renderError('mockStatusCode')}
           </div>
-          
+
           <div class="form-field">
             <label for="mockBody">Response Body (JSON) *</label>
             <textarea id="mockBody" class="input" rows="8">${this.formData.mockBody}</textarea>
             <span class="form-hint">Use template variables: {{timestamp()}}, {{uuid()}}, {{random(1,100)}}</span>
             ${this.renderError('mockBody')}
           </div>
-          
+        </div>
+
+        ${this.renderLatencyFields()}
+      </div>
+    `;
+  }
+
+  renderLatencyFields() {
+    return `
+      <div class="form-field">
+        <label>Latency</label>
+        <div class="radio-group">
+          <label class="radio-label">
+            <input type="radio" name="latencyType" value="none" ${this.formData.latencyType === 'none' ? 'checked' : ''}>
+            <span>None</span>
+          </label>
+          <label class="radio-label">
+            <input type="radio" name="latencyType" value="fixed" ${this.formData.latencyType === 'fixed' ? 'checked' : ''}>
+            <span>Fixed</span>
+          </label>
+          <label class="radio-label">
+            <input type="radio" name="latencyType" value="range" ${this.formData.latencyType === 'range' ? 'checked' : ''}>
+            <span>Range</span>
+          </label>
+        </div>
+      </div>
+
+      <div id="latencyFixed" style="display: ${this.formData.latencyType === 'fixed' ? 'block' : 'none'}">
+        <div class="form-field">
+          <label for="latencyValue">Delay (ms)</label>
+          <input type="number" id="latencyValue" class="input" value="${this.formData.latencyValue}" min="0">
+        </div>
+      </div>
+
+      <div id="latencyRange" style="display: ${this.formData.latencyType === 'range' ? 'block' : 'none'}">
+        <div class="form-row">
           <div class="form-field">
-            <label>Latency</label>
-            <div class="radio-group">
-              <label class="radio-label">
-                <input type="radio" name="latencyType" value="none" ${this.formData.latencyType === 'none' ? 'checked' : ''}>
-                <span>None</span>
-              </label>
-              <label class="radio-label">
-                <input type="radio" name="latencyType" value="fixed" ${this.formData.latencyType === 'fixed' ? 'checked' : ''}>
-                <span>Fixed</span>
-              </label>
-              <label class="radio-label">
-                <input type="radio" name="latencyType" value="range" ${this.formData.latencyType === 'range' ? 'checked' : ''}>
-                <span>Range</span>
-              </label>
-            </div>
+            <label for="latencyMin">Min (ms)</label>
+            <input type="number" id="latencyMin" class="input" value="${this.formData.latencyMin}" min="0">
           </div>
-          
-          <div id="latencyFixed" style="display: ${this.formData.latencyType === 'fixed' ? 'block' : 'none'}">
-            <div class="form-field">
-              <label for="latencyValue">Delay (ms)</label>
-              <input type="number" id="latencyValue" class="input" value="${this.formData.latencyValue}" min="0">
-            </div>
-          </div>
-          
-          <div id="latencyRange" style="display: ${this.formData.latencyType === 'range' ? 'block' : 'none'}">
-            <div class="form-row">
-              <div class="form-field">
-                <label for="latencyMin">Min (ms)</label>
-                <input type="number" id="latencyMin" class="input" value="${this.formData.latencyMin}" min="0">
-              </div>
-              <div class="form-field">
-                <label for="latencyMax">Max (ms)</label>
-                <input type="number" id="latencyMax" class="input" value="${this.formData.latencyMax}" min="0">
-              </div>
-            </div>
+          <div class="form-field">
+            <label for="latencyMax">Max (ms)</label>
+            <input type="number" id="latencyMax" class="input" value="${this.formData.latencyMax}" min="0">
           </div>
         </div>
       </div>
@@ -439,7 +448,6 @@ class RuleForm {
   }
 
   renderAdvancedOptions() {
-    // Removed until features are implemented
     return '';
   }
 
@@ -485,9 +493,23 @@ class RuleForm {
   toggleLatencyFields(type) {
     const fixedFields = document.getElementById('latencyFixed');
     const rangeFields = document.getElementById('latencyRange');
-    
+
     fixedFields.style.display = type === 'fixed' ? 'block' : 'none';
     rangeFields.style.display = type === 'range' ? 'block' : 'none';
+  }
+
+  collectLatency(latencyType) {
+    if (latencyType === 'fixed') {
+      return { type: 'fixed', value: parseInt(document.getElementById('latencyValue').value) };
+    }
+    if (latencyType === 'range') {
+      return {
+        type: 'range',
+        min: parseInt(document.getElementById('latencyMin').value),
+        max: parseInt(document.getElementById('latencyMax').value)
+      };
+    }
+    return null;
   }
 
   collectFormData() {
@@ -502,26 +524,17 @@ class RuleForm {
       action: action
     };
 
+    const latency = this.collectLatency(latencyType);
+
     if (action === 'proxy') {
       data.target = document.getElementById('proxyTarget').value.trim();
+      if (latency) data.latency = latency;
     } else {
       data.mockResponse = {
         statusCode: parseInt(document.getElementById('mockStatusCode').value),
         body: JSON.parse(document.getElementById('mockBody').value)
       };
-      
-      if (latencyType === 'fixed') {
-        data.mockResponse.latency = {
-          type: 'fixed',
-          value: parseInt(document.getElementById('latencyValue').value)
-        };
-      } else if (latencyType === 'range') {
-        data.mockResponse.latency = {
-          type: 'range',
-          min: parseInt(document.getElementById('latencyMin').value),
-          max: parseInt(document.getElementById('latencyMax').value)
-        };
-      }
+      if (latency) data.mockResponse.latency = latency;
     }
 
     return data;
