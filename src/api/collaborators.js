@@ -3,12 +3,16 @@ const router = express.Router();
 const crypto = require('crypto');
 const {
   isOwner,
+  canAdminServer,
   addCollaborator,
   removeCollaborator,
   getCollaborators,
   setInviteToken,
   clearInviteToken,
-  findServerByInviteToken
+  findServerByInviteToken,
+  makeAdmin,
+  removeAdmin,
+  transferOwnership
 } = require('../storage/users');
 
 function generateInviteToken() {
@@ -19,23 +23,23 @@ router.post('/', async (req, res) => {
   try {
     const serverId = req.serverId;
     const userId = req.session.userId;
-    
-    const owner = await isOwner(serverId, userId);
-    if (!owner) {
-      return res.status(403).json({ error: 'Forbidden', message: 'Only the owner can generate invite links' });
+
+    const canAdmin = await canAdminServer(serverId, userId);
+    if (!canAdmin) {
+      return res.status(403).json({ error: 'Forbidden', message: 'Only the owner or admin can generate invite links' });
     }
-    
+
     const token = generateInviteToken();
     await setInviteToken(serverId, token);
-    
+
     const rootDomain = process.env.ROOT_DOMAIN || 'localhost';
     const port = process.env.PORT || 3000;
     const isLocalhost = rootDomain === 'localhost';
     const protocol = isLocalhost ? 'http' : 'https';
     const portSuffix = isLocalhost ? `:${port}` : '';
-    
+
     res.json({
-      inviteUrl: `${protocol}://app.${rootDomain}${portSuffix}/api/invite/${token}`
+      inviteUrl: `${protocol}://app.${rootDomain}${portSuffix}/#invite/${token}`
     });
   } catch (error) {
     console.error('[COLLABORATION] Error generating invite:', error);
@@ -47,12 +51,12 @@ router.delete('/', async (req, res) => {
   try {
     const serverId = req.serverId;
     const userId = req.session.userId;
-    
-    const owner = await isOwner(serverId, userId);
-    if (!owner) {
-      return res.status(403).json({ error: 'Forbidden', message: 'Only the owner can revoke invites' });
+
+    const canAdmin = await canAdminServer(serverId, userId);
+    if (!canAdmin) {
+      return res.status(403).json({ error: 'Forbidden', message: 'Only the owner or admin can revoke invites' });
     }
-    
+
     await clearInviteToken(serverId);
     res.json({ success: true });
   } catch (error) {
@@ -64,14 +68,6 @@ router.delete('/', async (req, res) => {
 router.get('/collaborators', async (req, res) => {
   try {
     const serverId = req.serverId;
-    const userId = req.session.userId;
-    
-    const { canAccessServer } = require('../storage/users');
-    const hasAccess = await canAccessServer(serverId, userId);
-    if (!hasAccess) {
-      return res.status(404).json({ error: 'Not Found', message: 'Server not found' });
-    }
-    
     const collaborators = await getCollaborators(serverId);
     res.json({ collaborators });
   } catch (error) {
@@ -85,16 +81,73 @@ router.delete('/collaborators/:userId', async (req, res) => {
     const serverId = req.serverId;
     const { userId: collaboratorId } = req.params;
     const userId = req.session.userId;
-    
-    const owner = await isOwner(serverId, userId);
-    if (!owner) {
-      return res.status(403).json({ error: 'Forbidden', message: 'Only the owner can remove collaborators' });
+
+    const canAdmin = await canAdminServer(serverId, userId);
+    if (!canAdmin) {
+      return res.status(403).json({ error: 'Forbidden', message: 'Only the owner or admin can remove collaborators' });
     }
-    
+
     await removeCollaborator(serverId, parseInt(collaboratorId, 10));
     res.json({ success: true });
   } catch (error) {
     console.error('[COLLABORATION] Error removing collaborator:', error);
+    res.status(500).json({ error: 'Internal Server Error', message: error.message });
+  }
+});
+
+router.put('/collaborators/:userId/admin', async (req, res) => {
+  try {
+    const serverId = req.serverId;
+    const { userId: collaboratorId } = req.params;
+    const userId = req.session.userId;
+
+    const owner = await isOwner(serverId, userId);
+    if (!owner) {
+      return res.status(403).json({ error: 'Forbidden', message: 'Only the owner can promote collaborators to admin' });
+    }
+
+    await makeAdmin(serverId, parseInt(collaboratorId, 10));
+    res.json({ success: true });
+  } catch (error) {
+    console.error('[COLLABORATION] Error making admin:', error);
+    res.status(500).json({ error: 'Internal Server Error', message: error.message });
+  }
+});
+
+router.delete('/collaborators/:userId/admin', async (req, res) => {
+  try {
+    const serverId = req.serverId;
+    const { userId: collaboratorId } = req.params;
+    const userId = req.session.userId;
+
+    const owner = await isOwner(serverId, userId);
+    if (!owner) {
+      return res.status(403).json({ error: 'Forbidden', message: 'Only the owner can demote admins' });
+    }
+
+    await removeAdmin(serverId, parseInt(collaboratorId, 10));
+    res.json({ success: true });
+  } catch (error) {
+    console.error('[COLLABORATION] Error removing admin:', error);
+    res.status(500).json({ error: 'Internal Server Error', message: error.message });
+  }
+});
+
+router.post('/transfer-ownership/:userId', async (req, res) => {
+  try {
+    const serverId = req.serverId;
+    const { userId: newOwnerId } = req.params;
+    const userId = req.session.userId;
+
+    const owner = await isOwner(serverId, userId);
+    if (!owner) {
+      return res.status(403).json({ error: 'Forbidden', message: 'Only the owner can transfer ownership' });
+    }
+
+    await transferOwnership(serverId, parseInt(newOwnerId, 10));
+    res.json({ success: true });
+  } catch (error) {
+    console.error('[COLLABORATION] Error transferring ownership:', error);
     res.status(500).json({ error: 'Internal Server Error', message: error.message });
   }
 });

@@ -92,11 +92,40 @@ function validateRule(ruleData) {
     }
   }
 
+  if (ruleData.latency !== undefined) {
+    if (typeof ruleData.latency === 'number') {
+      if (ruleData.latency < 0) {
+        errors.push('latency must be a non-negative number');
+      }
+    } else if (typeof ruleData.latency === 'object') {
+      const { type, value, min, max } = ruleData.latency;
+      if (!['fixed', 'range'].includes(type)) {
+        errors.push('latency.type must be "fixed" or "range"');
+      }
+      if (type === 'fixed' && (typeof value !== 'number' || value < 0)) {
+        errors.push('latency.value must be a non-negative number for fixed type');
+      }
+      if (type === 'range') {
+        if (typeof min !== 'number' || min < 0) {
+          errors.push('latency.min must be a non-negative number for range type');
+        }
+        if (typeof max !== 'number' || max < 0) {
+          errors.push('latency.max must be a non-negative number for range type');
+        }
+        if (typeof min === 'number' && typeof max === 'number' && min > max) {
+          errors.push('latency.min must be less than or equal to max');
+        }
+      }
+    } else {
+      errors.push('latency must be a number or object');
+    }
+  }
+
   if (ruleData.action === 'proxy') {
     if (!ruleData.target || typeof ruleData.target !== 'string') {
       errors.push('target is required for proxy action and must be a non-empty string');
     }
-    
+
     if (ruleData.modifyRequestHeaders !== undefined) {
       if (typeof ruleData.modifyRequestHeaders !== 'object') {
         errors.push('modifyRequestHeaders must be an object');
@@ -383,8 +412,24 @@ async function executeMockRule(serverId, rule, req, res) {
   });
 }
 
-function executeProxyRule(serverId, rule, req, res, next) {
+function computeLatencyMs(latency) {
+  if (!latency) return 0;
+  if (typeof latency === 'number') return latency;
+  if (latency.type === 'fixed') return latency.value || 0;
+  if (latency.type === 'range') {
+    return Math.floor(Math.random() * (latency.max - latency.min + 1)) + latency.min;
+  }
+  return 0;
+}
+
+async function executeProxyRule(serverId, rule, req, res, next) {
   console.log(`[PROXY RULE] Executing proxy rule: ${rule.name} → ${rule.target}`);
+
+  const delay = computeLatencyMs(rule.latency);
+  if (delay > 0) {
+    console.log(`[PROXY RULE] Applying latency: ${delay}ms`);
+    await new Promise(resolve => setTimeout(resolve, delay));
+  }
 
   const { executeProxy, executeProxyWithTransform } = require('../proxy/proxyHandler');
 
@@ -409,7 +454,7 @@ async function executeRule(serverId, rule, req, res, next) {
   if (rule.action === 'mock') {
     await executeMockRule(serverId, rule, req, res);
   } else if (rule.action === 'proxy') {
-    executeProxyRule(serverId, rule, req, res, next);
+    await executeProxyRule(serverId, rule, req, res, next);
   } else {
     console.error(`[RULES ENGINE] Unknown action: ${rule.action}`);
     res.status(500).json({ error: 'Internal Server Error', message: 'Unknown rule action' });

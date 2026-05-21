@@ -20,27 +20,49 @@ This document covers how to develop Faultend locally, manage the repository, and
 ### Prerequisites
 - Node.js `20.18.1` (see `.tool-versions` for exact version)
 - npm
-- Docker (optional, for local deployment testing)
+- Docker (for local PostgreSQL)
 
-### Install & Run
+### 1. Start PostgreSQL
 
 ```bash
-# Clone the repository
-git clone https://github.com/<YOUR_USERNAME>/faultend.git
-cd faultend
+docker run -d \
+  --name faultend-pg-dev \
+  -e POSTGRES_USER=faultend \
+  -e POSTGRES_PASSWORD=faultend \
+  -e POSTGRES_DB=faultend \
+  -p 5432:5432 \
+  postgres:16-alpine
+```
 
-# Install dependencies
+### 2. Configure Environment
+
+Copy `.env.example` to `.env` and fill in the values:
+
+```env
+DATABASE_URL=postgresql://faultend:faultend@localhost:5432/faultend
+SESSION_SECRET=any-random-string-for-local
+ROOT_DOMAIN=localhost
+PORT=3000
+NODE_ENV=development
+MOCK_AUTH_ENABLED=true   # Enables /api/auth/dev-login — no OAuth needed locally
+SAMPLE_DATA=true
+```
+
+Google/GitHub OAuth credentials are optional for local development when `MOCK_AUTH_ENABLED=true`.
+
+### 3. Install & Run
+
+```bash
 npm install
-
-# Run tests - first backend then frontend - auto-starts mock deps.
-npm test
-
-# Start server
 npm run dev
+# or: node src/index.js
 
-# Access UI
 open http://app.localhost:3000
 ```
+
+The schema is applied automatically on every startup via `db/schema.sql` — no manual migrations needed.
+
+To log in without OAuth: visit `http://app.localhost:3000/api/auth/dev-login`.
 
 ### Access Points (Local)
 - **App UI:** `http://app.localhost:3000`
@@ -71,15 +93,23 @@ open http://app.localhost:3000
 
 ## Environment Configuration
 
-Local settings are controlled by `.env` at the repository root:
+All settings are controlled by `.env` at the repository root (gitignored). Required variables:
 
-```env
-SAMPLE_DATA=true       # Populate test servers and rules on startup
-ROOT_DOMAIN=localhost  # Base domain for subdomain routing
-PORT=3000              # Local server port
-```
+| Variable | Example | Description |
+|----------|---------|-------------|
+| `DATABASE_URL` | `postgresql://faultend:faultend@localhost:5432/faultend` | PostgreSQL connection string |
+| `SESSION_SECRET` | `any-random-string` | Signs session cookies |
+| `ROOT_DOMAIN` | `localhost` | Base domain for subdomain routing |
+| `PORT` | `3000` | HTTP listen port |
+| `NODE_ENV` | `development` | Enables trust-proxy in production |
+| `MOCK_AUTH_ENABLED` | `true` | Enables `/api/auth/dev-login` (local only) |
+| `SAMPLE_DATA` | `true` | Seeds test servers/rules on startup |
+| `GOOGLE_CLIENT_ID` | — | Google OAuth (optional locally) |
+| `GOOGLE_CLIENT_SECRET` | — | Google OAuth (optional locally) |
+| `GITHUB_CLIENT_ID` | — | GitHub OAuth (optional locally) |
+| `GITHUB_CLIENT_SECRET` | — | GitHub OAuth (optional locally) |
 
-**`.env` is ignored by Git.** Do not commit it. If you add new environment variables that other developers need, update `.env.example` (create it if it doesn't exist) with empty values and documentation.
+Do not commit `.env`. If you add a new variable, add it to `.env.example` with an empty value and a comment.
 
 ---
 
@@ -153,6 +183,29 @@ npm run test:frontend
 
 ---
 
+## DB Schema Changes
+
+`db/schema.sql` is the single source of truth. It runs on every startup — so every change must be **idempotent**.
+
+- New tables: use `CREATE TABLE IF NOT EXISTS`
+- New columns: wrap in a `DO $$ IF NOT EXISTS $$` block:
+
+```sql
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'my_table' AND column_name = 'new_column'
+    ) THEN
+        ALTER TABLE my_table ADD COLUMN new_column TEXT;
+    END IF;
+END $$;
+```
+
+Place migration blocks **before** the corresponding `CREATE TABLE IF NOT EXISTS` so new installs and upgrades both get the column.
+
+---
+
 ## Pull Request Workflow
 
 1. **Branch:** `git checkout -b feature/<description>`
@@ -160,9 +213,80 @@ npm run test:frontend
 3. **Commit:** `git commit -m "feat: description"`
 4. **Push:** `git push -u origin feature/<description>`
 5. **Open PR:** On GitHub, open a PR against `main`
-6. **Review:** Ensure tests pass; review changes for style and correctness
-7. **Merge:** Squash or merge commit as appropriate
-8. **Deploy:** Coolify auto-deploys `main` (see [Deployment Guide](./deployment.md))
+6. **Add screenshots** (if UI changed) — see below
+7. **Review:** Ensure tests pass; review changes for style and correctness
+8. **Merge:** Squash or merge commit as appropriate
+9. **Deploy:** Coolify auto-deploys `main` (see [Deployment Guide](./deployment.md))
+
+### PR Body Structure
+
+Every PR should have:
+
+```
+## Summary
+Closes #<issue>
+
+- Bullet summarising what changed and why (user-visible behaviour first)
+
+## Changes
+**Backend:** list of files + what each one does
+**Frontend:** list of files + what each one does
+
+## Screenshots
+(one screenshot per meaningful UI state — see workflow below)
+
+## Test plan
+- [ ] Checkbox items the reviewer should manually verify
+```
+
+### Taking Screenshots
+
+Screenshots are **evidence that the UI change works** — take one per meaningful state (e.g. form open, form filled, result visible). Run Playwright from the repo root so `node_modules/playwright` is found:
+
+```javascript
+// screenshot_<feature>.js  — run from repo root, delete after use
+const { chromium } = require('playwright');
+(async () => {
+  const browser = await chromium.launch({
+    executablePath: '/home/dalogax/.cache/ms-playwright/chromium-1224/chrome-linux/chrome',
+    headless: true
+  });
+  const page = await browser.newPage();
+
+  // Log in via dev-login (requires MOCK_AUTH_ENABLED=true)
+  await page.goto('http://app.localhost:3000/api/auth/dev-login');
+  await page.waitForTimeout(2000);
+
+  // Navigate to the feature and take screenshots
+  await page.goto('http://app.localhost:3000/#server/test-server');
+  await page.waitForTimeout(1500);
+  await page.screenshot({ path: '/tmp/my-feature.png' });
+
+  await browser.close();
+})();
+```
+
+### Attaching Screenshots to a PR
+
+**Never commit screenshot PNG files to the repository.** Upload them to the persistent `pr-screenshots` GitHub release instead:
+
+```bash
+# Upload (--clobber overwrites if the filename already exists)
+gh release upload pr-screenshots /tmp/my-feature.png --clobber
+
+# The permanent URL to embed in the PR body:
+# https://github.com/dalogax/faultend/releases/download/pr-screenshots/my-feature.png
+```
+
+Embed in the PR body as markdown:
+```markdown
+![description](https://github.com/dalogax/faultend/releases/download/pr-screenshots/my-feature.png)
+```
+
+If you need to recover a screenshot that was accidentally committed and then removed:
+```bash
+git show <commit-sha>:path/to/file.png > /tmp/file.png
+```
 
 ---
 
@@ -204,10 +328,9 @@ Currently there are **no GitHub Actions workflows**. All deployment is handled b
 Ensure these are never committed:
 - `.env`
 - `node_modules/`
-- `data/*.json`
 - `*.log`
 - Playwright artifacts (`test-results/`, `playwright-report/`)
-- Local screenshots or scripts with secrets
+- Screenshot PNG files (upload to GitHub release instead — see PR workflow above)
 
 ### Before Committing
 ```bash

@@ -104,10 +104,22 @@ CREATE TABLE IF NOT EXISTS rules (
   mock_response JSONB,
   conditions    JSONB DEFAULT '[]',
   request_headers JSONB DEFAULT '{}',
+  latency       JSONB,
   transform     TEXT,
   created_at    TIMESTAMPTZ DEFAULT NOW(),
   updated_at    TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Migration: Add latency column to rules table if it doesn't exist
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'rules' AND column_name = 'latency'
+  ) THEN
+    ALTER TABLE rules ADD COLUMN latency JSONB;
+  END IF;
+END $$;
 
 -- Migration: Add transform column to rules table if it doesn't exist
 DO $$
@@ -135,11 +147,23 @@ CREATE TABLE IF NOT EXISTS traffic (
   created_at    TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Migration: Add role column to server_collaborators
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'server_collaborators' AND column_name = 'role'
+    ) THEN
+        ALTER TABLE server_collaborators ADD COLUMN role VARCHAR(20) DEFAULT 'collaborator';
+    END IF;
+END $$;
+
 -- Server collaborators table
 CREATE TABLE IF NOT EXISTS server_collaborators (
   id            BIGSERIAL PRIMARY KEY,
   server_id     BIGINT NOT NULL REFERENCES servers(id) ON DELETE CASCADE,
   user_id       BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  role          VARCHAR(20) DEFAULT 'collaborator',
   created_at    TIMESTAMPTZ DEFAULT NOW(),
   UNIQUE(server_id, user_id)
 );

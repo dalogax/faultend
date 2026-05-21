@@ -137,7 +137,7 @@ app.use('/api/servers/:serverId/invite', (req, res, next) => {
   if (req.routeType !== 'app') {
     return next();
   }
-  requireOwner(req, res, (err) => {
+  requireServerAccess(req, res, (err) => {
     if (err) return next(err);
     collaboratorsRouter(req, res, next);
   });

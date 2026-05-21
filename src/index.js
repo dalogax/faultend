@@ -203,7 +203,11 @@ async function start() {
   }
   
   if (SAMPLE_DATA) {
-    await initSampleData();
+    try {
+      await initSampleData();
+    } catch (error) {
+      console.error('[INIT] Sample data error (non-fatal):', error.message);
+    }
   }
   
   server.listen(PORT, () => {

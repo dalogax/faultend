@@ -47,16 +47,23 @@
       <img src="/img/faultend.svg" alt="faultend" class="login-logo">
       <h1>faultend</h1>
       <p>Sign in to manage your fault servers</p>
-      <a href="/api/auth/google" class="btn btn-primary login-btn">Sign in with Google</a>
-      <a href="/api/auth/github" class="btn btn-secondary login-btn" style="margin-top: var(--space-sm);">Sign in with GitHub</a>
+      <a id="googleLoginBtn" href="/api/auth/google" class="btn btn-primary login-btn">Sign in with Google</a>
+      <a id="githubLoginBtn" href="/api/auth/github" class="btn btn-secondary login-btn" style="margin-top: var(--space-sm);">Sign in with GitHub</a>
       <div id="devLoginLink" style="margin-top: var(--space-lg); display: none;">
-        <a href="/api/auth/dev-login" class="text-sm text-gray" style="text-decoration: underline;">Dev Login (local only)</a>
+        <a id="devLoginBtn" href="/api/auth/dev-login" class="text-sm text-gray" style="text-decoration: underline;">Dev Login (local only)</a>
       </div>
       <script>
-        // Only show dev login on localhost
-        if (window.location.hostname === 'localhost' || window.location.hostname.endsWith('.localhost')) {
-          document.getElementById('devLoginLink').style.display = 'block';
-        }
+        (function() {
+          const redirectTo = encodeURIComponent(window.location.pathname + window.location.hash);
+          const suffix = redirectTo && redirectTo !== '%2F' ? '?redirectTo=' + redirectTo : '';
+          document.getElementById('googleLoginBtn').href = '/api/auth/google' + suffix;
+          document.getElementById('githubLoginBtn').href = '/api/auth/github' + suffix;
+
+          if (window.location.hostname === 'localhost' || window.location.hostname.endsWith('.localhost')) {
+            document.getElementById('devLoginLink').style.display = 'block';
+            document.getElementById('devLoginBtn').href = '/api/auth/dev-login' + suffix;
+          }
+        })();
       </script>
     </div>
   </div>

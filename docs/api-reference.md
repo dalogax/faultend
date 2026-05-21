@@ -6,36 +6,66 @@ This document describes the HTTP API endpoints, data models, template functions,
 
 ## API Endpoints
 
-### Servers API (`app.*` subdomain)
+All endpoints are on the `app.*` subdomain. All except `/api/auth/*` and `GET /api/invite/:token` require a valid session cookie.
 
-| Method | Path | Description |
-|--------|------|-------------|
-| `GET`    | `/api/servers`           | List all fault servers |
-| `POST`   | `/api/servers`           | Create fault server |
-| `GET`    | `/api/servers/:id`       | Get specific server |
-| `DELETE` | `/api/servers/:id`       | Delete server |
+### Auth API
 
-### Rules API (`app.*` subdomain)
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| `GET`  | `/api/auth/google`          | — | Initiate Google OAuth (accepts `?redirectTo=`) |
+| `GET`  | `/api/auth/google/callback` | — | Google OAuth callback |
+| `GET`  | `/api/auth/github`          | — | Initiate GitHub OAuth (accepts `?redirectTo=`) |
+| `GET`  | `/api/auth/github/callback` | — | GitHub OAuth callback |
+| `GET`  | `/api/auth/me`              | — | Current user info (401 if not logged in) |
+| `POST` | `/api/auth/logout`          | session | Destroy session |
+| `GET`  | `/api/auth/dev-login`       | — | Dev login (only when `MOCK_AUTH_ENABLED=true`) |
 
-| Method | Path | Description |
-|--------|------|-------------|
-| `GET`    | `/api/servers/:serverId/rules`              | List rules |
-| `POST`   | `/api/servers/:serverId/rules`              | Create rule |
-| `GET`    | `/api/servers/:serverId/rules/:id`          | Get rule |
-| `PUT`    | `/api/servers/:serverId/rules/:id`          | Update rule |
-| `DELETE` | `/api/servers/:serverId/rules/:id`          | Delete rule |
-| `PATCH`  | `/api/servers/:serverId/rules/:id/toggle`   | Toggle rule |
-| `POST`   | `/api/servers/:serverId/rules/export`       | Export rules |
-| `POST`   | `/api/servers/:serverId/rules/import`       | Import rules |
+### Servers API
 
-### Traffic API (`app.*` subdomain)
+| Method   | Path                  | Auth   | Description |
+|----------|-----------------------|--------|-------------|
+| `GET`    | `/api/servers`        | session | List owned + shared servers |
+| `POST`   | `/api/servers`        | session | Create fault server |
+| `GET`    | `/api/servers/:id`    | owner  | Get server detail |
+| `DELETE` | `/api/servers/:id`    | owner  | Delete server |
 
-| Method | Path | Description |
-|--------|------|-------------|
-| `GET`    | `/api/servers/:serverId/traffic`       | Get traffic logs |
-| `GET`    | `/api/servers/:serverId/traffic/:id`   | Get specific log |
-| `GET`    | `/api/servers/:serverId/traffic/stats` | Get statistics |
-| `DELETE` | `/api/servers/:serverId/traffic`       | Clear logs |
+### Rules API
+
+| Method   | Path                                        | Auth   | Description |
+|----------|---------------------------------------------|--------|-------------|
+| `GET`    | `/api/servers/:serverId/rules`              | access | List rules |
+| `POST`   | `/api/servers/:serverId/rules`              | access | Create rule |
+| `GET`    | `/api/servers/:serverId/rules/:id`          | access | Get rule |
+| `PUT`    | `/api/servers/:serverId/rules/:id`          | access | Update rule |
+| `DELETE` | `/api/servers/:serverId/rules/:id`          | access | Delete rule |
+| `PATCH`  | `/api/servers/:serverId/rules/:id/toggle`   | access | Toggle rule on/off |
+| `POST`   | `/api/servers/:serverId/rules/export`       | access | Export rules as JSON |
+| `POST`   | `/api/servers/:serverId/rules/import`       | access | Import rules from JSON |
+
+### Traffic API
+
+| Method   | Path                                       | Auth   | Description |
+|----------|--------------------------------------------|--------|-------------|
+| `GET`    | `/api/servers/:serverId/traffic`           | access | Get traffic logs (filterable) |
+| `GET`    | `/api/servers/:serverId/traffic/:id`       | access | Get specific log entry |
+| `GET`    | `/api/servers/:serverId/traffic/stats`     | access | Aggregate statistics |
+| `DELETE` | `/api/servers/:serverId/traffic`           | access | Clear all logs |
+
+### Collaboration API
+
+| Method   | Path                                                       | Auth        | Description |
+|----------|------------------------------------------------------------|-------------|-------------|
+| `POST`   | `/api/servers/:serverId/invite`                            | owner/admin | Generate invite link |
+| `DELETE` | `/api/servers/:serverId/invite`                            | owner/admin | Revoke invite link |
+| `GET`    | `/api/servers/:serverId/invite/collaborators`              | access      | List collaborators (with roles) |
+| `DELETE` | `/api/servers/:serverId/invite/collaborators/:userId`      | owner/admin | Remove collaborator |
+| `PUT`    | `/api/servers/:serverId/invite/collaborators/:userId/admin`| owner       | Promote to admin |
+| `DELETE` | `/api/servers/:serverId/invite/collaborators/:userId/admin`| owner       | Demote to collaborator |
+| `POST`   | `/api/servers/:serverId/invite/transfer-ownership/:userId` | owner       | Transfer ownership |
+| `GET`    | `/api/invite/:token`                                       | session     | Preview invite (server name, owner) |
+| `POST`   | `/api/invite/:token`                                       | session     | Accept invite (become collaborator) |
+
+Auth column legend: `access` = owner or any collaborator; `owner/admin` = owner or admin collaborator; `owner` = owner only.
 
 ---
 
@@ -99,26 +129,43 @@ curl -X DELETE http://localhost:3000/api/servers/:serverId/traffic
 ```javascript
 {
   id: "rule-1732627800000-abc123",
-  priority: 100,                    // Higher = evaluated first
-  enabled: true,                    // Can be toggled on/off
-  name: "Default API Proxy",        // Human-readable name
-  method: "*",                      // HTTP method or "*" for all
-  pathRegex: ".*",                  // Regex pattern for path matching
-  
-  action: "proxy",                  // "mock" or "proxy"
-  
-  // For proxy action
+  priority: 100,              // Higher = evaluated first
+  enabled: true,
+  name: "Default API Proxy",
+  method: "*",                // "GET"|"POST"|"PUT"|"PATCH"|"DELETE"|"*"
+  pathRegex: ".*",            // Regex matched against request path
+
+  action: "proxy",            // "mock" or "proxy"
+
+  // Proxy action fields
   target: "https://api.example.com",
-  
-  // For mock action
+  latency: {                  // Optional — applies before forwarding
+    type: "fixed",            // "fixed" | "range"
+    value: 200                // ms (fixed), or use min/max (range)
+  },
+  requestHeaders: {           // Optional header modifications
+    add: { "X-Env": "staging" },
+    set: { "Authorization": "Bearer token" },
+    remove: ["X-Internal-Id"]
+  },
+
+  // Mock action fields
   mockResponse: {
     statusCode: 200,
-    body: { message: "Mocked response" },
-    headers: {},                    // Optional custom headers
-    latency: 0                      // Artificial delay in ms
-  }
+    body: { message: "Mocked" },
+    headers: {},
+    latency: { type: "range", min: 100, max: 500 }
+  },
+
+  // Shared optional fields
+  conditions: [               // All must match for rule to apply
+    { type: "header", key: "x-env", operator: "equals", value: "staging" }
+  ],
+  transform: "res.body.injected = true;"  // JS snippet; receives res = {status, headers, body}
 }
 ```
+
+Condition operators: `equals`, `notEquals`, `contains`, `startsWith`, `endsWith`, `exists`, `notExists`, `matches` (regex).
 
 ---
 
