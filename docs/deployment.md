@@ -34,16 +34,18 @@ Coolify is configured to deploy from the Git repository. The typical flow is:
 3. Click the **Redeploy** or **Restart** button on the application tile.
 4. Watch the **Deployments** tab for build logs.
 
-### Manual Redeploy (via API)
-If an API token has been generated inside Coolify (see [Infrastructure](./infrastructure.md)), you can trigger deployments programmatically:
+### Manual Redeploy (via CLI)
+
+Use the `coolify` CLI (part of the `skill-creator:coolify` Claude skill). Run from the project root — it reads `.env` automatically:
 
 ```bash
-# Example: restart application by UUID
-curl -X GET "<YOUR_COOLIFY_URL>/api/v1/applications/{uuid}/restart" \
-  -H "Authorization: Bearer <COOLIFY_API_TOKEN>"
+coolify status       # check health
+coolify deploy       # trigger a new build + deployment
+coolify logs 200     # tail recent logs
+coolify envs         # list production env vars
 ```
 
-> The UI password cannot be used for API calls. Generate a dedicated token at **Keys & Tokens > API tokens** inside Coolify.
+The CLI is installed globally at `~/.local/bin/coolify`. See the skill for the full command reference and API token setup (`COOLIFY_API_TOKEN` in `.env`).
 
 ---
 
