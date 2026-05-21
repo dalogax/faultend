@@ -189,6 +189,19 @@ function validateRule(ruleData) {
     }
   }
 
+  if (ruleData.transform !== undefined && ruleData.transform !== null) {
+    if (typeof ruleData.transform !== 'string') {
+      errors.push('transform must be a string containing JavaScript code');
+    } else {
+      try {
+        const vm = require('vm');
+        new vm.Script(ruleData.transform);
+      } catch (e) {
+        errors.push(`transform is not valid JavaScript: ${e.message}`);
+      }
+    }
+  }
+
   if (errors.length > 0) {
     throw new Error(`Rule validation failed:\n- ${errors.join('\n- ')}`);
   }
@@ -317,6 +330,27 @@ async function executeMockRule(serverId, rule, req, res) {
 
   const startTime = Date.now();
 
+  const { renderTemplate } = require('./templateEngine');
+  const renderedBody = renderTemplate(body, req);
+
+  // Build mutable response object for transform
+  let responseObj = {
+    status: statusCode,
+    headers: headers ? { ...headers } : {},
+    body: renderedBody
+  };
+
+  // Apply transform (runs after mock but before latency)
+  if (rule.transform) {
+    const { runTransform } = require('./transformEngine');
+    try {
+      responseObj = runTransform(rule.transform, responseObj);
+      console.log(`[MOCK] Transform applied for rule: ${rule.name}`);
+    } catch (e) {
+      console.error(`[MOCK] Transform error in rule ${rule.name}:`, e.message);
+    }
+  }
+
   let actualLatency = 0;
   if (latency) {
     if (typeof latency === 'number') {
@@ -330,22 +364,19 @@ async function executeMockRule(serverId, rule, req, res) {
     }
   }
 
-  console.log(`[MOCK] Executing mock rule: ${rule.name} (${statusCode}, latency: ${actualLatency}ms)`);
+  console.log(`[MOCK] Executing mock rule: ${rule.name} (${responseObj.status}, latency: ${actualLatency}ms)`);
 
   if (actualLatency > 0) {
     await new Promise(resolve => setTimeout(resolve, actualLatency));
   }
 
-  const { renderTemplate } = require('./templateEngine');
-  const renderedBody = renderTemplate(body, req);
-
-  if (headers) {
-    Object.entries(headers).forEach(([key, value]) => {
+  if (responseObj.headers) {
+    Object.entries(responseObj.headers).forEach(([key, value]) => {
       res.setHeader(key, value);
     });
   }
 
-  res.status(statusCode).json(renderedBody);
+  res.status(responseObj.status).json(responseObj.body);
 
   const { logTransaction } = require('../storage/traffic');
   
@@ -363,11 +394,11 @@ async function executeMockRule(serverId, rule, req, res) {
       contentType: req.headers['content-type'] || null
     },
     response: {
-      statusCode: statusCode,
+      statusCode: responseObj.status,
       statusMessage: res.statusMessage,
-      headers: headers || {},
-      body: renderedBody,
-      bodySize: Buffer.byteLength(JSON.stringify(renderedBody)),
+      headers: responseObj.headers || {},
+      body: responseObj.body,
+      bodySize: Buffer.byteLength(JSON.stringify(responseObj.body)),
       contentType: 'application/json'
     },
     duration: duration,
@@ -400,7 +431,7 @@ async function executeProxyRule(serverId, rule, req, res, next) {
     await new Promise(resolve => setTimeout(resolve, delay));
   }
 
-  const { executeProxy } = require('../proxy/proxyHandler');
+  const { executeProxy, executeProxyWithTransform } = require('../proxy/proxyHandler');
 
   req.serverId = serverId;
   req.matchedRule = {
@@ -411,7 +442,12 @@ async function executeProxyRule(serverId, rule, req, res, next) {
     ...(rule.modifyRequestHeaders && { modifyRequestHeaders: rule.modifyRequestHeaders })
   };
 
-  executeProxy(rule.target, req, res, next);
+  if (rule.transform) {
+    const { runTransform } = require('./transformEngine');
+    executeProxyWithTransform(rule.target, req, res, next, runTransform, rule.transform);
+  } else {
+    executeProxy(rule.target, req, res, next);
+  }
 }
 
 async function executeRule(serverId, rule, req, res, next) {

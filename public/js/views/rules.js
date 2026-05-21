@@ -242,6 +242,7 @@ class RuleForm {
         latencyValue: this.getLatencyValue(latencySource),
         latencyMin: latencySource?.min || 100,
         latencyMax: latencySource?.max || 500,
+        transform: this.existingRule.transform || '',
         conditions: this.existingRule.conditions || []
       };
     } else if (this.trafficLog) {
@@ -259,6 +260,7 @@ class RuleForm {
         latencyValue: 0,
         latencyMin: 100,
         latencyMax: 500,
+        transform: '',
         conditions: []
       };
     } else {
@@ -276,6 +278,7 @@ class RuleForm {
         latencyValue: 0,
         latencyMin: 100,
         latencyMax: 500,
+        transform: '',
         conditions: []
       };
     }
@@ -310,7 +313,7 @@ class RuleForm {
       <div class="rule-form">
         ${this.renderBasicFields()}
         ${this.renderActionFields()}
-        ${this.renderAdvancedOptions()}
+        ${this.renderTransformFields()}
         <div class="form-actions">
           <button type="button" class="btn" id="saveRuleBtn">Save Rule</button>
         </div>
@@ -447,8 +450,34 @@ class RuleForm {
     `;
   }
 
-  renderAdvancedOptions() {
-    return '';
+  renderTransformFields() {
+    const hasTransform = !!this.formData.transform;
+    const defaultCode = `// res.status, res.headers, res.body are available
+// Example: add a header and trim the body array
+// res.headers['x-transformed'] = 'true';
+// if (Array.isArray(res.body)) res.body = res.body.slice(0, 5);`;
+
+    return `
+      <div class="form-section">
+        <h3>Transform</h3>
+        <p class="form-hint" style="margin-bottom: 12px">Optional JavaScript that runs after the mock/proxy response is received and before latency is applied. Modify <code>res.status</code>, <code>res.headers</code>, or <code>res.body</code>.</p>
+
+        <div class="form-field">
+          <label class="checkbox-label">
+            <input type="checkbox" id="transformEnabled" ${hasTransform ? 'checked' : ''}>
+            <span>Enable transform</span>
+          </label>
+        </div>
+
+        <div id="transformFields" style="display: ${hasTransform ? 'block' : 'none'}">
+          <div class="form-field">
+            <label for="transformCode">JavaScript code</label>
+            <textarea id="transformCode" class="input" rows="8" style="font-family: monospace; font-size: 13px">${this.formData.transform || defaultCode}</textarea>
+            ${this.renderError('transform')}
+          </div>
+        </div>
+      </div>
+    `;
   }
 
   renderError(field) {
@@ -475,6 +504,13 @@ class RuleForm {
         this.toggleLatencyFields(e.target.value);
       });
     });
+
+    const transformToggle = document.getElementById('transformEnabled');
+    if (transformToggle) {
+      transformToggle.addEventListener('change', (e) => {
+        document.getElementById('transformFields').style.display = e.target.checked ? 'block' : 'none';
+      });
+    }
   }
 
   toggleActionFields(action) {
@@ -535,6 +571,14 @@ class RuleForm {
         body: JSON.parse(document.getElementById('mockBody').value)
       };
       if (latency) data.mockResponse.latency = latency;
+    }
+
+    const transformEnabled = document.getElementById('transformEnabled')?.checked;
+    if (transformEnabled) {
+      const code = document.getElementById('transformCode')?.value?.trim();
+      if (code) data.transform = code;
+    } else {
+      data.transform = null;
     }
 
     return data;

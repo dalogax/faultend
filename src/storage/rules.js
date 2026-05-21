@@ -37,8 +37,8 @@ async function addRule(serverId, ruleData) {
   const name = ruleData.name || generateRuleName(ruleData.pathRegex, ruleData.action);
   
   const result = await pool.query(
-    `INSERT INTO rules (id, server_id, priority, enabled, name, method, path_regex, action, target, mock_response, conditions, request_headers, latency)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+    `INSERT INTO rules (id, server_id, priority, enabled, name, method, path_regex, action, target, mock_response, conditions, request_headers, latency, transform)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
      RETURNING *`,
     [
       ruleId,
@@ -53,7 +53,8 @@ async function addRule(serverId, ruleData) {
       ruleData.mockResponse ? JSON.stringify(ruleData.mockResponse) : null,
       ruleData.conditions ? JSON.stringify(ruleData.conditions) : '[]',
       ruleData.requestHeaders ? JSON.stringify(ruleData.requestHeaders) : '{}',
-      ruleData.latency ? JSON.stringify(ruleData.latency) : null
+      ruleData.latency ? JSON.stringify(ruleData.latency) : null,
+      ruleData.transform || null
     ]
   );
   
@@ -73,8 +74,8 @@ async function updateRule(serverId, ruleId, updates) {
     `UPDATE rules
      SET priority = $1, enabled = $2, name = $3, method = $4, path_regex = $5,
          action = $6, target = $7, mock_response = $8, conditions = $9, request_headers = $10,
-         latency = $11, updated_at = NOW()
-     WHERE id = $12 AND server_id = $13`,
+         latency = $11, transform = $12, updated_at = NOW()
+     WHERE id = $13 AND server_id = $14`,
     [
       merged.priority,
       merged.enabled,
@@ -87,6 +88,7 @@ async function updateRule(serverId, ruleId, updates) {
       merged.conditions ? JSON.stringify(merged.conditions) : '[]',
       merged.requestHeaders ? JSON.stringify(merged.requestHeaders) : '{}',
       merged.latency ? JSON.stringify(merged.latency) : null,
+      merged.transform || null,
       ruleId,
       server.id
     ]
@@ -184,6 +186,10 @@ function ruleFromRow(row, serverId) {
 
   if (row.latency) {
     rule.latency = typeof row.latency === 'string' ? JSON.parse(row.latency) : row.latency;
+  }
+
+  if (row.transform) {
+    rule.transform = row.transform;
   }
 
   return rule;

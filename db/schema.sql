@@ -105,6 +105,7 @@ CREATE TABLE IF NOT EXISTS rules (
   conditions    JSONB DEFAULT '[]',
   request_headers JSONB DEFAULT '{}',
   latency       JSONB,
+  transform     TEXT,
   created_at    TIMESTAMPTZ DEFAULT NOW(),
   updated_at    TIMESTAMPTZ DEFAULT NOW()
 );
@@ -117,6 +118,17 @@ BEGIN
     WHERE table_name = 'rules' AND column_name = 'latency'
   ) THEN
     ALTER TABLE rules ADD COLUMN latency JSONB;
+  END IF;
+END $$;
+
+-- Migration: Add transform column to rules table if it doesn't exist
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'rules' AND column_name = 'transform'
+  ) THEN
+    ALTER TABLE rules ADD COLUMN transform TEXT;
   END IF;
 END $$;
 
