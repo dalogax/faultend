@@ -145,6 +145,24 @@ export async function removeCollaborator(serverId, userId) {
   });
 }
 
+export async function makeCollaboratorAdmin(serverId, userId) {
+  return request(`${API_BASE.app}/api/servers/${serverId}/invite/collaborators/${userId}/admin`, {
+    method: 'PUT'
+  });
+}
+
+export async function removeCollaboratorAdmin(serverId, userId) {
+  return request(`${API_BASE.app}/api/servers/${serverId}/invite/collaborators/${userId}/admin`, {
+    method: 'DELETE'
+  });
+}
+
+export async function transferOwnership(serverId, userId) {
+  return request(`${API_BASE.app}/api/servers/${serverId}/invite/transfer-ownership/${userId}`, {
+    method: 'POST'
+  });
+}
+
 export async function previewInvite(token) {
   return request(`${API_BASE.app}/api/invite/${token}`);
 }

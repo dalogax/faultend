@@ -316,3 +316,29 @@ tr:hover {
   color: var(--color-gray-dark);
 }
 
+
+/* Role badges */
+.badge {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 3px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.badge-owner {
+  background: var(--color-primary);
+  color: var(--color-white);
+}
+
+.badge-admin {
+  background: var(--color-black);
+  color: var(--color-white);
+}
+
+.badge-shared {
+  background: var(--color-gray-light);
+  color: var(--color-gray-dark);
+}

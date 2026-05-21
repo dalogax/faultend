@@ -62,8 +62,12 @@ async function getServerById(id) {
 
 async function getAllServers(userId) {
   const result = await pool.query(
-    `SELECT s.*, 
+    `SELECT s.*,
       CASE WHEN s.owner_id = $1 THEN true ELSE false END as is_owner,
+      COALESCE(
+        (SELECT sc.role = 'admin' FROM server_collaborators sc WHERE sc.server_id = s.id AND sc.user_id = $1),
+        false
+      ) as is_admin,
       (SELECT COUNT(*) FROM server_collaborators WHERE server_id = s.id) as collaborators_count,
       (SELECT COUNT(*) FROM rules WHERE server_id = s.id) as rules_count,
       (SELECT COUNT(*) FROM traffic WHERE server_id = s.id) as traffic_count
@@ -85,13 +89,13 @@ async function serverExists(serverId) {
   return result.rowCount > 0;
 }
 
-async function addCollaborator(serverId, userId) {
+async function addCollaborator(serverId, userId, role = 'collaborator') {
   const server = await getServer(serverId);
   if (!server) throw new Error(`Server '${serverId}' not found`);
-  
+
   await pool.query(
-    'INSERT INTO server_collaborators (server_id, user_id) VALUES ($1, $2) ON CONFLICT DO NOTHING',
-    [server.id, userId]
+    'INSERT INTO server_collaborators (server_id, user_id, role) VALUES ($1, $2, $3) ON CONFLICT (server_id, user_id) DO UPDATE SET role = $3',
+    [server.id, userId, role]
   );
 }
 
@@ -108,9 +112,9 @@ async function removeCollaborator(serverId, userId) {
 async function getCollaborators(serverId) {
   const server = await getServer(serverId);
   if (!server) return [];
-  
+
   const result = await pool.query(
-    `SELECT u.id, u.email, u.name, u.avatar_url, sc.created_at as joined_at
+    `SELECT u.id, u.email, u.name, u.avatar_url, sc.role, sc.created_at as joined_at
      FROM users u
      JOIN server_collaborators sc ON u.id = sc.user_id
      WHERE sc.server_id = $1`,
@@ -185,6 +189,69 @@ async function isOwner(serverId, userId) {
   return server.owner_id === userId;
 }
 
+async function isAdmin(serverId, userId) {
+  const server = await getServer(serverId);
+  if (!server) return false;
+  const result = await pool.query(
+    "SELECT 1 FROM server_collaborators WHERE server_id = $1 AND user_id = $2 AND role = 'admin'",
+    [server.id, userId]
+  );
+  return result.rowCount > 0;
+}
+
+async function canAdminServer(serverId, userId) {
+  if (await isOwner(serverId, userId)) return true;
+  return isAdmin(serverId, userId);
+}
+
+async function makeAdmin(serverId, userId) {
+  const server = await getServer(serverId);
+  if (!server) throw new Error(`Server '${serverId}' not found`);
+  const result = await pool.query(
+    "UPDATE server_collaborators SET role = 'admin' WHERE server_id = $1 AND user_id = $2",
+    [server.id, userId]
+  );
+  if (result.rowCount === 0) throw new Error('Collaborator not found');
+}
+
+async function removeAdmin(serverId, userId) {
+  const server = await getServer(serverId);
+  if (!server) throw new Error(`Server '${serverId}' not found`);
+  const result = await pool.query(
+    "UPDATE server_collaborators SET role = 'collaborator' WHERE server_id = $1 AND user_id = $2",
+    [server.id, userId]
+  );
+  if (result.rowCount === 0) throw new Error('Collaborator not found');
+}
+
+async function transferOwnership(serverId, newOwnerUserId) {
+  const server = await getServer(serverId);
+  if (!server) throw new Error(`Server '${serverId}' not found`);
+
+  const newOwner = await findUserById(newOwnerUserId);
+  if (!newOwner) throw new Error('User not found');
+
+  const isCollab = await isCollaborator(serverId, newOwnerUserId);
+  if (!isCollab) throw new Error('User must be a collaborator to receive ownership');
+
+  await pool.query('BEGIN');
+  try {
+    await pool.query('UPDATE servers SET owner_id = $1 WHERE id = $2', [newOwnerUserId, server.id]);
+    await pool.query(
+      'DELETE FROM server_collaborators WHERE server_id = $1 AND user_id = $2',
+      [server.id, newOwnerUserId]
+    );
+    await pool.query(
+      "INSERT INTO server_collaborators (server_id, user_id, role) VALUES ($1, $2, 'admin') ON CONFLICT (server_id, user_id) DO UPDATE SET role = 'admin'",
+      [server.id, server.owner_id]
+    );
+    await pool.query('COMMIT');
+  } catch (err) {
+    await pool.query('ROLLBACK');
+    throw err;
+  }
+}
+
 module.exports = {
   createUser,
   findUserByGoogleId,
@@ -207,5 +274,10 @@ module.exports = {
   clearInviteToken,
   findServerByInviteToken,
   canAccessServer,
-  isOwner
+  isOwner,
+  isAdmin,
+  canAdminServer,
+  makeAdmin,
+  removeAdmin,
+  transferOwnership
 };
