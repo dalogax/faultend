@@ -218,25 +218,74 @@ Place migration blocks **before** the corresponding `CREATE TABLE IF NOT EXISTS`
 8. **Merge:** Squash or merge commit as appropriate
 9. **Deploy:** Coolify auto-deploys `main` (see [Deployment Guide](./deployment.md))
 
-### Screenshots in Pull Requests
+### PR Body Structure
 
-**Never commit screenshot files to the repository.** Upload them as GitHub release assets instead:
+Every PR should have:
+
+```
+## Summary
+Closes #<issue>
+
+- Bullet summarising what changed and why (user-visible behaviour first)
+
+## Changes
+**Backend:** list of files + what each one does
+**Frontend:** list of files + what each one does
+
+## Screenshots
+(one screenshot per meaningful UI state — see workflow below)
+
+## Test plan
+- [ ] Checkbox items the reviewer should manually verify
+```
+
+### Taking Screenshots
+
+Screenshots are **evidence that the UI change works** — take one per meaningful state (e.g. form open, form filled, result visible). Run Playwright from the repo root so `node_modules/playwright` is found:
+
+```javascript
+// screenshot_<feature>.js  — run from repo root, delete after use
+const { chromium } = require('playwright');
+(async () => {
+  const browser = await chromium.launch({
+    executablePath: '/home/dalogax/.cache/ms-playwright/chromium-1224/chrome-linux/chrome',
+    headless: true
+  });
+  const page = await browser.newPage();
+
+  // Log in via dev-login (requires MOCK_AUTH_ENABLED=true)
+  await page.goto('http://app.localhost:3000/api/auth/dev-login');
+  await page.waitForTimeout(2000);
+
+  // Navigate to the feature and take screenshots
+  await page.goto('http://app.localhost:3000/#server/test-server');
+  await page.waitForTimeout(1500);
+  await page.screenshot({ path: '/tmp/my-feature.png' });
+
+  await browser.close();
+})();
+```
+
+### Attaching Screenshots to a PR
+
+**Never commit screenshot PNG files to the repository.** Upload them to the persistent `pr-screenshots` GitHub release instead:
 
 ```bash
-# 1. Take screenshots locally (e.g. with Playwright from the repo root)
-node screenshot_script.js   # saves PNGs to /tmp/
-
-# 2. Upload to the persistent pr-screenshots release
+# Upload (--clobber overwrites if the filename already exists)
 gh release upload pr-screenshots /tmp/my-feature.png --clobber
 
-# 3. Reference in the PR body using the download URL:
+# The permanent URL to embed in the PR body:
 # https://github.com/dalogax/faultend/releases/download/pr-screenshots/my-feature.png
 ```
 
-The `pr-screenshots` pre-release tag exists on the repo for this purpose. If you need to recover screenshots after accidentally committing and then removing them, extract from git history:
+Embed in the PR body as markdown:
+```markdown
+![description](https://github.com/dalogax/faultend/releases/download/pr-screenshots/my-feature.png)
+```
 
+If you need to recover a screenshot that was accidentally committed and then removed:
 ```bash
-git show <commit-sha>:docs/screenshots/my-file.png > /tmp/my-file.png
+git show <commit-sha>:path/to/file.png > /tmp/file.png
 ```
 
 ---
