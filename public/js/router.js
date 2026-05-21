@@ -8,7 +8,6 @@ class ViewRouter {
     this.serverManagementView = document.getElementById('serverManagementView');
     
     this.bindEvents();
-    this.route();
   }
 
   bindEvents() {
@@ -203,7 +202,7 @@ class ViewRouter {
   async removeCollaborator(userId) {
     try {
       await removeCollaborator(this.currentServerId, userId);
-      const server = window.faultendApp?.servers?.find(s => s.id === this.currentServerId);
+      const server = window.faultendApp?.servers?.find(s => s.server_id === this.currentServerId);
       this.loadCollaborators(server?.is_owner);
     } catch (error) {
       console.error('Failed to remove collaborator:', error);
@@ -265,7 +264,7 @@ class ViewRouter {
       const rulesData = await fetchRules(this.currentServerId);
       const rules = rulesData.rules || [];
       const servers = window.faultendApp?.servers || [];
-      const server = servers.find(s => s.id === this.currentServerId) || { id: this.currentServerId };
+      const server = servers.find(s => s.server_id === this.currentServerId) || { server_id: this.currentServerId };
       
       const exportData = {
         version: '1.0',
