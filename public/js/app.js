@@ -40,9 +40,7 @@ class App {
     this.bindServerSelector();
     this.bindViewLoad();
 
-    if (this.router.currentServerId === null) {
-      this.renderServerList();
-    }
+    this.router.route();
 
     console.log('Application initialized');
   }
