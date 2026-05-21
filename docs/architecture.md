@@ -9,33 +9,33 @@ This document describes the technical architecture, codebase structure, and key 
 A small reverse proxy optimized strictly for REST + JSON:
 - Routes requests based on priority-ordered rules
 - Rules can either mock responses OR proxy to specified backends
-- Supports multiple backend targets (microservices-friendly)
-- Applies mock rules on the fly (status, body, latency)
-- Stores traffic logs and rule definitions
-- Exposes a simple API for the frontend
+- Optional JS transform step runs against the response before it is sent
+- Applies latency (fixed or range) to both mock and proxy responses
+- Persists traffic logs, rule definitions, users, and servers in PostgreSQL
+- Session-based authentication via Google and GitHub OAuth
+- Exposes a REST API for the frontend
 
 **Tech Stack:**
 - Node.js with Express
-- http-proxy-middleware for proxying
+- PostgreSQL (via `pg` + `pg-pool`)
+- `http-proxy-middleware` for proxying
+- `connect-pg-simple` + `express-session` for sessions
+- `passport` + `passport-google-oauth20` + `passport-github2` for OAuth
+- Node.js `vm` module for sandboxed JS transform execution
 - Vanilla JavaScript (no compilation required)
 
 ## Frontend
 
-A UI built for clarity and speed:
+A single-page application served as static files:
+- Hash-based routing (`#server/:id`, `#invite/:token`)
 - Real-time traffic viewer with auto-refresh
-- Server creation with manual/import modes (ID-only manual form)
-- Copyable server URL in top bar for easy access
-- One-click creation of mock OR proxy rules from traffic logs
-- Rule editor with full CRUD operations
-- Rules list with priority management and enable/disable controls
-- Export functionality in Settings drawer
-- Import functionality for server configurations
-- Drawer-based modal system
-- Custom confirmation dialogs (no browser popups)
-- Error-only toast notifications (no success toasts)
+- Rule editor with CRUD, latency controls, and optional JS transform field
+- Settings drawer: export config, invite link generation, collaborators list with role management
+- Server list with owner/admin/shared role badges
+- Login overlay with Google and GitHub OAuth buttons
 
 **Tech Stack:**
-- Vanilla HTML, CSS, JavaScript
+- Vanilla HTML, CSS, JavaScript (ES modules)
 - No build process or compilation
 - Served as static files from Express
 
@@ -46,25 +46,21 @@ A UI built for clarity and speed:
 ```
 Client Request
     ↓
-Faultend Proxy
+Faultend Proxy (subdomain routing)
     ↓
 Check Rules (by priority, high to low)
     ↓
 Rule Match? → Yes → Action Type?
                        ↓
-                   Mock → Return Custom Response (Status + JSON + Latency)
+                   Mock  → Build response → [Transform] → [Latency] → Send
                        ↓
-                   Proxy → Forward to Rule's Target Backend
-                       ↓
-                   Backend Response
-                       ↓
-Rule Match? → No → Return 502 (No matching rule)
+                   Proxy → [Latency] → Forward to target backend
+                             → Buffer response → [Transform] → Send
+Rule Match? → No → 502
     ↓
-Log Traffic
-    ↓
-Return to Client
+Log Traffic (PostgreSQL)
 
-Frontend UI ←→ API ←→ Traffic & Rules Store
+Frontend UI ←→ API (app.* subdomain) ←→ PostgreSQL
 ```
 
 ---
@@ -72,78 +68,87 @@ Frontend UI ←→ API ←→ Traffic & Rules Store
 ## Directory Structure
 
 ```
-Faultend/
-├── .env                        # Environment configuration (SAMPLE_DATA, ROOT_DOMAIN, PORT)
-├── .gitignore
-├── .tool-versions              # Node version (20.18.1)
-├── package.json                # v0.1.0, includes dotenv
-├── package-lock.json
-├── playwright.config.js        # Playwright test configuration
-├── README.md                   # User-facing documentation
-├── agents.md                   # Index for AI assistants
+faultend/
+├── .env                          # Local environment config (gitignored)
+├── .env.example                  # Template for env vars (no credentials)
+├── agents.md                     # AI agent directives (CLAUDE.md symlinks here)
+├── CLAUDE.md -> agents.md        # Symlink — read by Claude Code automatically
+├── db/
+│   └── schema.sql                # Full schema + idempotent migration blocks
 │
 ├── src/
-│   ├── index.js                # Main entry point with dotenv, sample data init
-│   ├── server.js               # Express server with subdomain routing, CORS
+│   ├── index.js                  # Entry point: DB connect, migrate, sample data, listen
+│   ├── server.js                 # Express app: CORS, sessions, routes, auth middleware
+│   ├── auth/
+│   │   ├── passport.js           # Google + GitHub Passport strategies
+│   │   ├── routes.js             # /api/auth/google, /github, /me, /logout, /dev-login
+│   │   └── middleware.js         # authRequired, requireServerAccess, requireOwner
+│   ├── db/
+│   │   ├── pool.js               # pg-pool singleton
+│   │   └── migrate.js            # Runs schema.sql on startup (idempotent)
 │   ├── middleware/
-│   │   └── subdomainRouter.js  # Subdomain detection and serverId extraction
-│   ├── utils/
-│   │   └── subdomain.js        # Subdomain parsing helpers
-│   ├── proxy/
-│   │   ├── config.js           # Proxy configuration
-│   │   ├── proxyHandler.js     # HTTP proxy handler
-│   │   └── router.js           # Rules-based routing
-│   ├── traffic/
-│   │   └── trafficLogger.js    # Traffic logging
-│   ├── rules/
-│   │   ├── rulesEngine.js      # Rules matching, execution, conditions
-│   │   ├── templateEngine.js   # Template variable rendering
-│   │   └── rulesManager.js     # Placeholder for future enhancements
+│   │   └── subdomainRouter.js    # Sets req.routeType, req.serverId from Host header
 │   ├── api/
-│   │   ├── servers.js          # Fault server management API
-│   │   ├── traffic.js          # Traffic API endpoints
-│   │   └── rules.js            # Rules management API
-│   └── storage/
-│       └── storage.js          # In-memory storage
+│   │   ├── servers.js            # CRUD for fault servers
+│   │   ├── rules.js              # Rules CRUD + toggle + export/import
+│   │   ├── traffic.js            # Traffic read/delete/stats
+│   │   ├── collaborators.js      # Invite generation, collaborator list, admin promotion
+│   │   └── invite.js             # Invite preview + acceptance (open, no owner required)
+│   ├── proxy/
+│   │   ├── config.js             # Proxy defaults (timeout, changeOrigin, etc.)
+│   │   ├── proxyHandler.js       # createFaultendProxy, executeProxy, executeProxyWithTransform
+│   │   └── router.js             # Applies rules engine, dispatches mock/proxy
+│   ├── rules/
+│   │   ├── rulesEngine.js        # findMatchingRule, executeMockRule, executeProxyRule, validateRule
+│   │   ├── templateEngine.js     # {{uuid()}}, {{random()}}, etc. in mock bodies
+│   │   └── transformEngine.js    # vm.Script sandbox for user JS transforms
+│   ├── storage/
+│   │   ├── storage.js            # Re-exports everything (users + rules + traffic)
+│   │   ├── users.js              # Users, servers, collaborators, invite tokens, roles
+│   │   ├── rules.js              # Rules CRUD + ruleFromRow mapping
+│   │   └── traffic.js            # logTransaction, getTraffic, clearTraffic, stats
+│   └── utils/
+│       └── subdomain.js          # Subdomain parsing helpers
 │
-├── public/                     # Static frontend files
-│   ├── landing.html            # Landing page
-│   ├── app.html                # Main app UI
-│   ├── img/faultend.svg       # Logo (48px)
+├── public/                       # Static frontend (no build step)
+│   ├── app.html                  # SPA shell
+│   ├── landing.html              # Marketing landing page
 │   ├── css/
-│   │   ├── reset.css           # CSS reset
-│   │   ├── variables.css       # Design system tokens
-│   │   ├── components.css      # Reusable components + ConfirmDialog
-│   │   ├── layout.css          # Responsive layout system
-│   │   ├── drawer.css          # Drawer styles
-│   │   └── app.css             # App-specific styles + server URL display
+│   │   ├── variables.css         # Design tokens
+│   │   ├── components.css        # Shared UI components
+│   │   ├── layout.css            # Grid + responsive layout
+│   │   ├── drawer.css            # Right-side drawer
+│   │   └── app.css               # App-specific + role badge styles
 │   └── js/
-│       ├── config.js           # Configuration
-│       ├── api.js              # API client
-│       ├── components.js       # UI components (Toast, ConfirmDialog, Badges)
-│       ├── drawer.js           # Drawer controller
-│       ├── router.js           # View router + server URL + export in Settings
-│       ├── app.js              # Main application controller
+│       ├── config.js             # API_BASE, buildSubdomainUrl
+│       ├── api.js                # All fetch wrappers (servers, rules, traffic, auth, invite)
+│       ├── auth.js               # AuthManager (fetchMe, signOut, getLoginUrl)
+│       ├── app.js                # Root controller: server list, create/delete server
+│       ├── router.js             # Hash router + settings drawer + invite acceptance
+│       ├── drawer.js             # DrawerController (open, close, setContent)
+│       ├── components.js         # Toast, ConfirmDialog
 │       └── views/
-│           ├── traffic.js      # Traffic view logic
-│           └── rules.js        # Rules view logic
+│           ├── traffic.js        # Traffic polling + rendering
+│           ├── rules.js          # Rules CRUD form + latency + transform fields
+│           └── config.js         # Export config view
 │
-└── tests/                      # Test files
-    ├── backend.test.js         # Backend integration tests (36 tests)
-    └── frontend.spec.js        # Frontend Playwright tests (43 tests × 2 browsers)
+└── tests/
+    ├── backend.test.js           # Integration tests (Node.js + real DB)
+    └── frontend.spec.js          # Playwright E2E tests
 ```
 
 ---
 
 ## Key Technical Decisions
 
-1. **Single Repository:** Backend and frontend in same repo for simplicity
-2. **No Build Step:** Vanilla JS only, no compilation or bundling
-3. **Express for Everything:** Handles both API routes and static file serving
-4. **In-Memory Storage:** Current implementation stores data in memory (persistence planned for future)
-5. **JSON-Focused:** Optimized specifically for REST + JSON APIs
-6. **Minimal Dependencies:** Only essential packages to keep it lightweight
-7. **Rules-Based Routing:** All proxy/mock behavior configured via priority-ordered rules
+1. **No Build Step:** Vanilla JS ES modules served directly — no Webpack, Vite, or TypeScript.
+2. **PostgreSQL for Everything:** Users, servers, rules, traffic, sessions all in one Postgres DB. Schema applied at startup via `db/schema.sql` (idempotent).
+3. **Schema Migrations via `DO $$ IF NOT EXISTS $$`:** Each new column or table is wrapped in a guard block so the same `schema.sql` can run safely on a production DB that already has data.
+4. **Subdomain Routing:** `app.*` serves the management UI/API; `<server-id>.*` serves the fault proxy. Determined from the `Host` header in `subdomainRouter.js`.
+5. **Session Auth:** Passport OAuth with sessions stored in PostgreSQL (`connect-pg-simple`). `MOCK_AUTH_ENABLED=true` adds a `/api/auth/dev-login` shortcut for local development.
+6. **vm Sandbox for Transforms:** User-supplied JS runs in a Node.js `vm.Script` with a 1-second timeout. The sandbox only exposes the `res` object — no Node.js globals.
+7. **`responseInterceptor` for Proxy Transforms:** `http-proxy-middleware`'s `selfHandleResponse + responseInterceptor` buffers the upstream response so transforms can mutate it before it reaches the client.
+8. **Role-Based Collaboration:** `server_collaborators.role` is `collaborator` or `admin`. Owners are identified by `servers.owner_id`. Ownership transfer moves the old owner into the collaborators table as admin atomically.
 
 ---
 

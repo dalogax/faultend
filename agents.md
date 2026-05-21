@@ -14,8 +14,10 @@
 | **Add or change a feature** | [Features](./docs/features.md) | Existing capabilities, what's in/out of scope, user-facing behavior |
 | **Change how traffic is proxied or mocked** | [Workflow](./docs/workflow.md) | End-to-end user flow, how rules are evaluated, traffic lifecycle |
 | **Add, remove, or modify an API endpoint** | [API Reference](./docs/api-reference.md) | Endpoint patterns, data models, auth requirements, response formats |
+| **Modify the DB schema** | [Development Workflow](./docs/development.md) | Idempotent migration pattern — every change needs a `DO $$ IF NOT EXISTS $$` guard |
 | **Write or modify tests** | [Testing](./docs/testing.md) | Test structure, running commands, coverage areas, mocking strategy |
-| **Set up local development environment** | [Development Workflow](./docs/development.md) | Local setup, dependencies, branching, PR workflow, code style |
+| **Open a pull request with UI changes** | [Development Workflow](./docs/development.md) | Screenshot workflow: upload to GitHub release, reference in PR body — never commit PNGs |
+| **Set up local development environment** | [Development Workflow](./docs/development.md) | Local setup, DB setup, env vars, branching, PR workflow |
 | **Deploy to production or troubleshoot a deployment** | [Deployment Guide](./docs/deployment.md) | Deploy pipeline, environment variables, health checks, rollback |
 | **Provision infrastructure or debug networking/DNS** | [Infrastructure & Operations](./docs/infrastructure.md) | Server details, Coolify, Traefik, Cloudflare, networking topology |
 | **Install on a new server or self-host** | [Installation Guide](./docs/installation.md) | Generic self-hosting instructions with Traefik, domain requirements |
