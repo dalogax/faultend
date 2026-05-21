@@ -76,6 +76,24 @@ router.get('/collaborators', async (req, res) => {
   }
 });
 
+router.delete('/collaborators/me', async (req, res) => {
+  try {
+    const serverId = req.serverId;
+    const userId = req.session.userId;
+
+    const owner = await isOwner(serverId, userId);
+    if (owner) {
+      return res.status(403).json({ error: 'Forbidden', message: 'The owner cannot leave the server. Transfer ownership first.' });
+    }
+
+    await removeCollaborator(serverId, userId);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('[COLLABORATION] Error leaving server:', error);
+    res.status(500).json({ error: 'Internal Server Error', message: error.message });
+  }
+});
+
 router.delete('/collaborators/:userId', async (req, res) => {
   try {
     const serverId = req.serverId;

@@ -1,5 +1,6 @@
 import { buildSubdomainUrl } from './config.js';
-import { generateInvite, revokeInvite, fetchCollaborators, removeCollaborator, makeCollaboratorAdmin, removeCollaboratorAdmin, transferOwnership } from './api.js';
+import { generateInvite, revokeInvite, fetchCollaborators, removeCollaborator, leaveServer, makeCollaboratorAdmin, removeCollaboratorAdmin, transferOwnership } from './api.js';
+import { authManager } from './auth.js';
 
 class ViewRouter {
   constructor() {
@@ -66,6 +67,7 @@ class ViewRouter {
 
       <div class="drawer-footer">
         ${isOwner ? `<button id="deleteServerBtn" class="btn-danger">Delete Server</button>` : ''}
+        ${!isOwner ? `<button id="leaveServerBtn" class="btn-danger">Leave Server</button>` : ''}
       </div>
     `);
     drawer.open();
@@ -78,6 +80,11 @@ class ViewRouter {
     const deleteBtn = document.getElementById('deleteServerBtn');
     if (deleteBtn) {
       deleteBtn.addEventListener('click', () => app.deleteCurrentServer());
+    }
+
+    const leaveBtn = document.getElementById('leaveServerBtn');
+    if (leaveBtn) {
+      leaveBtn.addEventListener('click', () => this.leaveCurrentServer());
     }
 
     if (canAdmin) {
@@ -149,34 +156,32 @@ class ViewRouter {
     if (!container) return;
     try {
       const result = await fetchCollaborators(this.currentServerId);
-
-      if (result.collaborators.length === 0) {
-        container.innerHTML = '<p class="text-gray text-sm">No collaborators yet</p>';
-        return;
-      }
-
       const app = window.faultendApp;
       const server = app.servers.find(s => s.server_id === this.currentServerId);
       const canAdmin = server ? (server.is_owner || server.is_admin) : false;
+      const currentUserId = authManager.getUser()?.id;
 
       container.innerHTML = `
-        <p class="text-sm" style="margin-bottom: var(--space-sm);"><strong>Collaborators:</strong></p>
-        ${result.collaborators.map(c => `
+        <p class="text-sm" style="margin-bottom: var(--space-sm);"><strong>Members:</strong></p>
+        ${result.collaborators.map(c => {
+          const isSelf = c.id === currentUserId;
+          const isCollabOwner = c.role === 'owner';
+          return `
           <div style="display: flex; justify-content: space-between; align-items: center; padding: var(--space-sm) 0; border-bottom: 1px solid var(--color-gray-light);">
-            <div>
+            <div style="display: flex; align-items: center; gap: var(--space-sm);">
               <span>${c.name || c.email}</span>
-              ${c.role === 'admin' ? `<span class="badge badge-admin" style="margin-left: var(--space-xs); font-size: 0.7rem; background: var(--color-primary); color: white; padding: 2px 6px; border-radius: 3px;">admin</span>` : ''}
+              <span class="badge badge-${isCollabOwner ? 'owner' : c.role === 'admin' ? 'admin' : 'shared'}">${isCollabOwner ? 'owner' : c.role === 'admin' ? 'admin' : 'collaborator'}</span>
             </div>
-            <div style="display: flex; gap: var(--space-xs);">
-              ${isOwner ? (c.role === 'admin'
+            <div style="display: flex; gap: var(--space-sm);">
+              ${isOwner && !isCollabOwner ? (c.role === 'admin'
                 ? `<button class="btn-icon remove-admin" data-user-id="${c.id}">Remove Admin</button>`
                 : `<button class="btn-icon make-admin" data-user-id="${c.id}">Make Admin</button>`)
                 : ''}
-              ${isOwner ? `<button class="btn-icon transfer-ownership" data-user-id="${c.id}">Transfer Owner</button>` : ''}
-              ${canAdmin ? `<button class="btn-icon remove-collaborator" data-user-id="${c.id}">Remove</button>` : ''}
+              ${isOwner && !isCollabOwner ? `<button class="btn-icon transfer-ownership" data-user-id="${c.id}">Transfer Owner</button>` : ''}
+              ${canAdmin && !isCollabOwner && !isSelf ? `<button class="btn-icon remove-collaborator" data-user-id="${c.id}">Remove</button>` : ''}
             </div>
           </div>
-        `).join('')}
+        `}).join('')}
       `;
 
       container.querySelectorAll('.remove-collaborator').forEach(btn => {
@@ -208,6 +213,30 @@ class ViewRouter {
       console.error('Failed to remove collaborator:', error);
       const { Toast } = await import('./components.js');
       Toast.error('Failed to remove collaborator');
+    }
+  }
+
+  async leaveCurrentServer() {
+    try {
+      const { ConfirmDialog, Toast } = await import('./components.js');
+      const confirmed = await ConfirmDialog.show({
+        title: 'Leave Server',
+        message: 'Are you sure you want to leave this server?',
+        confirmText: 'Leave',
+        cancelText: 'Cancel',
+        danger: true
+      });
+      if (!confirmed) return;
+
+      await leaveServer(this.currentServerId);
+      window.faultendApp.getDrawer().close();
+      await window.faultendApp.loadServers();
+      window.faultendApp.renderServerList();
+      this.navigateToServerList();
+    } catch (error) {
+      console.error('Failed to leave server:', error);
+      const { Toast } = await import('./components.js');
+      Toast.error('Failed to leave server');
     }
   }
 

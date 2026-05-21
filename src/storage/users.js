@@ -114,10 +114,16 @@ async function getCollaborators(serverId) {
   if (!server) return [];
 
   const result = await pool.query(
-    `SELECT u.id, u.email, u.name, u.avatar_url, sc.role, sc.created_at as joined_at
+    `SELECT u.id, u.email, u.name, u.avatar_url, 'owner' as role, s.created_at as joined_at
+     FROM users u
+     JOIN servers s ON u.id = s.owner_id
+     WHERE s.id = $1
+     UNION ALL
+     SELECT u.id, u.email, u.name, u.avatar_url, sc.role, sc.created_at as joined_at
      FROM users u
      JOIN server_collaborators sc ON u.id = sc.user_id
-     WHERE sc.server_id = $1`,
+     WHERE sc.server_id = $1
+     ORDER BY joined_at`,
     [server.id]
   );
   return result.rows;

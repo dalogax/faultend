@@ -145,6 +145,12 @@ export async function removeCollaborator(serverId, userId) {
   });
 }
 
+export async function leaveServer(serverId) {
+  return request(`${API_BASE.app}/api/servers/${serverId}/invite/collaborators/me`, {
+    method: 'DELETE'
+  });
+}
+
 export async function makeCollaboratorAdmin(serverId, userId) {
   return request(`${API_BASE.app}/api/servers/${serverId}/invite/collaborators/${userId}/admin`, {
     method: 'PUT'
