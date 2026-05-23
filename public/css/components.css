@@ -163,8 +163,10 @@
 .badge-status-5xx { background: var(--ft-s-5xx-bg); color: var(--ft-s-5xx-fg); }
 
 /* Action */
-.badge-action-mock  { background: var(--ft-a-mock-bg);  color: var(--ft-a-mock-fg);  }
-.badge-action-proxy { background: var(--ft-a-proxy-bg); color: var(--ft-a-proxy-fg); }
+.badge-action-mock      { background: var(--ft-a-mock-bg);      color: var(--ft-a-mock-fg);      }
+.badge-action-proxy     { background: var(--ft-a-proxy-bg);     color: var(--ft-a-proxy-fg);     }
+.badge-action-delay     { background: var(--ft-a-delay-bg);     color: var(--ft-a-delay-fg);     }
+.badge-action-transform { background: var(--ft-a-transform-bg); color: var(--ft-a-transform-fg); }
 
 /* Outline / meta */
 .badge-outline {
