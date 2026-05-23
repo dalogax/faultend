@@ -1,54 +1,98 @@
-/* CSS Custom Properties */
+/* ============================================================
+   Faultend · Design Tokens
+   A monochrome, sharp-edged developer-tool system.
+   Single accent: signal amber (fault). One mono family.
+   ============================================================ */
 
 :root {
-  /* Monochrome Base Colors */
-  --color-black: #000000;
-  --color-white: #ffffff;
-  --color-red: #DC2626;
-  --color-gray-dark: #333333;
-  --color-gray-mid: #666666;
-  --color-gray-light: #cccccc;
-  --color-background: #fafafa;
+  /* ---------- INK (neutrals) ---------- */
+  --ft-ink-0:  #ffffff;   /* surface — interactive */
+  --ft-ink-1:  #fafafa;   /* canvas — main bg */
+  --ft-ink-2:  #f4f4f3;   /* alt surface — code, filter chrome */
+  --ft-ink-3:  #ebebe9;   /* hairline divider */
+  --ft-ink-4:  #dedcd8;   /* subtle border */
+  --ft-ink-5:  #c4c2bd;   /* strong border */
+  --ft-ink-7:  #8a8884;   /* placeholder / disabled text */
+  --ft-ink-9:  #5a5854;   /* muted text */
+  --ft-ink-10: #3a3936;   /* secondary text */
+  --ft-ink-11: #1c1c1a;   /* primary text */
+  --ft-ink-12: #0a0a09;   /* strong fg, button fill */
 
-  /* Pastel Accent Colors (for badges only) */
-  --color-get: #b8d4f1;
-  --color-post: #b8e6d5;
-  --color-put: #f5d5b8;
-  --color-patch: #d5e8e6;
-  --color-delete: #f5c2c2;
-  --color-options: #e8d5f5;
-  --color-head: #f5f5d5;
+  /* ---------- SIGNAL ---------- */
+  --ft-amber-bg:   #fff4d1;   /* fault indicator background */
+  --ft-amber-line: #e5c168;   /* fault indicator border */
+  --ft-amber-ink:  #6b4d00;   /* fault indicator text */
+  --ft-amber-pure: #e5a100;   /* fault accent (icons, bars) */
 
-  /* Status Code Pastels */
-  --color-status-2xx: #d4edda;
-  --color-status-3xx: #d1ecf1;
-  --color-status-4xx: #fff3cd;
-  --color-status-5xx: #f8d7da;
+  --ft-red:        #c32d2d;   /* danger / destructive */
+  --ft-red-bg:     #fbe6e6;
+  --ft-red-ink:    #5c1212;
 
-  /* Typography */
-  --font-primary: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  --font-mono: "SF Mono", "Monaco", "Consolas", "Liberation Mono", "Courier New", monospace;
-  --font-weight: 300;
+  --ft-green:      #1aa052;   /* live / healthy signal */
 
-  /* Font Sizes (3 levels only) */
-  --text-sm: 0.875rem;   /* 14px */
-  --text-base: 1rem;     /* 16px */
-  --text-lg: 1.5rem;     /* 24px */
+  /* ---------- METHOD BADGES ---------- */
+  --ft-m-get-bg:     #dce8f5; --ft-m-get-fg:     #1e3a5f;
+  --ft-m-post-bg:    #d5e8dc; --ft-m-post-fg:    #1b4332;
+  --ft-m-put-bg:     #f0dcc2; --ft-m-put-fg:     #5c3d1f;
+  --ft-m-patch-bg:   #dae5e0; --ft-m-patch-fg:   #2e4f47;
+  --ft-m-delete-bg:  #f0cacd; --ft-m-delete-fg:  #5c1f22;
+  --ft-m-options-bg: #e0d5ee; --ft-m-options-fg: #3f2a5c;
+  --ft-m-head-bg:    #eeeac8; --ft-m-head-fg:    #4f4818;
+  --ft-m-any-bg:     #ebebe9; --ft-m-any-fg:     #3a3936;
 
-  /* Line Heights */
-  --line-height-tight: 1.2;
-  --line-height-normal: 1.6;
+  /* ---------- STATUS BADGES ---------- */
+  --ft-s-2xx-bg: #d5e8dc; --ft-s-2xx-fg: #1b4332;
+  --ft-s-3xx-bg: #c9dde3; --ft-s-3xx-fg: #1f4146;
+  --ft-s-4xx-bg: #f0e3b8; --ft-s-4xx-fg: #5c4318;
+  --ft-s-5xx-bg: #f0cacd; --ft-s-5xx-fg: #5c1f22;
 
-  /* Spacing (4 levels) */
-  --space-sm: 0.5rem;    /* 8px */
-  --space-md: 1rem;      /* 16px */
-  --space-lg: 2rem;      /* 32px */
-  --space-xl: 4rem;      /* 64px */
+  /* ---------- ACTION BADGES ---------- */
+  --ft-a-mock-bg:  #dcdff5; --ft-a-mock-fg:  #1f2659;
+  --ft-a-proxy-bg: #cfe8dc; --ft-a-proxy-fg: #1a3f2a;
+  --ft-a-fault-bg: #fff1c2; --ft-a-fault-fg: #5c4318;
+  --ft-a-delay-bg: #e8dfd0; --ft-a-delay-fg: #4f3a1f;
+  --ft-a-pass-bg:  #ebebe9; --ft-a-pass-fg:  #3a3936;
 
-  /* Border Radius - None (all sharp edges) */
+  /* ---------- SEMANTIC ROLES ---------- */
+  --ft-bg:          var(--ft-ink-1);
+  --ft-surface:     var(--ft-ink-0);
+  --ft-surface-2:   var(--ft-ink-2);
+  --ft-hairline:    var(--ft-ink-3);
+  --ft-border:      var(--ft-ink-4);
+  --ft-border-strong: var(--ft-ink-12);
+  --ft-fg:          var(--ft-ink-11);
+  --ft-fg-strong:   var(--ft-ink-12);
+  --ft-fg-muted:    var(--ft-ink-9);
+  --ft-fg-faint:    var(--ft-ink-7);
+  --ft-fg-on-fill:  var(--ft-ink-0);
+
+  /* ---------- TYPOGRAPHY ---------- */
+  --ft-font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --ft-mono: 'JetBrains Mono', 'SF Mono', Menlo, Consolas, monospace;
+
+  --ft-fs-10: 10px;
+  --ft-fs-11: 11px;
+  --ft-fs-12: 12px;
+  --ft-fs-13: 13px;
+  --ft-fs-14: 14px;
+  --ft-fs-16: 16px;
+  --ft-fs-20: 20px;
+  --ft-fs-26: 26px;
+  --ft-fs-36: 36px;
+
+  /* ---------- SPACING ---------- */
+  --ft-sp-1: 2px;
+  --ft-sp-2: 4px;
+  --ft-sp-3: 8px;
+  --ft-sp-4: 12px;
+  --ft-sp-5: 16px;
+  --ft-sp-6: 24px;
+  --ft-sp-7: 32px;
+  --ft-sp-8: 48px;
+  --ft-sp-9: 64px;
+
+  /* ---------- BORDERS / MOTION ---------- */
   --radius: 0;
-
-  /* Transitions */
-  --transition-fast: 150ms ease-out;
-  --transition-normal: 300ms ease-out;
+  --ft-transition-fast: 120ms ease;
+  --ft-transition-normal: 240ms ease;
 }

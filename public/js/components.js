@@ -4,7 +4,7 @@
  * Toast Notification System
  */
 export const Toast = {
-  show(message, duration = 3000) {
+  show(message, duration = 3000, isError = false) {
     const container = document.getElementById('toastContainer');
     if (!container) {
       console.error('Toast container not found');
@@ -12,24 +12,24 @@ export const Toast = {
     }
 
     const toast = document.createElement('div');
-    toast.className = 'toast';
+    toast.className = isError ? 'toast toast-error' : 'toast';
     toast.textContent = message;
-    
+
     container.appendChild(toast);
-    
+
     setTimeout(() => {
       toast.style.opacity = '0';
       toast.style.transition = 'opacity 300ms ease-out';
       setTimeout(() => toast.remove(), 300);
     }, duration);
   },
-  
+
   success(message) {
     this.show(message);
   },
-  
+
   error(message) {
-    this.show(message, 5000);
+    this.show(message, 5000, true);
   }
 };
 
@@ -103,8 +103,8 @@ export const ConfirmDialog = {
           <p>${message}</p>
         </div>
         <div class="confirm-actions">
-          <button class="btn-secondary confirm-cancel">${cancelText}</button>
-          <button class="btn ${danger ? 'btn-danger' : 'btn-primary'} confirm-ok">${confirmText}</button>
+          <button class="btn-ghost btn-sm confirm-cancel">${cancelText}</button>
+          <button class="${danger ? 'btn-danger' : 'btn'} btn-sm confirm-ok">${confirmText}</button>
         </div>
       `;
       

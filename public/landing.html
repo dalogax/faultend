@@ -3,573 +3,541 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Faultend</title>
+  <title>Faultend · A proxy for testing resilience</title>
   <link rel="icon" type="image/x-icon" href="/img/favicon.ico">
   <link rel="icon" type="image/png" sizes="16x16" href="/img/favicon-16x16.png">
   <link rel="icon" type="image/png" sizes="32x32" href="/img/favicon-32x32.png">
   <link rel="apple-touch-icon" sizes="180x180" href="/img/apple-touch-icon.png">
   <link rel="manifest" href="/site.webmanifest">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=swap">
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&display=swap');
-
-    /* Reset */
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-
-    /* Variables */
     :root {
-      --color-black: #000000;
-      --color-white: #ffffff;
-      --color-gray-dark: #333333;
-      --color-gray-mid: #666666;
-      --color-gray-light: #cccccc;
-      --color-background: #fafafa;
-      --font-primary: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      --font-mono: "SF Mono", "Monaco", "Consolas", "Liberation Mono", "Courier New", monospace;
-      --font-weight: 300;
-      --text-sm: 0.875rem;
-      --text-base: 1rem;
-      --text-lg: 1.5rem;
-      --line-height-tight: 1.2;
-      --line-height-normal: 1.6;
-      --space-sm: 0.5rem;
-      --space-md: 1rem;
-      --space-lg: 2rem;
-      --space-xl: 4rem;
-      --transition-normal: 300ms ease-out;
+      --ink-0:#ffffff; --ink-1:#fafafa; --ink-2:#f4f4f3; --ink-3:#ebebe9;
+      --ink-4:#dedcd8; --ink-5:#c4c2bd; --ink-7:#8a8884; --ink-9:#5a5854;
+      --ink-10:#3a3936; --ink-11:#1c1c1a; --ink-12:#0a0a09;
+      --amber-bg:#fff4d1; --amber-line:#e5c168; --amber-ink:#6b4d00; --amber:#e5a100;
+      --red:#c32d2d;
+      --m-get-bg:#dce8f5; --m-get-fg:#1e3a5f;
+      --m-post-bg:#d5e8dc; --m-post-fg:#1b4332;
+      --m-put-bg:#f0dcc2; --m-put-fg:#5c3d1f;
+      --m-patch-bg:#dae5e0; --m-patch-fg:#2e4f47;
+      --m-delete-bg:#f0cacd; --m-delete-fg:#5c1f22;
+      --s-2xx-bg:#d5e8dc; --s-2xx-fg:#1b4332;
+      --s-4xx-bg:#f0e3b8; --s-4xx-fg:#5c4318;
+      --s-5xx-bg:#f0cacd; --s-5xx-fg:#5c1f22;
+      --a-mock-bg:#dcdff5; --a-mock-fg:#1f2659;
+      --a-delay-bg:#e8dfd0; --a-delay-fg:#4f3a1f;
+      --a-pass-bg:#ebebe9; --a-pass-fg:#3a3936;
+      --bg:var(--ink-1); --surface:var(--ink-0); --surface-2:var(--ink-2);
+      --hairline:var(--ink-3); --border:var(--ink-4); --border-strong:var(--ink-12);
+      --fg:var(--ink-11); --fg-strong:var(--ink-12); --fg-muted:var(--ink-9); --fg-faint:var(--ink-7);
+      --font:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
+      --mono:'JetBrains Mono','SF Mono',Menlo,Consolas,monospace;
     }
-
+    * { margin:0; padding:0; box-sizing:border-box; }
+    html, body { background:var(--bg); }
     body {
-      font-family: var(--font-primary);
-      font-weight: var(--font-weight);
-      color: var(--color-black);
-      background: var(--color-white);
-      overflow-x: hidden;
+      font-family:var(--font); font-weight:400; color:var(--fg);
+      font-size:13px; line-height:1.45; letter-spacing:-0.005em;
+      -webkit-font-smoothing:antialiased;
+    }
+    a { color:inherit; text-decoration:none; }
+    ::selection { background:var(--ink-12); color:var(--ink-0); }
+    h1,h2,h3 { font-weight:400; }
+
+    .wrap { max-width:1320px; margin:0 auto; }
+
+    /* Buttons */
+    .btn {
+      display:inline-flex; align-items:center; justify-content:center; gap:8px;
+      height:40px; padding:0 18px; font-family:var(--font); font-size:14px; font-weight:500;
+      border:2px solid var(--ink-12); background:var(--ink-10); color:var(--ink-0);
+      cursor:pointer; transition:background-color 120ms ease;
+    }
+    .btn:hover { background:var(--ink-9); }
+    .btn--sm { height:30px; padding:0 12px; font-size:13px; }
+    .btn--secondary { background:var(--ink-0); color:var(--ink-12); }
+    .btn--secondary:hover { background:var(--ink-2); }
+
+    /* Badges */
+    .badge {
+      display:inline-flex; align-items:center; justify-content:center;
+      height:18px; padding:0 6px; font-family:var(--mono); font-size:11px;
+      letter-spacing:0.04em; line-height:1; border:1px solid transparent;
+    }
+    .badge--lg { height:22px; padding:0 8px; font-size:12px; }
+    .m-GET{background:var(--m-get-bg);color:var(--m-get-fg);}
+    .m-POST{background:var(--m-post-bg);color:var(--m-post-fg);}
+    .m-PUT{background:var(--m-put-bg);color:var(--m-put-fg);}
+    .m-PATCH{background:var(--m-patch-bg);color:var(--m-patch-fg);}
+    .m-DELETE{background:var(--m-delete-bg);color:var(--m-delete-fg);}
+    .s-2xx{background:var(--s-2xx-bg);color:var(--s-2xx-fg);}
+    .s-4xx{background:var(--s-4xx-bg);color:var(--s-4xx-fg);}
+    .s-5xx{background:var(--s-5xx-bg);color:var(--s-5xx-fg);}
+    .a-mock{background:var(--a-mock-bg);color:var(--a-mock-fg);}
+    .a-delay{background:var(--a-delay-bg);color:var(--a-delay-fg);}
+    .a-pass{background:var(--a-pass-bg);color:var(--a-pass-fg);}
+
+    .mono { font-family:var(--mono); }
+    .eyebrow {
+      font-family:var(--mono); font-size:11px; letter-spacing:0.16em;
+      text-transform:uppercase; color:var(--fg-faint);
     }
 
-    /* Hero Section */
+    /* Latency bar */
+    .lat { display:inline-flex; align-items:center; gap:6px; font-family:var(--mono); font-size:12px; }
+    .lat-bar { width:36px; height:4px; background:var(--ink-3); position:relative; flex-shrink:0; }
+    .lat-bar > i { display:block; height:100%; background:var(--ink-10); }
+    .lat-bar > i.slow { background:var(--amber); }
+    .lat-bar > i.err { background:var(--red); }
+
+    /* Nav */
+    .nav {
+      display:flex; align-items:center; gap:32px; height:56px; padding:0 32px;
+      border-bottom:1px solid var(--border-strong); background:var(--surface);
+    }
+    .logo { display:flex; align-items:center; gap:8px; }
+    .logo svg { width:22px; height:22px; }
+    .logo span { font-size:14px; font-weight:500; letter-spacing:-0.02em; }
+    .nav-links { display:flex; gap:28px; font-size:13px; color:var(--fg-muted); }
+    .nav-links a:hover { color:var(--fg-strong); }
+    .nav-divider { width:1px; height:18px; background:var(--border); }
+
+    /* Hero */
     .hero {
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      padding: var(--space-xl);
-      position: relative;
-      background: var(--color-white);
+      position:relative; padding:88px 64px 72px;
+      border-bottom:1px solid var(--border-strong); overflow:hidden;
     }
-
-    .hero-logo {
-      width: 288px;
-      height: 288px;
-      margin-bottom: var(--space-lg);
-      opacity: 0;
-      transform: translateY(20px);
-      animation: fadeInUp 0.8s ease-out forwards;
+    .hero-watermark { position:absolute; right:-160px; top:-120px; width:620px; opacity:0.05; pointer-events:none; }
+    .hero-grid { display:grid; grid-template-columns:1.15fr 0.85fr; gap:64px; align-items:center; position:relative; }
+    .hero-copy { display:flex; flex-direction:column; gap:28px; }
+    .hero-tag { display:inline-flex; align-items:center; gap:10px; }
+    .hero-tag .sq { width:6px; height:6px; background:var(--amber); }
+    .hero h1 {
+      font-size:64px; line-height:1.02; letter-spacing:-0.025em;
+      color:var(--fg-strong); max-width:720px;
     }
-
-    .hero-title {
-      font-size: clamp(2rem, 5vw, 4rem);
-      font-weight: 300;
-      margin-bottom: var(--space-md);
-      letter-spacing: -0.02em;
-      opacity: 0;
-      transform: translateY(20px);
-      animation: fadeInUp 0.8s ease-out 0.2s forwards;
+    .hero h1 .mark { display:inline-block; position:relative; }
+    .hero h1 .mark > span { position:relative; z-index:1; }
+    .hero h1 .mark::after {
+      content:''; position:absolute; left:-4px; right:-4px; bottom:2px; height:14px;
+      background:var(--amber-bg); border-bottom:2px solid var(--amber); z-index:0;
     }
-
-    .hero-subtitle {
-      font-size: clamp(1rem, 2.5vw, 1.5rem);
-      color: var(--color-gray-mid);
-      max-width: 600px;
-      margin: 0 auto var(--space-xl);
-      opacity: 0;
-      transform: translateY(20px);
-      animation: fadeInUp 0.8s ease-out 0.4s forwards;
+    .hero p { font-size:17px; line-height:1.55; color:var(--fg-muted); max-width:560px; }
+    .hero-curl {
+      display:flex; flex-direction:column; gap:6px;
+      font-family:var(--mono); font-size:12px; color:var(--fg-muted);
     }
+    .hero-curl .injected { color:var(--amber-ink); }
 
-    .hero-cta {
-      display: inline-block;
-      padding: var(--space-md) var(--space-lg);
-      background: var(--color-black);
-      color: var(--color-white);
-      text-decoration: none;
-      font-size: var(--text-base);
-      transition: all var(--transition-normal);
-      opacity: 0;
-      transform: translateY(20px);
-      animation: fadeInUp 0.8s ease-out 0.6s forwards;
+    /* Hero preview card */
+    .card { border:1px solid var(--border); background:var(--surface); overflow:hidden; }
+    .card-chrome {
+      display:flex; align-items:center; gap:10px; padding:10px 14px;
+      border-bottom:1px solid var(--border); background:var(--surface-2);
+      font-family:var(--mono); font-size:11px; color:var(--fg-muted);
     }
-
-    .hero-cta:hover {
-      background: var(--color-gray-dark);
-      transform: translateY(-2px);
+    .card-chrome svg { width:12px; height:12px; }
+    table { width:100%; border-collapse:collapse; font-size:13px; }
+    th {
+      text-align:left; font-weight:400; font-size:11px; letter-spacing:0.08em;
+      text-transform:uppercase; color:var(--fg-faint); padding:8px 12px;
+      border-bottom:1px solid var(--border);
     }
+    td { padding:8px 12px; border-bottom:1px solid var(--hairline); }
+    tr:last-child td { border-bottom:none; }
+    .path { font-family:var(--mono); font-size:12px; color:var(--fg-strong);
+      overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 
-    .scroll-indicator {
-      position: absolute;
-      bottom: var(--space-xl);
-      left: 50%;
-      transform: translateX(-50%);
-      color: var(--color-gray-light);
-      font-size: var(--text-sm);
-      opacity: 0;
-      animation: fadeIn 1s ease-out 1s forwards, bounce 2s ease-in-out 2s infinite;
+    /* Why */
+    .why { background:var(--surface-2); border-bottom:1px solid var(--border-strong); }
+    .why-head {
+      padding:64px 64px 0; display:flex; align-items:flex-end;
+      justify-content:space-between; gap:32px;
     }
-
-    /* Features Section */
-    .features {
-      min-height: 100vh;
-      padding: var(--space-xl);
-      background: var(--color-background);
-      position: relative;
+    .why-head h2 {
+      font-size:40px; line-height:1.1; letter-spacing:-0.02em;
+      color:var(--fg-strong); margin-top:12px; max-width:640px;
     }
-
-    .features-inner {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: var(--space-xl) 0;
+    .why-head .side { font-size:12px; color:var(--fg-muted); max-width:280px; line-height:1.6; }
+    .why-grid {
+      margin:40px 64px 0; display:grid; grid-template-columns:repeat(3,1fr);
+      border:1px solid var(--border); border-right:0; border-bottom:0;
     }
-
-    .section-title {
-      font-size: clamp(1.5rem, 4vw, 3rem);
-      font-weight: 300;
-      text-align: center;
-      margin-bottom: var(--space-xl);
-      letter-spacing: -0.02em;
+    .cell {
+      padding:28px 28px 24px; border-right:1px solid var(--border);
+      border-bottom:1px solid var(--border); background:var(--surface);
+      display:flex; flex-direction:column; gap:14px; min-height:280px;
     }
-
-    .features-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: var(--space-lg);
-      margin-bottom: var(--space-xl);
+    .cell-num { display:flex; align-items:baseline; gap:12px; }
+    .cell-num span { font-family:var(--mono); font-size:11px; color:var(--fg-faint); }
+    .cell-num .rule { flex:1; height:1px; background:var(--hairline); }
+    .cell h3 { font-size:20px; font-weight:500; letter-spacing:-0.015em; color:var(--fg-strong); }
+    .cell p { font-size:13px; line-height:1.55; color:var(--fg-muted); }
+    .cell .demo { margin-top:auto; }
+    .cell-roadmap {
+      grid-column:span 2; border-right:1px solid var(--border);
+      border-bottom:1px solid var(--border); background:var(--surface);
+      display:flex; align-items:flex-end; justify-content:flex-end; padding:28px;
     }
+    .cell-roadmap span { font-family:var(--mono); font-size:11px; color:var(--fg-faint); }
+    .demo-mono { font-family:var(--mono); font-size:11.5px; color:var(--fg-strong);
+      display:flex; flex-direction:column; gap:4px; }
+    .demo-mono .faint { color:var(--fg-faint); }
+    .demo-row { display:flex; align-items:center; gap:6px; }
 
-    .feature-card {
-      padding: var(--space-lg);
-      background: var(--color-white);
-      border: 1px solid var(--color-black);
-      transition: all var(--transition-normal);
-      opacity: 0;
-      transform: translateY(30px);
-    }
-
-    .feature-card.visible {
-      opacity: 1;
-      transform: translateY(0);
-    }
-
-    .feature-card:hover {
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    }
-
-    .feature-number {
-      font-size: var(--text-lg);
-      color: var(--color-gray-light);
-      margin-bottom: var(--space-sm);
-    }
-
-    .feature-title {
-      font-size: var(--text-lg);
-      margin-bottom: var(--space-sm);
-      font-weight: 400;
-    }
-
-    .feature-description {
-      font-size: var(--text-base);
-      color: var(--color-gray-mid);
-      line-height: var(--line-height-normal);
-    }
-
-    /* How It Works Section */
-    .how-it-works {
-      min-height: 100vh;
-      padding: var(--space-xl);
-      background: var(--color-white);
-      position: relative;
-    }
-
-    .how-it-works-inner {
-      max-width: 900px;
-      margin: 0 auto;
-      padding: var(--space-xl) 0;
-    }
-
-    .steps {
-      margin-top: var(--space-xl);
-    }
-
+    /* How */
+    .how { padding:88px 64px; border-bottom:1px solid var(--border-strong); }
+    .how-head { display:flex; justify-content:space-between; align-items:flex-end; gap:32px; margin-bottom:32px; }
+    .how-head h2 { font-size:40px; line-height:1.1; letter-spacing:-0.02em; color:var(--fg-strong); margin-top:12px; }
+    .steps { border-top:1px solid var(--border-strong); }
     .step {
-      display: grid;
-      grid-template-columns: 60px 1fr;
-      gap: var(--space-lg);
-      margin-bottom: var(--space-xl);
-      opacity: 0;
-      transform: translateX(-30px);
-      transition: all 0.6s ease-out;
+      display:grid; grid-template-columns:80px 1fr 1.1fr; gap:32px;
+      padding:32px 0; border-bottom:1px solid var(--hairline); align-items:start;
+    }
+    .step-n { font-family:var(--mono); font-size:42px; line-height:1; color:var(--fg-strong); letter-spacing:-0.04em; }
+    .step h3 { font-size:22px; font-weight:500; letter-spacing:-0.015em; color:var(--fg-strong); margin-bottom:10px; }
+    .step p { font-size:14px; line-height:1.55; color:var(--fg-muted); }
+    .step-aside { display:flex; flex-direction:column; gap:10px; }
+    .code {
+      background:var(--surface-2); border:1px solid var(--border); padding:10px 12px;
+      font-family:var(--mono); font-size:12px; color:var(--fg-strong);
+      white-space:pre; overflow-x:auto;
     }
 
-    .step.visible {
-      opacity: 1;
-      transform: translateX(0);
-    }
-
-    .step-number {
-      width: 60px;
-      height: 60px;
-      border: 2px solid var(--color-black);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: var(--text-lg);
-      font-weight: 400;
-      flex-shrink: 0;
-    }
-
-    .step-content h3 {
-      font-size: var(--text-lg);
-      margin-bottom: var(--space-sm);
-      font-weight: 400;
-    }
-
-    .step-content p {
-      font-size: var(--text-base);
-      color: var(--color-gray-mid);
-      line-height: var(--line-height-normal);
-    }
-
-    .step-code {
-      margin-top: var(--space-md);
-      padding: var(--space-md);
-      background: var(--color-background);
-      border: 1px solid var(--color-gray-light);
-      font-family: var(--font-mono);
-      font-size: var(--text-sm);
-      overflow-x: auto;
-    }
-
-    /* CTA Section */
+    /* CTA */
     .cta {
-      padding: var(--space-xl);
-      background: var(--color-black);
-      color: var(--color-white);
-      text-align: center;
+      padding:96px 64px; background:var(--ink-12); color:var(--ink-0);
+      position:relative; overflow:hidden;
     }
-
-    .cta-inner {
-      max-width: 800px;
-      margin: 0 auto;
-      padding: var(--space-xl) 0;
-    }
-
-    .cta-title {
-      font-size: clamp(1.5rem, 4vw, 3rem);
-      font-weight: 300;
-      margin-bottom: var(--space-md);
-      letter-spacing: -0.02em;
-    }
-
-    .cta-description {
-      font-size: var(--text-lg);
-      color: var(--color-gray-light);
-      margin-bottom: var(--space-xl);
-    }
-
-    .cta-button {
-      display: inline-block;
-      padding: var(--space-md) var(--space-lg);
-      background: var(--color-white);
-      color: var(--color-black);
-      text-decoration: none;
-      font-size: var(--text-base);
-      transition: all var(--transition-normal);
-    }
-
-    .cta-button:hover {
-      background: var(--color-background);
-      transform: translateY(-2px);
-    }
-
-    /* Animations */
-    @keyframes fadeInUp {
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    @keyframes fadeIn {
-      to {
-        opacity: 1;
-      }
-    }
-
-    @keyframes bounce {
-      0%, 100% {
-        transform: translateX(-50%) translateY(0);
-      }
-      50% {
-        transform: translateX(-50%) translateY(-10px);
-      }
-    }
-
-    /* Parallax Effect */
-    .parallax-bg {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      z-index: -1;
-      opacity: 0.03;
-      pointer-events: none;
-    }
-
-    .parallax-line {
-      position: absolute;
-      width: 1px;
-      height: 100%;
-      background: var(--color-black);
-    }
+    .cta-watermark { position:absolute; right:-120px; top:-160px; width:560px; opacity:0.06; pointer-events:none; }
+    .cta-inner { display:flex; align-items:flex-end; justify-content:space-between; gap:64px; position:relative; }
+    .cta h2 { font-size:52px; line-height:1.05; letter-spacing:-0.025em; margin-top:12px; }
+    .cta h2 .accent { color:var(--amber); }
+    .cta p { font-size:16px; color:rgba(255,255,255,0.7); max-width:540px; line-height:1.55; margin-top:18px; }
+    .cta-side { display:flex; flex-direction:column; gap:12px; min-width:280px; }
+    .cta-note { font-family:var(--mono); font-size:11px; color:rgba(255,255,255,0.5); text-align:center; }
 
     /* Footer */
     footer {
-      padding: var(--space-lg);
-      text-align: center;
-      border-top: 1px solid var(--color-gray-light);
-      font-size: var(--text-sm);
-      color: var(--color-gray-mid);
+      padding:40px 64px 28px; background:var(--surface);
+      border-top:1px solid var(--border); display:flex; flex-direction:column; gap:32px;
+    }
+    .foot-grid { display:grid; grid-template-columns:1.4fr repeat(3,1fr); gap:32px; }
+    .foot-brand { display:flex; flex-direction:column; gap:14px; }
+    .foot-brand p { font-size:12px; line-height:1.55; color:var(--fg-muted); max-width:280px; }
+    .foot-col { display:flex; flex-direction:column; gap:10px; }
+    .foot-col .h {
+      font-family:var(--mono); font-size:10px; letter-spacing:0.14em;
+      text-transform:uppercase; color:var(--fg-faint);
+    }
+    .foot-col a { font-size:13px; color:var(--fg-muted); }
+    .foot-col a:hover { color:var(--fg-strong); }
+    .foot-bar {
+      border-top:1px solid var(--hairline); padding-top:16px;
+      display:flex; justify-content:space-between;
+      font-family:var(--mono); font-size:11px; color:var(--fg-faint);
     }
 
-    /* Responsive */
-    @media (max-width: 768px) {
-      .hero {
-        padding: var(--space-lg);
-      }
-
-      .features-grid {
-        grid-template-columns: 1fr;
-      }
-
-      .step {
-        grid-template-columns: 50px 1fr;
-        gap: var(--space-md);
-      }
-
-      .step-number {
-        width: 50px;
-        height: 50px;
-      }
+    @media (max-width:960px) {
+      .hero { padding:56px 28px 48px; }
+      .hero-grid { grid-template-columns:1fr; gap:40px; }
+      .hero h1 { font-size:44px; }
+      .why-head, .why-grid, .how, .cta, footer, .nav { padding-left:28px; padding-right:28px; }
+      .why-head { flex-direction:column; align-items:flex-start; }
+      .why-grid { margin-left:28px; margin-right:28px; grid-template-columns:1fr; }
+      .cell-roadmap { grid-column:span 1; }
+      .how-head, .cta-inner, .foot-grid { flex-direction:column; align-items:flex-start; }
+      .foot-grid { grid-template-columns:1fr 1fr; }
+      .step { grid-template-columns:1fr; gap:12px; }
+      .cta h2 { font-size:38px; }
+      .nav-links { display:none; }
     }
   </style>
 </head>
 <body>
-  <!-- Parallax Background -->
-  <div class="parallax-bg" id="parallaxBg"></div>
+  <!-- Nav -->
+  <nav class="nav">
+    <a href="/" class="logo">
+      <svg viewBox="0 0 1024 1024" preserveAspectRatio="xMidYMid meet" aria-hidden="true"><g transform="translate(0,1024) scale(0.1,-0.1)" fill="#0a0a09" stroke="none"><path d="M4803 6933 c-98 -119 -314 -383 -481 -587 -374 -457 -349 -429 -364 -424 -7 3 -79 85 -160 183 -191 231 -222 263 -288 294 -81 38 -155 34 -460 -27 -219 -44 -591 -117 -1230 -241 -820 -159 -805 -156 -841 -197 -47 -54 -52 -81 -52 -265 1 -195 8 -231 54 -275 28 -27 36 -29 102 -28 40 0 160 17 267 38 107 20 290 55 405 76 116 22 296 56 400 75 105 20 298 56 430 81 132 24 310 58 395 75 229 46 268 36 385 -98 143 -162 185 -215 185 -232 0 -9 -412 -532 -915 -1161 -503 -629 -915 -1148 -915 -1152 0 -5 185 -7 412 -6 l412 3 77 95 c41 52 163 205 269 340 312 394 418 528 515 650 50 63 190 239 310 390 119 151 225 281 233 288 40 32 54 19 231 -218 95 -126 190 -244 212 -261 22 -17 62 -40 89 -50 87 -33 84 -33 830 82 179 27 370 57 425 65 55 8 154 24 220 34 66 11 228 35 360 55 132 19 371 55 530 80 160 24 393 60 519 79 238 37 278 36 257 -2 -5 -9 -95 -131 -200 -271 -105 -140 -189 -256 -187 -258 5 -5 142 53 381 162 105 48 237 109 295 135 523 237 1171 543 1211 571 38 27 52 61 38 92 -17 38 3 30 -519 217 -308 111 -837 298 -1205 426 -148 52 -280 99 -293 104 -52 23 -54 10 -7 -42 153 -167 280 -303 350 -376 86 -90 96 -107 68 -116 -23 -6 -209 -34 -688 -101 -214 -30 -640 -90 -945 -135 -1123 -163 -1050 -153 -1103 -141 -27 6 -65 23 -85 38 -69 50 -332 374 -332 408 0 19 278 368 729 915 180 217 661 818 661 824 0 3 -182 6 -404 6 l-405 0 -178 -217z"/></g></svg>
+      <span>faultend</span>
+    </a>
+    <div style="flex:1"></div>
+    <div class="nav-links">
+      <a href="#why">Why Faultend</a>
+      <a href="#how">How it works</a>
+    </div>
+    <div class="nav-divider"></div>
+    <a class="btn btn--sm app-link">Try it now →</a>
+  </nav>
 
-  <!-- Hero Section -->
+  <!-- Hero -->
   <section class="hero">
-    <img src="/img/faultend.svg" alt="Faultend" class="hero-logo">
-    <h1 class="hero-title">Test Your App's Resilience</h1>
-    <p class="hero-subtitle">
-      A lightweight proxy that helps you validate how your mobile and web applications handle unreliable backends
-    </p>
-    <a href="#" class="hero-cta" id="hero-cta">Try it now</a>
-    <div class="scroll-indicator">Scroll to explore ↓</div>
-  </section>
-
-  <!-- Features Section -->
-  <section class="features">
-    <div class="features-inner">
-      <h2 class="section-title">Why Faultend?</h2>
-      <div class="features-grid">
-        <div class="feature-card">
-          <div class="feature-number">01</div>
-          <h3 class="feature-title">Real-Time Inspection</h3>
-          <p class="feature-description">
-            See every request and response live. Full visibility into headers, bodies, status codes, and timing.
-          </p>
+    <svg class="hero-watermark" viewBox="0 0 1024 1024" preserveAspectRatio="xMidYMid meet" aria-hidden="true"><g transform="translate(0,1024) scale(0.1,-0.1)" fill="#0a0a09" stroke="none"><path d="M4803 6933 c-98 -119 -314 -383 -481 -587 -374 -457 -349 -429 -364 -424 -7 3 -79 85 -160 183 -191 231 -222 263 -288 294 -81 38 -155 34 -460 -27 -219 -44 -591 -117 -1230 -241 -820 -159 -805 -156 -841 -197 -47 -54 -52 -81 -52 -265 1 -195 8 -231 54 -275 28 -27 36 -29 102 -28 40 0 160 17 267 38 107 20 290 55 405 76 116 22 296 56 400 75 105 20 298 56 430 81 132 24 310 58 395 75 229 46 268 36 385 -98 143 -162 185 -215 185 -232 0 -9 -412 -532 -915 -1161 -503 -629 -915 -1148 -915 -1152 0 -5 185 -7 412 -6 l412 3 77 95 c41 52 163 205 269 340 312 394 418 528 515 650 50 63 190 239 310 390 119 151 225 281 233 288 40 32 54 19 231 -218 95 -126 190 -244 212 -261 22 -17 62 -40 89 -50 87 -33 84 -33 830 82 179 27 370 57 425 65 55 8 154 24 220 34 66 11 228 35 360 55 132 19 371 55 530 80 160 24 393 60 519 79 238 37 278 36 257 -2 -5 -9 -95 -131 -200 -271 -105 -140 -189 -256 -187 -258 5 -5 142 53 381 162 105 48 237 109 295 135 523 237 1171 543 1211 571 38 27 52 61 38 92 -17 38 3 30 -519 217 -308 111 -837 298 -1205 426 -148 52 -280 99 -293 104 -52 23 -54 10 -7 -42 153 -167 280 -303 350 -376 86 -90 96 -107 68 -116 -23 -6 -209 -34 -688 -101 -214 -30 -640 -90 -945 -135 -1123 -163 -1050 -153 -1103 -141 -27 6 -65 23 -85 38 -69 50 -332 374 -332 408 0 19 278 368 729 915 180 217 661 818 661 824 0 3 -182 6 -404 6 l-405 0 -178 -217z"/></g></svg>
+    <div class="wrap hero-grid">
+      <div class="hero-copy">
+        <div class="hero-tag eyebrow"><span class="sq"></span> a proxy for testing resilience</div>
+        <h1>Test your app's<br>resilience by <span class="mark"><span>breaking</span></span> its backend.</h1>
+        <p>A lightweight proxy that helps you validate how your mobile and web applications behave when their backends misbehave. Route traffic, inspect every request, and inject failures — all from one dashboard.</p>
+        <div><a class="btn app-link">Try it now →</a></div>
+        <div class="hero-curl">
+          <div>$ curl https://yourapp.faultend.com/users/42</div>
+          <div>→ <span class="injected">503 Service Unavailable</span> · injected by rule "flaky-users"</div>
         </div>
-        <div class="feature-card">
-          <div class="feature-number">02</div>
-          <h3 class="feature-title">One-Click Mocking</h3>
-          <p class="feature-description">
-            Click any logged request to instantly convert it into a mock rule. No manual configuration needed.
-          </p>
-        </div>
-        <div class="feature-card">
-          <div class="feature-number">03</div>
-          <h3 class="feature-title">Multi-Backend Routing</h3>
-          <p class="feature-description">
-            Route different endpoints to different services. Perfect for microservices architectures.
-          </p>
-        </div>
-        <div class="feature-card">
-          <div class="feature-number">04</div>
-          <h3 class="feature-title">Failure Injection</h3>
-          <p class="feature-description">
-            Simulate latency, errors, and edge cases. Test how your app behaves when things go wrong.
-          </p>
-        </div>
-        <div class="feature-card">
-          <div class="feature-number">05</div>
-          <h3 class="feature-title">Dynamic Templates</h3>
-          <p class="feature-description">
-            Generate dynamic mock responses with variables, timestamps, UUIDs, and random data.
-          </p>
-        </div>
-        <div class="feature-card">
-          <div class="feature-number">06</div>
-          <h3 class="feature-title">Export & Share</h3>
-          <p class="feature-description">
-            Save your configurations as JSON files. Share them across teams and environments.
-          </p>
+      </div>
+      <div>
+        <div class="card">
+          <div class="card-chrome">
+            <svg viewBox="0 0 1024 1024" aria-hidden="true"><g transform="translate(0,1024) scale(0.1,-0.1)" fill="#5a5854" stroke="none"><path d="M4803 6933 c-98 -119 -314 -383 -481 -587 -374 -457 -349 -429 -364 -424 -7 3 -79 85 -160 183 -191 231 -222 263 -288 294 -81 38 -155 34 -460 -27 -219 -44 -591 -117 -1230 -241 -820 -159 -805 -156 -841 -197 -47 -54 -52 -81 -52 -265 1 -195 8 -231 54 -275 28 -27 36 -29 102 -28 40 0 160 17 267 38 107 20 290 55 405 76 116 22 296 56 400 75 105 20 298 56 430 81 132 24 310 58 395 75 229 46 268 36 385 -98 143 -162 185 -215 185 -232 0 -9 -412 -532 -915 -1161 -503 -629 -915 -1148 -915 -1152 0 -5 185 -7 412 -6 l412 3 77 95 c41 52 163 205 269 340 312 394 418 528 515 650 50 63 190 239 310 390 119 151 225 281 233 288 40 32 54 19 231 -218 95 -126 190 -244 212 -261 22 -17 62 -40 89 -50 87 -33 84 -33 830 82 179 27 370 57 425 65 55 8 154 24 220 34 66 11 228 35 360 55 132 19 371 55 530 80 160 24 393 60 519 79 238 37 278 36 257 -2 -5 -9 -95 -131 -200 -271 -105 -140 -189 -256 -187 -258 5 -5 142 53 381 162 105 48 237 109 295 135 523 237 1171 543 1211 571 38 27 52 61 38 92 -17 38 3 30 -519 217 -308 111 -837 298 -1205 426 -148 52 -280 99 -293 104 -52 23 -54 10 -7 -42 153 -167 280 -303 350 -376 86 -90 96 -107 68 -116 -23 -6 -209 -34 -688 -101 -214 -30 -640 -90 -945 -135 -1123 -163 -1050 -153 -1103 -141 -27 6 -65 23 -85 38 -69 50 -332 374 -332 408 0 19 278 368 729 915 180 217 661 818 661 824 0 3 -182 6 -404 6 l-405 0 -178 -217z"/></g></svg>
+            <span style="color:var(--fg-strong)">yourapp</span>
+            <span style="color:var(--fg-faint)">·</span>
+            <span>resilience report</span>
+            <span style="flex:1"></span>
+            <span class="badge s-2xx">12 OK</span>
+            <span class="badge a-delay">3 DEG</span>
+            <span class="badge s-5xx">1 FAULT</span>
+          </div>
+          <table>
+            <thead>
+              <tr><th>Method</th><th>Path</th><th>Status</th><th>Time</th><th>Resilient</th></tr>
+            </thead>
+            <tbody id="heroRows"></tbody>
+          </table>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- How It Works Section -->
-  <section class="how-it-works">
-    <div class="how-it-works-inner">
-      <h2 class="section-title">How It Works</h2>
+  <!-- Why -->
+  <section class="why" id="why">
+    <div class="wrap">
+      <div class="why-head">
+        <div>
+          <div class="eyebrow">── Why Faultend</div>
+          <h2>A proxy that inspects, mocks, and breaks your HTTP traffic.</h2>
+        </div>
+        <div class="side">Point your client at a Faultend URL instead of your backend. Every request is logged and can be intercepted with a rule — mock the response, inject a delay, or return a 5xx.</div>
+      </div>
+      <div class="why-grid">
+        <div class="cell">
+          <div class="cell-num"><span>01</span><div class="rule"></div></div>
+          <h3>Real-time inspection</h3>
+          <p>Every request and response, streamed live. Full visibility into method, path, status, timing, headers, and body — no log diving.</p>
+          <div class="demo demo-mono"><span><span style="color:#1aa052">●</span> last updated · just now</span></div>
+        </div>
+        <div class="cell">
+          <div class="cell-num"><span>02</span><div class="rule"></div></div>
+          <h3>One-click mocking</h3>
+          <p>Click any logged request to turn it into a mock rule. Edit the status code, response body, and latency — no manual config.</p>
+          <div class="demo demo-row"><span class="badge m-GET">GET</span><span class="mono" style="font-size:12px;color:var(--fg-strong)">/users/42</span><span style="margin-left:auto"><span class="badge a-mock">MOCK</span></span></div>
+        </div>
+        <div class="cell">
+          <div class="cell-num"><span>03</span><div class="rule"></div></div>
+          <h3>Multi-backend routing</h3>
+          <p>Match by regex path and HTTP method, ordered by priority. Each rule proxies to its own upstream — perfect for microservices.</p>
+          <div class="demo demo-mono">
+            <div><span class="faint">^/payments/.*&nbsp;</span>→ yoursecondbackend.faultend.com</div>
+            <div><span class="faint">.*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>→ yourapp.faultend.com</div>
+          </div>
+        </div>
+        <div class="cell">
+          <div class="cell-num"><span>04</span><div class="rule"></div></div>
+          <h3>Failure injection</h3>
+          <p>Return any status code, any body. Add fixed delays or random latency in a range. Make a flaky endpoint flaky on demand.</p>
+          <div class="demo demo-row" style="flex-wrap:wrap"><span class="badge s-5xx">503</span><span class="badge a-delay">100–500ms</span><span class="badge a-mock">MOCK</span></div>
+        </div>
+        <div class="cell">
+          <div class="cell-num"><span>05</span><div class="rule"></div></div>
+          <h3>Dynamic templates</h3>
+          <p>Templated JSON responses with timestamps, UUIDs, and randoms. Realistic mocks without copying realistic payloads.</p>
+          <div class="demo demo-mono"><div><span style="color:var(--fg-muted)">{</span> id: <span style="color:var(--amber-ink)">{{uuid()}}</span>, ts: <span style="color:var(--amber-ink)">{{timestamp()}}</span> <span style="color:var(--fg-muted)">}</span></div></div>
+        </div>
+        <div class="cell">
+          <div class="cell-num"><span>06</span><div class="rule"></div></div>
+          <h3>Response transforms</h3>
+          <p>Forward to the real upstream, then rewrite parts of the response before it reaches the client. Patch JSON fields, swap status codes, or strip headers — exercise edge cases without changing the backend.</p>
+          <div class="demo demo-mono">
+            <div><span class="faint">set </span>status <span class="faint">=</span> <span style="color:var(--amber-ink)">503</span></div>
+            <div><span class="faint">set </span>$.user.email <span class="faint">=</span> <span style="color:var(--amber-ink)">null</span></div>
+          </div>
+        </div>
+        <div class="cell">
+          <div class="cell-num"><span>07</span><div class="rule"></div></div>
+          <h3>Share &amp; collaborate</h3>
+          <p>Invite teammates to a server with view or edit access. Rule changes apply for everyone — useful for pairing on a flaky bug or handing a repro to QA.</p>
+          <div class="demo demo-row"><span class="mono" style="font-size:11.5px;color:var(--fg-muted)">3 editors · <span style="color:var(--fg-strong)">live</span></span></div>
+        </div>
+        <div class="cell-roadmap"><span>── more on the roadmap</span></div>
+      </div>
+      <div style="height:64px"></div>
+    </div>
+  </section>
+
+  <!-- How -->
+  <section class="how" id="how">
+    <div class="wrap">
+      <div class="how-head">
+        <div>
+          <div class="eyebrow">── How it works</div>
+          <h2>Five steps. Zero changes to your app.</h2>
+        </div>
+        <span class="mono" style="font-size:11px;color:var(--fg-faint)">~3 min · skim</span>
+      </div>
       <div class="steps">
         <div class="step">
-          <div class="step-number">1</div>
-          <div class="step-content">
-            <h3>Point Your App to Faultend</h3>
-            <p>Configure your application to use Faultend as its backend proxy.</p>
-            <div class="step-code">https://your-app.faultend.com</div>
+          <div class="step-n">1</div>
+          <div>
+            <h3>Point your app at Faultend</h3>
+            <p>Create a server, give it an ID, and point your app at the proxy URL we hand back. Every request flows through and gets logged.</p>
+          </div>
+          <div class="step-aside">
+            <span class="badge badge--lg s-2xx">PROXY · transparent</span>
+            <div class="code">API_BASE_URL=https://yourapp.faultend.com</div>
           </div>
         </div>
-
         <div class="step">
-          <div class="step-number">2</div>
-          <div class="step-content">
-            <h3>Create Routing Rules</h3>
-            <p>Set up rules to route traffic to your real backends or create mock responses.</p>
-            <div class="step-code">Rule: /api/* → Proxy to https://api.yourapp.com</div>
+          <div class="step-n">2</div>
+          <div>
+            <h3>Create routing rules</h3>
+            <p>Match each request by HTTP method and a regex path pattern. Rules are evaluated in priority order — the first match wins.</p>
+          </div>
+          <div class="step-aside">
+            <span class="badge badge--lg a-pass">5 RULES · ordered</span>
+            <div class="code">200  GET   ^/users/[0-9]+$   → mock
+180  GET   ^/products$       → mock
+100  *     .*                → proxy</div>
           </div>
         </div>
-
         <div class="step">
-          <div class="step-number">3</div>
-          <div class="step-content">
-            <h3>Use Your App Normally</h3>
-            <p>Interact with your application as you normally would. All traffic flows through Faultend.</p>
+          <div class="step-n">3</div>
+          <div>
+            <h3>Use your app normally</h3>
+            <p>Watch every call land in the traffic log: method, path, status, time, and whether a rule matched. Filter by method, status, or path.</p>
+          </div>
+          <div class="step-aside">
+            <span class="badge badge--lg s-5xx">REC · live stream</span>
+            <div class="code">GET    /users/5    200    250ms   ✓
+GET    /products   500    295ms   ✓
+DELETE /posts/1    403      9ms   ✓</div>
           </div>
         </div>
-
         <div class="step">
-          <div class="step-number">4</div>
-          <div class="step-content">
-            <h3>Inject Failures On Demand</h3>
-            <p>Click any request in the UI to create a mock rule. Adjust status codes, add latency, modify responses.</p>
-            <div class="step-code">Mock: 503 Service Unavailable + 5000ms delay</div>
+          <div class="step-n">4</div>
+          <div>
+            <h3>Inject failures on demand</h3>
+            <p>Switch any rule to Mock mode. Pick a status code, write a JSON body, and dial in a fixed delay or a random range. Toggle it on or off live.</p>
+          </div>
+          <div class="step-aside">
+            <span class="badge badge--lg a-delay">MOCK · armed</span>
+            <div class="code">Mock   ^/products$   500   {}
+Latency  range  100–500ms</div>
           </div>
         </div>
-
         <div class="step">
-          <div class="step-number">5</div>
-          <div class="step-content">
-            <h3>Validate Resilience</h3>
-            <p>Observe how your app handles errors, retries, timeouts, and degraded states.</p>
+          <div class="step-n">5</div>
+          <div>
+            <h3>Validate resilience</h3>
+            <p>Watch your app retry, back off, degrade, and recover — and pinpoint exactly which endpoints are making it easy to break. Each rule rolls up into a verdict so you can see what your app survives and what it depends on.</p>
+          </div>
+          <div class="step-aside">
+            <span class="badge badge--lg s-2xx">VERDICT · mostly resilient</span>
+            <div class="code">GET    /users/:id      PASS       resilient
+GET    /products       DEGRADE    stale cache served
+POST   /orders         HARD DEP   checkout blocks
+GET    /notifications  HARD DEP   session screen hangs</div>
           </div>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- CTA Section -->
+  <!-- CTA -->
   <section class="cta">
-    <div class="cta-inner">
-      <h2 class="cta-title">Ready to Build Resilient Apps?</h2>
-      <p class="cta-description">
-        Start testing your application's resilience in minutes
-      </p>
-      <a href="#" class="cta-button" id="cta-button">Try it now</a>
+    <svg class="cta-watermark" viewBox="0 0 1024 1024" preserveAspectRatio="xMidYMid meet" aria-hidden="true"><g transform="translate(0,1024) scale(0.1,-0.1)" fill="#fafafa" stroke="none"><path d="M4803 6933 c-98 -119 -314 -383 -481 -587 -374 -457 -349 -429 -364 -424 -7 3 -79 85 -160 183 -191 231 -222 263 -288 294 -81 38 -155 34 -460 -27 -219 -44 -591 -117 -1230 -241 -820 -159 -805 -156 -841 -197 -47 -54 -52 -81 -52 -265 1 -195 8 -231 54 -275 28 -27 36 -29 102 -28 40 0 160 17 267 38 107 20 290 55 405 76 116 22 296 56 400 75 105 20 298 56 430 81 132 24 310 58 395 75 229 46 268 36 385 -98 143 -162 185 -215 185 -232 0 -9 -412 -532 -915 -1161 -503 -629 -915 -1148 -915 -1152 0 -5 185 -7 412 -6 l412 3 77 95 c41 52 163 205 269 340 312 394 418 528 515 650 50 63 190 239 310 390 119 151 225 281 233 288 40 32 54 19 231 -218 95 -126 190 -244 212 -261 22 -17 62 -40 89 -50 87 -33 84 -33 830 82 179 27 370 57 425 65 55 8 154 24 220 34 66 11 228 35 360 55 132 19 371 55 530 80 160 24 393 60 519 79 238 37 278 36 257 -2 -5 -9 -95 -131 -200 -271 -105 -140 -189 -256 -187 -258 5 -5 142 53 381 162 105 48 237 109 295 135 523 237 1171 543 1211 571 38 27 52 61 38 92 -17 38 3 30 -519 217 -308 111 -837 298 -1205 426 -148 52 -280 99 -293 104 -52 23 -54 10 -7 -42 153 -167 280 -303 350 -376 86 -90 96 -107 68 -116 -23 -6 -209 -34 -688 -101 -214 -30 -640 -90 -945 -135 -1123 -163 -1050 -153 -1103 -141 -27 6 -65 23 -85 38 -69 50 -332 374 -332 408 0 19 278 368 729 915 180 217 661 818 661 824 0 3 -182 6 -404 6 l-405 0 -178 -217z"/></g></svg>
+    <div class="wrap cta-inner">
+      <div style="max-width:720px">
+        <div class="eyebrow" style="color:rgba(255,255,255,0.55)">── ready?</div>
+        <h2>Build apps that <span class="accent">fail well.</span></h2>
+        <p>Try it now — create your first fault server and have a proxy URL in under a minute. Nothing to install.</p>
+      </div>
+      <div class="cta-side">
+        <a class="btn btn--secondary app-link" style="height:44px">Try it now →</a>
+        <div class="cta-note">hosted · one URL per server</div>
+      </div>
     </div>
   </section>
 
   <!-- Footer -->
   <footer>
-    <p>&copy; 2025 Faultend. Built for developers who care about resilience.</p>
+    <div class="wrap" style="width:100%">
+      <div class="foot-grid">
+        <div class="foot-brand">
+          <a href="/" class="logo">
+            <svg viewBox="0 0 1024 1024" aria-hidden="true"><g transform="translate(0,1024) scale(0.1,-0.1)" fill="#0a0a09" stroke="none"><path d="M4803 6933 c-98 -119 -314 -383 -481 -587 -374 -457 -349 -429 -364 -424 -7 3 -79 85 -160 183 -191 231 -222 263 -288 294 -81 38 -155 34 -460 -27 -219 -44 -591 -117 -1230 -241 -820 -159 -805 -156 -841 -197 -47 -54 -52 -81 -52 -265 1 -195 8 -231 54 -275 28 -27 36 -29 102 -28 40 0 160 17 267 38 107 20 290 55 405 76 116 22 296 56 400 75 105 20 298 56 430 81 132 24 310 58 395 75 229 46 268 36 385 -98 143 -162 185 -215 185 -232 0 -9 -412 -532 -915 -1161 -503 -629 -915 -1148 -915 -1152 0 -5 185 -7 412 -6 l412 3 77 95 c41 52 163 205 269 340 312 394 418 528 515 650 50 63 190 239 310 390 119 151 225 281 233 288 40 32 54 19 231 -218 95 -126 190 -244 212 -261 22 -17 62 -40 89 -50 87 -33 84 -33 830 82 179 27 370 57 425 65 55 8 154 24 220 34 66 11 228 35 360 55 132 19 371 55 530 80 160 24 393 60 519 79 238 37 278 36 257 -2 -5 -9 -95 -131 -200 -271 -105 -140 -189 -256 -187 -258 5 -5 142 53 381 162 105 48 237 109 295 135 523 237 1171 543 1211 571 38 27 52 61 38 92 -17 38 3 30 -519 217 -308 111 -837 298 -1205 426 -148 52 -280 99 -293 104 -52 23 -54 10 -7 -42 153 -167 280 -303 350 -376 86 -90 96 -107 68 -116 -23 -6 -209 -34 -688 -101 -214 -30 -640 -90 -945 -135 -1123 -163 -1050 -153 -1103 -141 -27 6 -65 23 -85 38 -69 50 -332 374 -332 408 0 19 278 368 729 915 180 217 661 818 661 824 0 3 -182 6 -404 6 l-405 0 -178 -217z"/></g></svg>
+            <span>faultend</span>
+          </a>
+          <p>A proxy for testing how your app behaves when the network — or the backend behind it — misbehaves.</p>
+          <div class="mono" style="font-size:11px;color:var(--fg-faint)">© 2026 faultend</div>
+        </div>
+        <div class="foot-col">
+          <div class="h">Product</div>
+          <a href="#why">Why Faultend</a>
+          <a class="app-link">Try it now</a>
+        </div>
+        <div class="foot-col">
+          <div class="h">Resources</div>
+          <a href="#how">How it works</a>
+        </div>
+        <div class="foot-col">
+          <div class="h">Company</div>
+          <a href="#why">About</a>
+        </div>
+      </div>
+      <div class="foot-bar">
+        <span>Built for developers who care about resilience.</span>
+        <span>faultend.com</span>
+      </div>
+    </div>
   </footer>
 
   <script>
-    // Parallax Background Lines
-    const parallaxBg = document.getElementById('parallaxBg');
-    const lineCount = 15;
-    
-    for (let i = 0; i < lineCount; i++) {
-      const line = document.createElement('div');
-      line.className = 'parallax-line';
-      line.style.left = `${(i / lineCount) * 100}%`;
-      parallaxBg.appendChild(line);
-    }
-
-    // Parallax Scroll Effect
-    window.addEventListener('scroll', () => {
-      const scrolled = window.pageYOffset;
-      const lines = document.querySelectorAll('.parallax-line');
-      
-      lines.forEach((line, index) => {
-        const speed = 0.5 + (index % 3) * 0.2;
-        const yPos = -(scrolled * speed);
-        line.style.transform = `translateY(${yPos}px)`;
-      });
-    });
-
-    // Intersection Observer for Animations
-    const observerOptions = {
-      threshold: 0.1,
-      rootMargin: '0px 0px -100px 0px'
-    };
-
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add('visible');
-        }
-      });
-    }, observerOptions);
-
-    // Observe feature cards
-    document.querySelectorAll('.feature-card').forEach((card, index) => {
-      card.style.transitionDelay = `${index * 0.1}s`;
-      observer.observe(card);
-    });
-
-    // Observe steps
-    document.querySelectorAll('.step').forEach((step, index) => {
-      step.style.transitionDelay = `${index * 0.15}s`;
-      observer.observe(step);
-    });
-
-    // Set up CTA buttons with dynamic host
+    // App URL from the current host
     const hostParts = window.location.host.split('.');
-    const baseDomain = hostParts.length >= 3 
-      ? hostParts.slice(1).join('.') 
-      : window.location.host;
+    const baseDomain = hostParts.length >= 3 ? hostParts.slice(1).join('.') : window.location.host;
     const appUrl = `${window.location.protocol}//app.${baseDomain}`;
-    document.getElementById('hero-cta').href = appUrl;
-    document.getElementById('cta-button').href = appUrl;
+    document.querySelectorAll('.app-link').forEach(a => { a.href = appUrl; });
 
-    // Smooth scroll for links
-    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-      anchor.addEventListener('click', function (e) {
-        e.preventDefault();
-        const target = document.querySelector(this.getAttribute('href'));
-        if (target) {
-          target.scrollIntoView({ behavior: 'smooth' });
-        }
-      });
-    });
+    // Hero resilience-report rows
+    const rows = [
+      ['GET', '/users/42', 200, 42, 'ok'],
+      ['GET', '/users/42/orders', 200, 118, 'ok'],
+      ['POST', '/orders', 503, 1812, 'fault'],
+      ['GET', '/products', 500, 295, 'deg'],
+      ['DELETE', '/posts/1', 403, 9, 'deg'],
+      ['GET', '/users/5', 200, 250, 'ok'],
+      ['PATCH', '/users/3/settings', 204, 88, 'ok'],
+      ['GET', '/health', 200, 6, 'ok'],
+    ];
+    const statusClass = (s) => s < 300 ? 's-2xx' : s < 500 ? 's-4xx' : 's-5xx';
+    document.getElementById('heroRows').innerHTML = rows.map(([m, path, st, ms, res]) => {
+      const max = res === 'fault' ? 2000 : 300;
+      const pct = Math.max(2, Math.min(100, (ms / max) * 100));
+      const barCls = res === 'fault' ? 'err' : (ms > 200 ? 'slow' : '');
+      const verdict = res === 'ok'
+        ? '<span class="badge s-2xx">OK</span>'
+        : res === 'deg'
+          ? '<span class="badge a-delay">DEGRADED</span>'
+          : '<span class="badge s-5xx">FAULTED</span>';
+      return `<tr>
+        <td><span class="badge m-${m}">${m}</span></td>
+        <td class="path">${path}</td>
+        <td><span class="badge ${statusClass(st)}">${st}</span></td>
+        <td><span class="lat"><span class="lat-bar"><i class="${barCls}" style="width:${pct}%"></i></span><span>${ms}<span style="opacity:.5">ms</span></span></span></td>
+        <td>${verdict}</td>
+      </tr>`;
+    }).join('');
   </script>
 </body>
 </html>

@@ -9,7 +9,12 @@
   <link rel="icon" type="image/png" sizes="32x32" href="/img/favicon-32x32.png">
   <link rel="apple-touch-icon" sizes="180x180" href="/img/apple-touch-icon.png">
   <link rel="manifest" href="/site.webmanifest">
-  
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=swap">
+
   <!-- CSS -->
   <link rel="stylesheet" href="/css/reset.css">
   <link rel="stylesheet" href="/css/variables.css">
@@ -21,93 +26,132 @@
 <body>
   <!-- Top Bar -->
   <header class="top-bar">
-    <div class="top-bar-left">
-      <a href="#" class="logo-link">
-        <img src="/img/faultend.svg" alt="faultend" class="logo">
-        <span class="brand">faultend</span>
-      </a>
-    </div>
-    
+    <a href="#" class="logo-link">
+      <img src="/img/faultend.svg" alt="faultend" class="logo">
+      <span class="brand">faultend</span>
+    </a>
+
     <div class="top-bar-center" id="serverInfo" style="display: none;">
-      <span class="server-name"></span>
-      <div class="server-url-container">
+      <button class="url-chip" id="copyUrlBtn" title="Copy proxy URL">
         <code class="server-url" id="serverUrl"></code>
-        <button class="btn-icon copy-url-btn" id="copyUrlBtn" title="Copy URL">📋</button>
-      </div>
+        <svg viewBox="0 0 16 16" width="13" height="13" fill="none" aria-hidden="true"><rect x="3" y="3" width="9" height="9" stroke="currentColor" stroke-width="1.2"/><path d="M6 3 L6 1 L14 1 L14 9 L12 9" stroke="currentColor" stroke-width="1.2"/></svg>
+      </button>
     </div>
-    
+    <div class="top-bar-spacer"></div>
+
     <div class="top-bar-right">
-      <div id="userDisplay" style="display: none; align-items: center; gap: 1rem;"></div>
-      <button id="settingsBtn" class="btn-secondary" style="display: none;">Settings</button>
+      <button id="settingsBtn" class="btn-ghost btn-sm" style="display: none;">Settings</button>
+      <button id="logoutBtn" class="btn-ghost btn-sm" style="display: none;">Logout</button>
     </div>
   </header>
 
-  <div id="loginOverlay" class="login-overlay" style="display: flex;">
-    <div class="login-modal">
-      <img src="/img/faultend.svg" alt="faultend" class="login-logo">
-      <h1>faultend</h1>
-      <p>Sign in to manage your fault servers</p>
-      <a id="googleLoginBtn" href="/api/auth/google" class="btn btn-primary login-btn">Sign in with Google</a>
-      <a id="githubLoginBtn" href="/api/auth/github" class="btn btn-secondary login-btn" style="margin-top: var(--space-sm);">Sign in with GitHub</a>
-      <div id="devLoginLink" style="margin-top: var(--space-lg); display: none;">
-        <a id="devLoginBtn" href="/api/auth/dev-login" class="text-sm text-gray" style="text-decoration: underline;">Dev Login (local only)</a>
+  <!-- Login (two-panel split) -->
+  <div id="loginOverlay" class="login-overlay" style="display: grid;">
+    <div class="login-brand">
+      <div class="login-brand-mark">
+        <svg class="logo" viewBox="0 0 1024 1024" preserveAspectRatio="xMidYMid meet" aria-hidden="true"><g transform="translate(0,1024) scale(0.1,-0.1)" stroke="none"><path d="M4803 6933 c-98 -119 -314 -383 -481 -587 -374 -457 -349 -429 -364 -424 -7 3 -79 85 -160 183 -191 231 -222 263 -288 294 -81 38 -155 34 -460 -27 -219 -44 -591 -117 -1230 -241 -820 -159 -805 -156 -841 -197 -47 -54 -52 -81 -52 -265 1 -195 8 -231 54 -275 28 -27 36 -29 102 -28 40 0 160 17 267 38 107 20 290 55 405 76 116 22 296 56 400 75 105 20 298 56 430 81 132 24 310 58 395 75 229 46 268 36 385 -98 143 -162 185 -215 185 -232 0 -9 -412 -532 -915 -1161 -503 -629 -915 -1148 -915 -1152 0 -5 185 -7 412 -6 l412 3 77 95 c41 52 163 205 269 340 312 394 418 528 515 650 50 63 190 239 310 390 119 151 225 281 233 288 40 32 54 19 231 -218 95 -126 190 -244 212 -261 22 -17 62 -40 89 -50 87 -33 84 -33 830 82 179 27 370 57 425 65 55 8 154 24 220 34 66 11 228 35 360 55 132 19 371 55 530 80 160 24 393 60 519 79 238 37 278 36 257 -2 -5 -9 -95 -131 -200 -271 -105 -140 -189 -256 -187 -258 5 -5 142 53 381 162 105 48 237 109 295 135 523 237 1171 543 1211 571 38 27 52 61 38 92 -17 38 3 30 -519 217 -308 111 -837 298 -1205 426 -148 52 -280 99 -293 104 -52 23 -54 10 -7 -42 153 -167 280 -303 350 -376 86 -90 96 -107 68 -116 -23 -6 -209 -34 -688 -101 -214 -30 -640 -90 -945 -135 -1123 -163 -1050 -153 -1103 -141 -27 6 -65 23 -85 38 -69 50 -332 374 -332 408 0 19 278 368 729 915 180 217 661 818 661 824 0 3 -182 6 -404 6 l-405 0 -178 -217z"/></g></svg>
+        <span>faultend</span>
       </div>
-      <script>
-        (function() {
-          const redirectTo = encodeURIComponent(window.location.pathname + window.location.hash);
-          const suffix = redirectTo && redirectTo !== '%2F' ? '?redirectTo=' + redirectTo : '';
-          document.getElementById('googleLoginBtn').href = '/api/auth/google' + suffix;
-          document.getElementById('githubLoginBtn').href = '/api/auth/github' + suffix;
 
-          if (window.location.hostname === 'localhost' || window.location.hostname.endsWith('.localhost')) {
-            document.getElementById('devLoginLink').style.display = 'block';
-            document.getElementById('devLoginBtn').href = '/api/auth/dev-login' + suffix;
-          }
-        })();
-      </script>
+      <div class="login-headline">
+        <div class="login-eyebrow">resilience is rehearsed.</div>
+        <h1>The proxy that lets you<br><span class="accent">break</span> your own backend.</h1>
+        <p>Faultend intercepts requests between your app and any upstream — letting you inject latency, errors, and mocked responses to test how gracefully your code fails.</p>
+      </div>
+
+      <div class="login-curl">
+        <div>$ curl https://yourapp.faultend.com/users/42</div>
+        <div>→ <span class="injected">503 Service Unavailable</span> · injected by rule "flaky-users"</div>
+      </div>
+
+      <svg class="login-watermark" viewBox="0 0 1024 1024" preserveAspectRatio="xMidYMid meet" aria-hidden="true"><g transform="translate(0,1024) scale(0.1,-0.1)" stroke="none"><path d="M4803 6933 c-98 -119 -314 -383 -481 -587 -374 -457 -349 -429 -364 -424 -7 3 -79 85 -160 183 -191 231 -222 263 -288 294 -81 38 -155 34 -460 -27 -219 -44 -591 -117 -1230 -241 -820 -159 -805 -156 -841 -197 -47 -54 -52 -81 -52 -265 1 -195 8 -231 54 -275 28 -27 36 -29 102 -28 40 0 160 17 267 38 107 20 290 55 405 76 116 22 296 56 400 75 105 20 298 56 430 81 132 24 310 58 395 75 229 46 268 36 385 -98 143 -162 185 -215 185 -232 0 -9 -412 -532 -915 -1161 -503 -629 -915 -1148 -915 -1152 0 -5 185 -7 412 -6 l412 3 77 95 c41 52 163 205 269 340 312 394 418 528 515 650 50 63 190 239 310 390 119 151 225 281 233 288 40 32 54 19 231 -218 95 -126 190 -244 212 -261 22 -17 62 -40 89 -50 87 -33 84 -33 830 82 179 27 370 57 425 65 55 8 154 24 220 34 66 11 228 35 360 55 132 19 371 55 530 80 160 24 393 60 519 79 238 37 278 36 257 -2 -5 -9 -95 -131 -200 -271 -105 -140 -189 -256 -187 -258 5 -5 142 53 381 162 105 48 237 109 295 135 523 237 1171 543 1211 571 38 27 52 61 38 92 -17 38 3 30 -519 217 -308 111 -837 298 -1205 426 -148 52 -280 99 -293 104 -52 23 -54 10 -7 -42 153 -167 280 -303 350 -376 86 -90 96 -107 68 -116 -23 -6 -209 -34 -688 -101 -214 -30 -640 -90 -945 -135 -1123 -163 -1050 -153 -1103 -141 -27 6 -65 23 -85 38 -69 50 -332 374 -332 408 0 19 278 368 729 915 180 217 661 818 661 824 0 3 -182 6 -404 6 l-405 0 -178 -217z"/></g></svg>
     </div>
+
+    <div class="login-panel">
+      <div class="login-modal">
+        <div>
+          <div class="login-intro-eyebrow">Sign in</div>
+          <h2>Welcome back.</h2>
+          <p class="login-sub">Manage your fault servers and mock rules.</p>
+        </div>
+        <div class="login-actions">
+          <a id="googleLoginBtn" href="/api/auth/google" class="btn-secondary login-btn">
+            <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path fill="#4285F4" d="M15.7 8.2c0-.6-.05-1.1-.16-1.6H8v3.05h4.3c-.18 1-.74 1.85-1.6 2.4v2h2.55c1.5-1.37 2.45-3.4 2.45-5.85z"/><path fill="#34A853" d="M8 16c2.16 0 3.97-.72 5.3-1.94l-2.55-2c-.7.47-1.6.74-2.75.74-2.1 0-3.9-1.42-4.54-3.33H.84v2.07A8 8 0 0 0 8 16z"/><path fill="#FBBC05" d="M3.46 9.47A4.8 4.8 0 0 1 3.2 8c0-.51.1-1 .26-1.47V4.46H.84A8 8 0 0 0 0 8c0 1.3.3 2.5.84 3.54l2.62-2.07z"/><path fill="#EA4335" d="M8 3.17c1.17 0 2.23.4 3.06 1.2L13.3 2.1A8 8 0 0 0 8 0 8 8 0 0 0 .84 4.46l2.62 2.07C4.1 4.6 5.9 3.17 8 3.17z"/></svg>
+            Continue with Google
+          </a>
+          <a id="githubLoginBtn" href="/api/auth/github" class="btn-ghost login-btn">
+            <svg width="15" height="15" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0a8 8 0 0 0-2.53 15.59c.4.07.55-.17.55-.38v-1.5c-2.22.48-2.7-.94-2.7-.94-.36-.92-.88-1.16-.88-1.16-.72-.5.06-.48.06-.48.8.06 1.22.83 1.22.83.7 1.21 1.85.86 2.3.66.07-.52.28-.86.5-1.06-1.77-.2-3.64-.88-3.64-3.93 0-.87.31-1.58.82-2.14-.08-.2-.36-1.02.08-2.12 0 0 .67-.22 2.2.82a7.6 7.6 0 0 1 4 0c1.52-1.04 2.19-.82 2.19-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.14 0 3.06-1.87 3.72-3.65 3.92.29.25.54.74.54 1.5v2.22c0 .21.15.46.55.38A8 8 0 0 0 8 0z"/></svg>
+            Continue with GitHub
+          </a>
+        </div>
+        <div id="devLoginLink" class="login-dev" style="display: none;">
+          <a id="devLoginBtn" href="/api/auth/dev-login">dev login · local only</a>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      (function() {
+        const redirectTo = encodeURIComponent(window.location.pathname + window.location.hash);
+        const suffix = redirectTo && redirectTo !== '%2F' ? '?redirectTo=' + redirectTo : '';
+        document.getElementById('googleLoginBtn').href = '/api/auth/google' + suffix;
+        document.getElementById('githubLoginBtn').href = '/api/auth/github' + suffix;
+
+        if (window.location.hostname === 'localhost' || window.location.hostname.endsWith('.localhost')) {
+          document.getElementById('devLoginLink').style.display = 'block';
+          document.getElementById('devLoginBtn').href = '/api/auth/dev-login' + suffix;
+        }
+      })();
+    </script>
   </div>
 
   <main id="mainContent" class="main-content" style="visibility: hidden;">
     <!-- Server List View -->
     <div id="serverListView" class="view active">
       <div class="view-header">
-        <h2>Servers</h2>
-        <button id="createServerBtn" class="btn">Create Server</button>
+        <button id="createServerBtn" class="btn">
+          <svg viewBox="0 0 16 16" width="12" height="12" fill="none" aria-hidden="true"><path d="M8 2 L8 14 M2 8 L14 8" stroke="currentColor" stroke-width="1.4"/></svg>
+          New server
+        </button>
       </div>
       <div id="serverListContent">
-        <p class="empty-state">Loading servers...</p>
+        <p class="empty-state">Loading servers…</p>
       </div>
     </div>
 
     <!-- Server Management View (Traffic/Rules in 2 columns) -->
-    <div id="serverManagementView" class="view" style="display: none;">
+    <div id="serverManagementView" class="view">
       <div class="two-column-layout">
-        <!-- Traffic Column -->
         <div class="column" id="trafficView">
-          <h2>Traffic</h2>
-          <p class="empty-state">No traffic logs yet. Send requests through your fault server to see them here.</p>
+          <p class="empty-state">No traffic logged yet.</p>
         </div>
-
-        <!-- Rules/Config Column -->
         <div class="column" id="rulesView">
-          <div id="rules-content" class="column-content">
-            <h2>Rules</h2>
-            <p class="empty-state">No rules configured. Create rules to control how requests are handled.</p>
+          <div id="rules-content">
+            <p class="empty-state">No rules configured.</p>
           </div>
         </div>
       </div>
     </div>
   </main>
 
+  <!-- Status Bar (server pages only) -->
+  <footer id="statusBar" class="status-bar" style="display: none;"></footer>
+
   <!-- Right-Side Drawer -->
   <div id="drawerOverlay" class="drawer-overlay"></div>
   <div id="drawer" class="drawer">
     <div class="drawer-header">
-      <h2 id="drawerTitle" class="drawer-title"></h2>
+      <div class="drawer-heading">
+        <div id="drawerEyebrow" class="drawer-eyebrow" style="display: none;"></div>
+        <h2 id="drawerTitle" class="drawer-title"></h2>
+        <div id="drawerSub" class="drawer-sub" style="display: none;"></div>
+      </div>
+      <button id="drawerClose" class="btn-icon" title="Close">
+        <svg viewBox="0 0 16 16" width="13" height="13" fill="none" aria-hidden="true"><path d="M3 3 L13 13 M13 3 L3 13" stroke="currentColor" stroke-width="1.4"/></svg>
+      </button>
     </div>
-    <div id="drawerBody" class="drawer-body">
-    </div>
+    <div id="drawerBody" class="drawer-body"></div>
+    <div id="drawerFooter" class="drawer-footer" style="display: none;"></div>
   </div>
 
   <!-- Toast Notifications -->

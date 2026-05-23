@@ -1,19 +1,21 @@
 import { buildSubdomainUrl } from './config.js';
 import { generateInvite, revokeInvite, fetchCollaborators, removeCollaborator, leaveServer, makeCollaboratorAdmin, removeCollaboratorAdmin, transferOwnership } from './api.js';
 import { authManager } from './auth.js';
+import { Icon } from './icons.js';
 
 class ViewRouter {
   constructor() {
     this.currentServerId = null;
     this.serverListView = document.getElementById('serverListView');
     this.serverManagementView = document.getElementById('serverManagementView');
-    
+    this.statusBar = document.getElementById('statusBar');
+
     this.bindEvents();
   }
 
   bindEvents() {
     window.addEventListener('hashchange', () => this.route());
-    
+
     const logoLink = document.querySelector('.logo-link');
     if (logoLink) {
       logoLink.addEventListener('click', (e) => {
@@ -21,12 +23,10 @@ class ViewRouter {
         this.navigateToServerList();
       });
     }
-    
+
     const settingsBtn = document.getElementById('settingsBtn');
     if (settingsBtn) {
-      settingsBtn.addEventListener('click', () => {
-        this.openServerSettings();
-      });
+      settingsBtn.addEventListener('click', () => this.openServerSettings());
     }
   }
 
@@ -38,119 +38,90 @@ class ViewRouter {
     const isAdmin = server ? server.is_admin : false;
     const canAdmin = isOwner || isAdmin;
 
-    drawer.setTitle('Server Settings');
+    drawer.setHeader({ eyebrow: 'Server', title: `${this.currentServerId} · settings` });
     drawer.setContent(`
       <div class="settings-section">
-        <p>Server ID: <strong>${this.currentServerId}</strong></p>
-        ${!isOwner ? `<p class="text-gray text-sm">You are ${isAdmin ? 'an admin' : 'a collaborator'} on this server.</p>` : ''}
-      </div>
-
-      <div class="settings-section">
-        <h3>Export Configuration</h3>
-        <p>Download your server configuration as JSON for backup or sharing.</p>
-        <button id="exportConfigBtn" class="btn-secondary">Export Configuration</button>
+        <h3>Identity</h3>
+        <div class="form-field" style="margin-bottom:0">
+          <label>Server ID</label>
+          <input class="input input-mono" value="${this.currentServerId}" disabled>
+          ${!isOwner ? `<span class="form-hint">You are ${isAdmin ? 'an admin' : 'a collaborator'} on this server.</span>` : ''}
+        </div>
       </div>
 
       <div class="settings-section">
         <h3>Sharing</h3>
         ${canAdmin ? `
-          <p>Invite others to collaborate on this server.</p>
-          <div id="inviteLinkContainer" style="display: none; margin-bottom: var(--space-md);">
-            <code id="inviteLink" style="display: block; padding: var(--space-sm); background: var(--color-background); margin-bottom: var(--space-sm); word-break: break-all;"></code>
-            <button id="copyInviteBtn" class="btn-secondary">Copy Link</button>
-            <button id="revokeInviteBtn" class="btn-secondary" style="margin-left: var(--space-sm);">Revoke</button>
+          <div id="inviteLinkContainer" class="invite-link-box" style="display:none">
+            <code id="inviteLink"></code>
+            <div class="invite-link-actions">
+              <button id="copyInviteBtn" class="btn-ghost btn-sm">Copy link</button>
+              <button id="revokeInviteBtn" class="btn-ghost btn-sm">Revoke</button>
+            </div>
           </div>
-          <button id="generateInviteBtn" class="btn-secondary">Generate Invite Link</button>
+          <button id="generateInviteBtn" class="btn-secondary btn-sm" style="margin-bottom:var(--ft-sp-4)">${Icon.plus} Generate invite link</button>
         ` : ''}
-        <div id="collaboratorsList" style="margin-top: var(--space-md);"></div>
+        <div id="collaboratorsList"></div>
       </div>
-
-      <div class="drawer-footer">
-        ${isOwner ? `<button id="deleteServerBtn" class="btn-danger">Delete Server</button>` : ''}
-        ${!isOwner ? `<button id="leaveServerBtn" class="btn-danger">Leave Server</button>` : ''}
-      </div>
+    `);
+    drawer.setFooter(`
+      <button id="exportConfigBtn" class="btn-ghost btn-sm">${Icon.copy} Export</button>
+      ${isOwner
+        ? '<button id="deleteServerBtn" class="btn-danger btn-sm">Delete server</button>'
+        : '<button id="leaveServerBtn" class="btn-danger btn-sm">Leave server</button>'}
     `);
     drawer.open();
 
-    const exportBtn = document.getElementById('exportConfigBtn');
-    if (exportBtn) {
-      exportBtn.addEventListener('click', () => this.exportServerConfig());
-    }
-
-    const deleteBtn = document.getElementById('deleteServerBtn');
-    if (deleteBtn) {
-      deleteBtn.addEventListener('click', () => app.deleteCurrentServer());
-    }
-
-    const leaveBtn = document.getElementById('leaveServerBtn');
-    if (leaveBtn) {
-      leaveBtn.addEventListener('click', () => this.leaveCurrentServer());
-    }
+    document.getElementById('exportConfigBtn')?.addEventListener('click', () => this.exportServerConfig());
+    document.getElementById('deleteServerBtn')?.addEventListener('click', () => app.deleteCurrentServer());
+    document.getElementById('leaveServerBtn')?.addEventListener('click', () => this.leaveCurrentServer());
 
     if (canAdmin) {
-      const generateBtn = document.getElementById('generateInviteBtn');
-      if (generateBtn) {
-        generateBtn.addEventListener('click', () => this.generateInviteLink());
-      }
-
-      const revokeBtn = document.getElementById('revokeInviteBtn');
-      if (revokeBtn) {
-        revokeBtn.addEventListener('click', () => this.revokeInviteLink());
-      }
-
-      const copyBtn = document.getElementById('copyInviteBtn');
-      if (copyBtn) {
-        copyBtn.addEventListener('click', () => this.copyInviteLink());
-      }
+      document.getElementById('generateInviteBtn')?.addEventListener('click', () => this.generateInviteLink());
+      document.getElementById('revokeInviteBtn')?.addEventListener('click', () => this.revokeInviteLink());
+      document.getElementById('copyInviteBtn')?.addEventListener('click', () => this.copyInviteLink());
     }
 
     this.loadCollaborators(isOwner);
   }
-  
+
   async generateInviteLink() {
     try {
       const result = await generateInvite(this.currentServerId);
-      const container = document.getElementById('inviteLinkContainer');
-      const linkEl = document.getElementById('inviteLink');
-      const generateBtn = document.getElementById('generateInviteBtn');
-      
-      linkEl.textContent = result.inviteUrl;
-      container.style.display = 'block';
-      generateBtn.style.display = 'none';
+      document.getElementById('inviteLink').textContent = result.inviteUrl;
+      document.getElementById('inviteLinkContainer').style.display = 'flex';
+      document.getElementById('generateInviteBtn').style.display = 'none';
     } catch (error) {
       console.error('Failed to generate invite:', error);
       const { Toast } = await import('./components.js');
       Toast.error('Failed to generate invite link');
     }
   }
-  
+
   async revokeInviteLink() {
     try {
       await revokeInvite(this.currentServerId);
-      const container = document.getElementById('inviteLinkContainer');
-      const generateBtn = document.getElementById('generateInviteBtn');
-      
-      container.style.display = 'none';
-      generateBtn.style.display = 'inline-block';
+      document.getElementById('inviteLinkContainer').style.display = 'none';
+      document.getElementById('generateInviteBtn').style.display = 'inline-flex';
     } catch (error) {
       console.error('Failed to revoke invite:', error);
       const { Toast } = await import('./components.js');
       Toast.error('Failed to revoke invite link');
     }
   }
-  
+
   copyInviteLink() {
     const linkEl = document.getElementById('inviteLink');
     if (linkEl) {
       navigator.clipboard.writeText(linkEl.textContent).then(() => {
         const btn = document.getElementById('copyInviteBtn');
         const originalText = btn.textContent;
-        btn.textContent = 'Copied!';
+        btn.textContent = 'Copied';
         setTimeout(() => btn.textContent = originalText, 1000);
       });
     }
   }
-  
+
   async loadCollaborators(isOwner = false) {
     const container = document.getElementById('collaboratorsList');
     if (!container) return;
@@ -161,41 +132,43 @@ class ViewRouter {
       const canAdmin = server ? (server.is_owner || server.is_admin) : false;
       const currentUserId = authManager.getUser()?.id;
 
-      container.innerHTML = `
-        <p class="text-sm" style="margin-bottom: var(--space-sm);"><strong>Members:</strong></p>
-        ${result.collaborators.map(c => {
-          const isSelf = c.id === currentUserId;
-          const isCollabOwner = c.role === 'owner';
-          return `
-          <div style="display: flex; justify-content: space-between; align-items: center; padding: var(--space-sm) 0; border-bottom: 1px solid var(--color-gray-light);">
-            <div style="display: flex; align-items: center; gap: var(--space-sm);">
-              <span>${c.name || c.email}</span>
-              <span class="badge badge-${isCollabOwner ? 'owner' : c.role === 'admin' ? 'admin' : 'shared'}">${isCollabOwner ? 'owner' : c.role === 'admin' ? 'admin' : 'collaborator'}</span>
+      container.innerHTML = result.collaborators.map(c => {
+        const isSelf = c.id === currentUserId;
+        const isCollabOwner = c.role === 'owner';
+        const roleClass = isCollabOwner ? 'owner' : c.role === 'admin' ? 'admin' : 'shared';
+        const roleLabel = isCollabOwner ? 'owner' : c.role === 'admin' ? 'admin' : 'collaborator';
+        const name = c.name || c.email;
+        const actions = [];
+        if (isOwner && !isCollabOwner) {
+          actions.push(c.role === 'admin'
+            ? `<button class="link-btn remove-admin" data-user-id="${c.id}">Remove admin</button>`
+            : `<button class="link-btn make-admin" data-user-id="${c.id}">Make admin</button>`);
+          actions.push(`<button class="link-btn transfer-ownership" data-user-id="${c.id}">Transfer</button>`);
+        }
+        if (canAdmin && !isCollabOwner && !isSelf) {
+          actions.push(`<button class="link-btn danger remove-collaborator" data-user-id="${c.id}">Remove</button>`);
+        }
+        return `
+          <div class="collab-row">
+            <div class="collab-id">
+              <span class="collab-avatar">${name.slice(0, 2).toUpperCase()}</span>
+              <span class="collab-name">${name}</span>
+              <span class="badge badge-${roleClass}">${roleLabel}</span>
             </div>
-            <div style="display: flex; gap: var(--space-sm);">
-              ${isOwner && !isCollabOwner ? (c.role === 'admin'
-                ? `<button class="btn-icon remove-admin" data-user-id="${c.id}">Remove Admin</button>`
-                : `<button class="btn-icon make-admin" data-user-id="${c.id}">Make Admin</button>`)
-                : ''}
-              ${isOwner && !isCollabOwner ? `<button class="btn-icon transfer-ownership" data-user-id="${c.id}">Transfer Owner</button>` : ''}
-              ${canAdmin && !isCollabOwner && !isSelf ? `<button class="btn-icon remove-collaborator" data-user-id="${c.id}">Remove</button>` : ''}
-            </div>
+            <div class="collab-actions">${actions.join('')}</div>
           </div>
-        `}).join('')}
-      `;
+        `;
+      }).join('');
 
       container.querySelectorAll('.remove-collaborator').forEach(btn => {
         btn.addEventListener('click', (e) => this.removeCollaborator(e.currentTarget.dataset.userId));
       });
-
       container.querySelectorAll('.make-admin').forEach(btn => {
         btn.addEventListener('click', (e) => this.makeAdmin(e.currentTarget.dataset.userId));
       });
-
       container.querySelectorAll('.remove-admin').forEach(btn => {
         btn.addEventListener('click', (e) => this.removeAdmin(e.currentTarget.dataset.userId));
       });
-
       container.querySelectorAll('.transfer-ownership').forEach(btn => {
         btn.addEventListener('click', (e) => this.transferOwnership(e.currentTarget.dataset.userId));
       });
@@ -220,8 +193,8 @@ class ViewRouter {
     try {
       const { ConfirmDialog, Toast } = await import('./components.js');
       const confirmed = await ConfirmDialog.show({
-        title: 'Leave Server',
-        message: 'Are you sure you want to leave this server?',
+        title: 'Leave server',
+        message: 'Are you sure you want to leave this server? You will lose access to it.',
         confirmText: 'Leave',
         cancelText: 'Cancel',
         danger: true
@@ -266,8 +239,8 @@ class ViewRouter {
     try {
       const { ConfirmDialog } = await import('./components.js');
       const confirmed = await ConfirmDialog.show({
-        title: 'Transfer Ownership',
-        message: 'Are you sure you want to transfer ownership? You will become an admin collaborator.',
+        title: 'Transfer ownership',
+        message: 'Transfer ownership of this server? You will become an admin collaborator.',
         confirmText: 'Transfer',
         cancelText: 'Cancel',
         danger: true
@@ -286,7 +259,7 @@ class ViewRouter {
       Toast.error('Failed to transfer ownership');
     }
   }
-  
+
   async exportServerConfig() {
     try {
       const { fetchRules } = await import('./api.js');
@@ -294,22 +267,15 @@ class ViewRouter {
       const rules = rulesData.rules || [];
       const servers = window.faultendApp?.servers || [];
       const server = servers.find(s => s.server_id === this.currentServerId) || { server_id: this.currentServerId };
-      
+
       const exportData = {
         version: '1.0',
         exportedAt: new Date().toISOString(),
-        server: {
-          id: server.id,
-          name: server.name || '',
-          description: server.description || ''
-        },
-        rules: rules,
-        metadata: {
-          rulesCount: rules.length,
-          exportSource: 'faultend-ui'
-        }
+        server: { id: server.server_id || this.currentServerId },
+        rules,
+        metadata: { rulesCount: rules.length, exportSource: 'faultend-ui' }
       };
-      
+
       const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -326,14 +292,13 @@ class ViewRouter {
 
   route() {
     const hash = window.location.hash.slice(1);
-    
+
     if (!hash) {
       this.showServerList();
       return;
     }
-    
+
     const parts = hash.split('/');
-    
     if (parts[0] === 'server' && parts[1]) {
       this.showServerManagement(parts[1]);
     } else if (parts[0] === 'invite' && parts[1]) {
@@ -345,54 +310,78 @@ class ViewRouter {
 
   showServerList() {
     this.currentServerId = null;
+    this.serverListView.classList.add('active');
     this.serverListView.style.display = 'block';
+    this.serverManagementView.classList.remove('active', 'fills');
     this.serverManagementView.style.display = 'none';
     document.getElementById('serverInfo').style.display = 'none';
     document.getElementById('settingsBtn').style.display = 'none';
+    if (this.statusBar) this.statusBar.style.display = 'none';
     this.triggerViewLoad('serverList');
   }
-  
+
   showServerManagement(serverId) {
     this.currentServerId = serverId;
+    this.serverListView.classList.remove('active');
     this.serverListView.style.display = 'none';
+    this.serverManagementView.classList.add('active', 'fills');
     this.serverManagementView.style.display = 'block';
-    
+
     const serverInfo = document.getElementById('serverInfo');
     serverInfo.style.display = 'flex';
-    serverInfo.querySelector('.server-name').textContent = serverId;
-    
+
     const serverUrl = buildSubdomainUrl(serverId);
     document.getElementById('serverUrl').textContent = serverUrl;
-    document.getElementById('settingsBtn').style.display = 'block';
-    
+    document.getElementById('settingsBtn').style.display = 'inline-flex';
+
     const copyBtn = document.getElementById('copyUrlBtn');
     if (copyBtn) {
       copyBtn.onclick = () => this.copyServerUrl(serverUrl);
     }
-    
+
+    this.updateStatusBar(serverId, serverUrl);
+
     this.triggerViewLoad('traffic');
     this.triggerViewLoad('rules');
   }
-  
+
+  updateStatusBar(serverId, serverUrl) {
+    if (!this.statusBar) return;
+    const server = window.faultendApp?.servers?.find(s => s.server_id === serverId);
+    const host = serverUrl.replace(/^https?:\/\//, '');
+    const traffic = server ? (parseInt(server.traffic_count) || 0) : 0;
+    const rules = server ? (parseInt(server.rules_count) || 0) : 0;
+    this.statusBar.innerHTML = `
+      <span class="status-item"><span class="dot live"></span>proxy</span>
+      <span class="sep"></span>
+      <span class="status-item">${host}</span>
+      <span class="spacer"></span>
+      <span class="status-item">${traffic.toLocaleString()} req logged</span>
+      <span class="sep"></span>
+      <span class="status-item">${rules} rules</span>
+    `;
+    this.statusBar.style.display = 'flex';
+  }
+
   async showInviteAcceptance(token) {
     try {
       const { previewInvite, acceptInvite } = await import('./api.js');
       const preview = await previewInvite(token);
-      
+
       const drawer = window.faultendApp.getDrawer();
-      drawer.setTitle('Server Invitation');
+      drawer.setHeader({ eyebrow: 'Invitation', title: 'Join server' });
       drawer.setContent(`
-        <div style="padding: var(--space-lg);">
-          <p>You've been invited to collaborate on <strong>${preview.serverName}</strong></p>
-          <p class="text-gray text-sm">Owner: ${preview.ownerName}</p>
-          <div style="margin-top: var(--space-lg); display: flex; gap: var(--space-md);">
-            <button id="acceptInviteBtn" class="btn-primary">Join Server</button>
-            <button id="declineInviteBtn" class="btn-secondary">Decline</button>
-          </div>
+        <div class="settings-section" style="margin-bottom:0">
+          <p>You've been invited to collaborate on <strong class="text-strong">${preview.serverName}</strong>.</p>
+          <p class="form-hint" style="margin-top:0">Owner · ${preview.ownerName}</p>
         </div>
       `);
+      drawer.setFooter(`
+        <button id="declineInviteBtn" class="btn-ghost btn-sm">Decline</button>
+        <button id="acceptInviteBtn" class="btn btn-sm">Join server</button>
+      `);
       drawer.open();
-      
+
       document.getElementById('acceptInviteBtn').addEventListener('click', async () => {
         try {
           const result = await acceptInvite(token);
@@ -404,7 +393,7 @@ class ViewRouter {
           Toast.error('Failed to join server');
         }
       });
-      
+
       document.getElementById('declineInviteBtn').addEventListener('click', () => {
         drawer.close();
         this.navigateToServerList();
@@ -416,29 +405,27 @@ class ViewRouter {
       this.navigateToServerList();
     }
   }
-  
+
   copyServerUrl(url) {
     navigator.clipboard.writeText(url).then(() => {
-      const btn = document.getElementById('copyUrlBtn');
-      const originalText = btn.textContent;
-      btn.textContent = '✓';
-      setTimeout(() => btn.textContent = originalText, 1000);
+      const chip = document.getElementById('copyUrlBtn');
+      chip.classList.add('copied');
+      setTimeout(() => chip.classList.remove('copied'), 1000);
     }).catch(err => {
       console.error('Failed to copy URL:', err);
     });
   }
-  
+
   navigateToServer(serverId) {
     window.location.hash = `server/${serverId}`;
   }
-  
+
   navigateToServerList() {
     window.location.hash = '';
   }
 
   triggerViewLoad(viewName) {
-    const event = new CustomEvent('viewload', { detail: { view: viewName } });
-    window.dispatchEvent(event);
+    window.dispatchEvent(new CustomEvent('viewload', { detail: { view: viewName } }));
   }
 }
 
