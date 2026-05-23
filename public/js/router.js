@@ -38,17 +38,12 @@ class ViewRouter {
     const isAdmin = server ? server.is_admin : false;
     const canAdmin = isOwner || isAdmin;
 
-    drawer.setHeader({ eyebrow: 'Server', title: `${this.currentServerId} · settings` });
+    drawer.setHeader({
+      eyebrow: 'Server',
+      title: `${this.currentServerId} · settings`,
+      sub: !isOwner ? `You are ${isAdmin ? 'an admin' : 'a collaborator'} on this server.` : null
+    });
     drawer.setContent(`
-      <div class="settings-section">
-        <h3>Identity</h3>
-        <div class="form-field" style="margin-bottom:0">
-          <label>Server ID</label>
-          <input class="input input-mono" value="${this.currentServerId}" disabled>
-          ${!isOwner ? `<span class="form-hint">You are ${isAdmin ? 'an admin' : 'a collaborator'} on this server.</span>` : ''}
-        </div>
-      </div>
-
       <div class="settings-section">
         <h3>Sharing</h3>
         ${canAdmin ? `
