@@ -16,3 +16,5 @@ data/rules.json
 scripts/
 *.png
 *.jpg
+.design-handoff/
+.tmp/
