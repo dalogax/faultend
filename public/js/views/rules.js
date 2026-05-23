@@ -373,7 +373,7 @@ class RuleForm {
 
         <div class="form-section">
           <h3>Transform
-            <span class="toggle-switch"><input type="checkbox" id="transformEnabled" ${d.transformEnabled ? 'checked' : ''}><span class="toggle-slider"></span></span>
+            <label class="toggle-switch"><input type="checkbox" id="transformEnabled" ${d.transformEnabled ? 'checked' : ''}><span class="toggle-slider"></span></label>
           </h3>
           <p class="form-hint" style="margin-top:0;margin-bottom:var(--ft-sp-4)">Run JavaScript on the response before it returns to the client. Mutate <code>res.status</code>, <code>res.headers</code>, or <code>res.body</code>.</p>
           <div id="transformFields" style="display:${d.transformEnabled ? 'block' : 'none'}">
@@ -387,7 +387,7 @@ class RuleForm {
 
         <div class="form-section">
           <h3>Latency
-            <span class="toggle-switch"><input type="checkbox" id="latencyEnabled" ${d.latencyEnabled ? 'checked' : ''}><span class="toggle-slider"></span></span>
+            <label class="toggle-switch"><input type="checkbox" id="latencyEnabled" ${d.latencyEnabled ? 'checked' : ''}><span class="toggle-slider"></span></label>
           </h3>
           <div id="latencyFields" style="display:${d.latencyEnabled ? 'block' : 'none'}">
             <div class="seg-control" id="latencySeg" style="margin-bottom:var(--ft-sp-4)">
