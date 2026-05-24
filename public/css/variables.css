@@ -95,3 +95,64 @@
   --ft-transition-fast: 120ms ease;
   --ft-transition-normal: 240ms ease;
 }
+
+/* ============================================================
+   DARK THEME
+   Applies when `<html data-theme="dark">` is set, or when the user
+   has prefers-color-scheme: dark and no explicit choice was made.
+   ============================================================ */
+:root[data-theme="dark"] {
+  --ft-ink-0:  #0c0c0b;
+  --ft-ink-1:  #131312;
+  --ft-ink-2:  #1a1a18;
+  --ft-ink-3:  #232321;
+  --ft-ink-4:  #2f2f2c;
+  --ft-ink-5:  #44443f;
+  --ft-ink-7:  #6c6a64;
+  --ft-ink-9:  #8e8c86;
+  --ft-ink-10: #b5b3ad;
+  --ft-ink-11: #e2e0db;
+  --ft-ink-12: #f6f4ef;
+
+  --ft-amber-bg:   #2c2105;
+  --ft-amber-line: #6b4d00;
+  --ft-amber-ink:  #ffd76b;
+  --ft-amber-pure: #f1b73a;
+
+  --ft-red:        #ef6464;
+  --ft-red-bg:     #2c0e0e;
+  --ft-red-ink:    #ff9b9b;
+
+  --ft-green:      #5cd97b;
+
+  --ft-m-get-bg:     #1c2d44; --ft-m-get-fg:     #a8c4e8;
+  --ft-m-post-bg:    #1c3a2c; --ft-m-post-fg:    #9adfb8;
+  --ft-m-put-bg:     #3d2c14; --ft-m-put-fg:     #e6b682;
+  --ft-m-patch-bg:   #1f2f2a; --ft-m-patch-fg:   #9ec8be;
+  --ft-m-delete-bg:  #3d1a1d; --ft-m-delete-fg:  #f5a3a8;
+  --ft-m-options-bg: #2a1e3d; --ft-m-options-fg: #c8a8e8;
+  --ft-m-head-bg:    #2e2a0f; --ft-m-head-fg:    #d8d294;
+  --ft-m-any-bg:     #232321; --ft-m-any-fg:     #b5b3ad;
+
+  --ft-s-2xx-bg: #1c3a2c; --ft-s-2xx-fg: #9adfb8;
+  --ft-s-3xx-bg: #19303a; --ft-s-3xx-fg: #92d0dc;
+  --ft-s-4xx-bg: #3a2f0f; --ft-s-4xx-fg: #ead68a;
+  --ft-s-5xx-bg: #3d1a1d; --ft-s-5xx-fg: #f5a3a8;
+
+  --ft-a-mock-bg:      #1f2440; --ft-a-mock-fg:      #b5bef0;
+  --ft-a-proxy-bg:     #1c3329; --ft-a-proxy-fg:     #97d3b1;
+  --ft-a-delay-bg:     #332815; --ft-a-delay-fg:     #e6c98a;
+  --ft-a-transform-bg: #321f32; --ft-a-transform-fg: #e4b8e4;
+
+  --ft-bg:          var(--ft-ink-1);
+  --ft-surface:     var(--ft-ink-0);
+  --ft-surface-2:   var(--ft-ink-2);
+  --ft-hairline:    var(--ft-ink-3);
+  --ft-border:      var(--ft-ink-4);
+  --ft-border-strong: var(--ft-ink-5);
+  --ft-fg:          var(--ft-ink-11);
+  --ft-fg-strong:   var(--ft-ink-12);
+  --ft-fg-muted:    var(--ft-ink-9);
+  --ft-fg-faint:    var(--ft-ink-7);
+  --ft-fg-on-fill:  var(--ft-ink-0);
+}
