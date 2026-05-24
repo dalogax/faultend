@@ -2,6 +2,7 @@ import { buildSubdomainUrl } from './config.js';
 import { generateInvite, revokeInvite, fetchCollaborators, removeCollaborator, leaveServer, makeCollaboratorAdmin, removeCollaboratorAdmin, transferOwnership } from './api.js';
 import { authManager } from './auth.js';
 import { Icon } from './icons.js';
+import { DangerConfirm } from './components.js';
 
 class ViewRouter {
   constructor() {
@@ -68,8 +69,16 @@ class ViewRouter {
     drawer.open();
 
     document.getElementById('exportConfigBtn')?.addEventListener('click', () => this.exportServerConfig());
-    document.getElementById('deleteServerBtn')?.addEventListener('click', () => app.deleteCurrentServer());
-    document.getElementById('leaveServerBtn')?.addEventListener('click', () => this.leaveCurrentServer());
+    DangerConfirm.wire(document.getElementById('deleteServerBtn'), {
+      idleText: 'Delete server',
+      armedText: 'Click again to confirm',
+      onConfirm: () => app.deleteCurrentServer()
+    });
+    DangerConfirm.wire(document.getElementById('leaveServerBtn'), {
+      idleText: 'Leave server',
+      armedText: 'Click again to confirm',
+      onConfirm: () => this.leaveCurrentServer()
+    });
 
     if (canAdmin) {
       document.getElementById('generateInviteBtn')?.addEventListener('click', () => this.generateInviteLink());
@@ -186,16 +195,6 @@ class ViewRouter {
 
   async leaveCurrentServer() {
     try {
-      const { ConfirmDialog, Toast } = await import('./components.js');
-      const confirmed = await ConfirmDialog.show({
-        title: 'Leave server',
-        message: 'Are you sure you want to leave this server? You will lose access to it.',
-        confirmText: 'Leave',
-        cancelText: 'Cancel',
-        danger: true
-      });
-      if (!confirmed) return;
-
       await leaveServer(this.currentServerId);
       window.faultendApp.getDrawer().close();
       await window.faultendApp.loadServers();

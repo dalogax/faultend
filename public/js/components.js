@@ -75,6 +75,45 @@ export function createEmptyState(message) {
 }
 
 /**
+ * Inline arm-then-fire destructive button.
+ *
+ * Wires an existing button so the first click "arms" it (text + fill change)
+ * and the second click within 3s fires `onConfirm`. After 3s the button
+ * auto-disarms. Replaces the centered ConfirmDialog for destructive actions.
+ */
+export const DangerConfirm = {
+  wire(button, { idleText, armedText, onConfirm }) {
+    if (!button) return;
+    const idleHtml = idleText !== undefined ? idleText : button.innerHTML;
+    button.innerHTML = idleHtml;
+
+    let armed = false;
+    let timer = null;
+
+    const disarm = () => {
+      armed = false;
+      button.innerHTML = idleHtml;
+      button.classList.remove('armed');
+      if (timer) { clearTimeout(timer); timer = null; }
+    };
+
+    button.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (armed) {
+        disarm();
+        onConfirm();
+      } else {
+        armed = true;
+        button.innerHTML = armedText;
+        button.classList.add('armed');
+        timer = setTimeout(disarm, 3000);
+      }
+    });
+  }
+};
+
+/**
  * Confirmation Dialog
  */
 export const ConfirmDialog = {
