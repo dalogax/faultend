@@ -22,10 +22,15 @@ function createFaultendProxy(targetUrl) {
       
       if (req.matchedRule && req.matchedRule.modifyRequestHeaders) {
         const modifications = req.matchedRule.modifyRequestHeaders;
-        
-        // Remove headers (first)
+        const preserve = new Set((req.serverConfig?.preserveHeaders || []).map(h => h.toLowerCase()));
+
+        // Remove headers (first) — but never remove a server-level preserved header
         if (modifications.remove && Array.isArray(modifications.remove)) {
           modifications.remove.forEach(header => {
+            if (preserve.has(String(header).toLowerCase())) {
+              console.log(`[PROXY] Skip remove (preserved): ${header}`);
+              return;
+            }
             proxyReq.removeHeader(header);
             console.log(`[PROXY] Removed header: ${header}`);
           });
@@ -113,6 +118,7 @@ function createFaultendProxy(targetUrl) {
         }
         
         const serverId = req.serverId || 'unknown';
+        if (req.serverConfig?.recordingEnabled === false) return;
         logTransaction(serverId, {
           request: req.capturedRequest,
           response: {
@@ -143,6 +149,7 @@ function createFaultendProxy(targetUrl) {
       console.error(`[PROXY ERROR] ${req.method} ${req.url}:`, err.message);
       
       const serverId = req.serverId || 'unknown';
+      if (req.serverConfig?.recordingEnabled === false) return;
       logTransaction(serverId, {
         request: req.capturedRequest || {
           method: req.method,
@@ -219,7 +226,11 @@ function executeProxyWithTransform(targetUrl, req, res, next, runTransform, tran
 
       if (req.matchedRule && req.matchedRule.modifyRequestHeaders) {
         const modifications = req.matchedRule.modifyRequestHeaders;
-        if (modifications.remove) modifications.remove.forEach(h => proxyReq.removeHeader(h));
+        const preserve = new Set((req.serverConfig?.preserveHeaders || []).map(h => h.toLowerCase()));
+        if (modifications.remove) modifications.remove.forEach(h => {
+          if (preserve.has(String(h).toLowerCase())) return;
+          proxyReq.removeHeader(h);
+        });
         if (modifications.set) Object.entries(modifications.set).forEach(([k, v]) => proxyReq.setHeader(k, v));
         if (modifications.add) Object.entries(modifications.add).forEach(([k, v]) => { if (!proxyReq.getHeader(k)) proxyReq.setHeader(k, v); });
       }
@@ -281,6 +292,7 @@ function executeProxyWithTransform(targetUrl, req, res, next, runTransform, tran
       res.setHeader('content-length', Buffer.byteLength(responseBody));
 
       const { logTransaction } = require('../storage/traffic');
+      if (req.serverConfig?.recordingEnabled === false) return;
       logTransaction(req.serverId || 'unknown', {
         request: req.capturedRequest,
         response: {

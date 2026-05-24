@@ -1,7 +1,7 @@
 const express = require('express');
 const { findMatchingRule, executeRule } = require('../rules/rulesEngine');
 const { logTransaction } = require('../storage/traffic');
-const { serverExists } = require('../storage/users');
+const { serverExists, getServer } = require('../storage/users');
 
 const router = express.Router();
 
@@ -25,8 +25,8 @@ router.use('/', async (req, res, next) => {
     });
   }
   
-  const exists = await serverExists(serverId);
-  if (!exists) {
+  const server = await getServer(serverId);
+  if (!server) {
     console.log(`[PROXY ROUTER] Server '${serverId}' does not exist`);
     return res.status(404).json({
       error: 'Server Not Found',
@@ -35,7 +35,15 @@ router.use('/', async (req, res, next) => {
       serverId: serverId
     });
   }
-  
+
+  // Expose behaviour knobs to downstream handlers (rules engine + proxyHandler)
+  req.serverConfig = {
+    recordingEnabled: server.recording_enabled !== false,
+    defaultLatencyMs: server.default_latency_ms || 0,
+    preserveHeaders: (server.preserve_headers || '')
+      .split(',').map(h => h.trim().toLowerCase()).filter(Boolean)
+  };
+
   const request = {
     method: req.method,
     path: req.path,
@@ -50,7 +58,7 @@ router.use('/', async (req, res, next) => {
     console.log(`[PROXY ROUTER] [${serverId}] No matching rule for ${req.method} ${req.path}`);
     
     const startTime = Date.now();
-    await logTransaction(serverId, {
+    if (req.serverConfig.recordingEnabled) await logTransaction(serverId, {
       request: {
         method: req.method,
         url: req.url,

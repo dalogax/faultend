@@ -55,6 +55,26 @@ async function getServer(serverId) {
   return result.rows[0] || null;
 }
 
+async function updateServerBehaviour(serverId, { recordingEnabled, defaultLatencyMs, preserveHeaders }) {
+  const server = await getServer(serverId);
+  if (!server) return null;
+  await pool.query(
+    `UPDATE servers
+        SET recording_enabled = COALESCE($1, recording_enabled),
+            default_latency_ms = COALESCE($2, default_latency_ms),
+            preserve_headers   = COALESCE($3, preserve_headers),
+            updated_at = NOW()
+      WHERE id = $4`,
+    [
+      recordingEnabled === undefined ? null : recordingEnabled,
+      defaultLatencyMs === undefined ? null : defaultLatencyMs,
+      preserveHeaders   === undefined ? null : preserveHeaders,
+      server.id
+    ]
+  );
+  return getServer(serverId);
+}
+
 async function getServerById(id) {
   const result = await pool.query('SELECT * FROM servers WHERE id = $1', [id]);
   return result.rows[0] || null;
@@ -268,6 +288,7 @@ module.exports = {
   createServer,
   getServer,
   getServerById,
+  updateServerBehaviour,
   getAllServers,
   deleteServer,
   serverExists,

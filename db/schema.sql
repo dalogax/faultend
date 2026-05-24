@@ -132,6 +132,35 @@ BEGIN
   END IF;
 END $$;
 
+-- Migration: Add Behaviour columns to servers
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'servers' AND column_name = 'recording_enabled'
+  ) THEN
+    ALTER TABLE servers ADD COLUMN recording_enabled BOOLEAN DEFAULT true;
+  END IF;
+END $$;
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'servers' AND column_name = 'default_latency_ms'
+  ) THEN
+    ALTER TABLE servers ADD COLUMN default_latency_ms INTEGER DEFAULT 0;
+  END IF;
+END $$;
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'servers' AND column_name = 'preserve_headers'
+  ) THEN
+    ALTER TABLE servers ADD COLUMN preserve_headers TEXT DEFAULT '';
+  END IF;
+END $$;
+
 -- Traffic table
 CREATE TABLE IF NOT EXISTS traffic (
   id            BIGSERIAL PRIMARY KEY,
