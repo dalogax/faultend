@@ -129,6 +129,10 @@ export async function generateInvite(serverId) {
   });
 }
 
+export async function fetchInvite(serverId) {
+  return request(`${API_BASE.app}/api/servers/${serverId}/invite`);
+}
+
 export async function revokeInvite(serverId) {
   return request(`${API_BASE.app}/api/servers/${serverId}/invite`, {
     method: 'DELETE'

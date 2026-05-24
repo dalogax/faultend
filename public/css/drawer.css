@@ -154,23 +154,52 @@
 .collab-actions .link-btn:hover { color: var(--ft-fg-strong); }
 .collab-actions .link-btn.danger { color: var(--ft-red); }
 
-.invite-link-box {
-  display: flex;
-  flex-direction: column;
-  gap: var(--ft-sp-3);
-  margin-bottom: var(--ft-sp-4);
-}
-.invite-link-box code {
-  display: block;
-  padding: 8px 10px;
+/* Share-by-link · Settings drawer */
+.share-by-link {
+  margin-top: var(--ft-sp-4);
+  padding: 10px 12px;
   background: var(--ft-surface-2);
   border: 1px solid var(--ft-border);
-  font-family: var(--ft-mono);
-  font-size: var(--ft-fs-11);
-  color: var(--ft-fg-strong);
-  word-break: break-all;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
-.invite-link-actions { display: flex; gap: var(--ft-sp-2); }
+.share-by-link-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ft-sp-3);
+}
+.share-by-link-title {
+  font-size: var(--ft-fs-12);
+  color: var(--ft-fg-strong);
+}
+.share-by-link-sub {
+  font-size: var(--ft-fs-11);
+  color: var(--ft-fg-muted);
+}
+.share-by-link-url {
+  display: flex;
+  align-items: stretch;
+  border: 1px solid var(--ft-border-strong);
+  background: var(--ft-surface);
+}
+.share-by-link-url code {
+  flex: 1;
+  padding: 0 10px;
+  display: flex;
+  align-items: center;
+  font-family: var(--ft-mono);
+  font-size: var(--ft-fs-12);
+  color: var(--ft-fg-strong);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.share-by-link-url .btn-ghost {
+  border-left: 1px solid var(--ft-border);
+  border-radius: 0;
+}
 
 /* Code editor block (transform field) */
 .code-editor {
