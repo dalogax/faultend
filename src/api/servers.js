@@ -11,6 +11,16 @@ const {
 
 router.use(express.json());
 
+function deriveServerStatus(server) {
+  if (server.recording_enabled === false) return 'off';
+  const live = parseInt(server.live_count) || 0;
+  const total = parseInt(server.recent_total) || 0;
+  const errors = parseInt(server.recent_errors) || 0;
+  if (total > 0 && (errors / total) >= 0.05) return 'warn';
+  if (live > 0) return 'live';
+  return 'idle';
+}
+
 router.get('/servers', async (req, res) => {
   try {
     if (!req.user) {
@@ -18,9 +28,10 @@ router.get('/servers', async (req, res) => {
     }
     
     const servers = await getAllServers(req.user.id);
-    res.json({ 
-      servers, 
-      count: servers.length 
+    const decorated = servers.map(s => ({ ...s, status: deriveServerStatus(s) }));
+    res.json({
+      servers: decorated,
+      count: decorated.length
     });
   } catch (error) {
     console.error('[SERVERS API] Error listing servers:', error);
@@ -60,6 +71,7 @@ router.get('/servers/:id', async (req, res) => {
     
     res.json({
       ...server,
+      status: deriveServerStatus(server),
       isOwner: owner,
       collaborators: collaborators.map(c => ({
         id: c.id,

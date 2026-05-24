@@ -147,8 +147,10 @@ class App {
     const rows = this.servers.map(server => {
       const serverUrl = buildSubdomainUrl(server.server_id);
       const collaborators = parseInt(server.collaborators_count) || 0;
+      const status = server.status || 'idle';
       return `
         <tr class="server-row" data-server-id="${server.server_id}">
+          <td class="status-cell" title="${status}"><span class="server-status-dot ${status}"></span></td>
           <td class="text-strong">${server.server_id}</td>
           <td><span class="server-url">${serverUrl}</span></td>
           <td class="muted">${this.formatDate(server.created_at)}</td>
@@ -166,6 +168,7 @@ class App {
         <table class="server-table">
           <thead>
             <tr>
+              <th style="width:18px"></th>
               <th>Server</th>
               <th>Endpoint</th>
               <th style="width:120px">Created</th>
