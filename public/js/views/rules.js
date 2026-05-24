@@ -57,6 +57,8 @@ export function openRuleForm(serverId, trafficLog = null, existingRule = null) {
   `);
   drawer.open();
 
+  document.getElementById('saveRuleBtn').addEventListener('click', () => form.save());
+  document.getElementById('cancelRuleBtn').addEventListener('click', () => drawer.close());
   form.bindEvents();
 }
 
@@ -478,11 +480,6 @@ class RuleForm {
   }
 
   bindEvents() {
-    document.getElementById('saveRuleBtn')?.addEventListener('click', () => this.save());
-    document.getElementById('cancelRuleBtn')?.addEventListener('click', () => {
-      window.faultendApp.getDrawer().close();
-    });
-
     document.querySelectorAll('#actionSeg .seg-option').forEach(btn => {
       btn.addEventListener('click', () => {
         const action = btn.dataset.action;
@@ -603,6 +600,8 @@ class RuleForm {
   }
 
   async save() {
+    if (this._saving) return;
+
     let data;
     try {
       data = this.collectFormData();
@@ -619,6 +618,10 @@ class RuleForm {
       return;
     }
 
+    this._saving = true;
+    const saveBtn = document.getElementById('saveRuleBtn');
+    if (saveBtn) saveBtn.disabled = true;
+
     try {
       if (this.existingRule) {
         await updateRule(this.serverId, this.existingRule.id, data);
@@ -633,6 +636,9 @@ class RuleForm {
     } catch (error) {
       console.error('Failed to save rule:', error);
       Toast.error(`Failed to save rule: ${error.message}`);
+    } finally {
+      this._saving = false;
+      if (saveBtn) saveBtn.disabled = false;
     }
   }
 }

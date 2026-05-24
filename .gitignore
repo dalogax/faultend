@@ -17,4 +17,5 @@ scripts/
 *.png
 *.jpg
 .design-handoff/
+.design-handoff-v2/
 .tmp/
