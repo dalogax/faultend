@@ -29,6 +29,26 @@ class ViewRouter {
     if (settingsBtn) {
       settingsBtn.addEventListener('click', () => this.openServerSettings());
     }
+
+    // Mobile bottom tab bar — toggles which dashboard column is visible.
+    // The Settings tab opens the existing settings drawer.
+    document.querySelectorAll('.mobile-tab').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const tab = btn.dataset.mobileTab;
+        if (tab === 'settings') {
+          this.openServerSettings();
+          return;
+        }
+        this.setMobileTab(tab);
+      });
+    });
+  }
+
+  setMobileTab(tab) {
+    document.body.dataset.mobileTab = tab;
+    document.querySelectorAll('.mobile-tab').forEach(b => {
+      b.classList.toggle('active', b.dataset.mobileTab === tab);
+    });
   }
 
   async openServerSettings() {
@@ -378,6 +398,8 @@ class ViewRouter {
   showServerList() {
     this.currentServerId = null;
     this.stopLiveStatsPolling();
+    document.body.classList.remove('is-server-view');
+    delete document.body.dataset.mobileTab;
     this.serverListView.classList.add('active');
     this.serverListView.style.display = 'block';
     this.serverManagementView.classList.remove('active', 'fills');
@@ -390,6 +412,8 @@ class ViewRouter {
 
   showServerManagement(serverId) {
     this.currentServerId = serverId;
+    document.body.classList.add('is-server-view');
+    if (!document.body.dataset.mobileTab) this.setMobileTab('traffic');
     this.serverListView.classList.remove('active');
     this.serverListView.style.display = 'none';
     this.serverManagementView.classList.add('active', 'fills');
