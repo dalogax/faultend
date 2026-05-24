@@ -1,7 +1,7 @@
 import { fetchTraffic, clearTraffic } from '../api.js';
 import { Toast, DangerConfirm } from '../components.js';
 import { Icon, methodBadgeClass } from '../icons.js';
-import { getRuleById } from './rules.js';
+import { getRuleById, ruleLabels, renderLabelStack } from './rules.js';
 
 let trafficTable = null;
 
@@ -192,7 +192,7 @@ class TrafficTable {
     const matched = log.matchedRule ? getRuleById(log.matchedRule) : null;
     const rule = log.matchedRule
       ? (matched
-          ? `<span class="badge badge-action-${matched.action}">${matched.action}</span>`
+          ? renderLabelStack(ruleLabels(matched))
           : '<span class="badge badge-outline">matched</span>')
       : '<span class="muted">—</span>';
 
@@ -357,7 +357,7 @@ class TrafficDetail {
     return `
       <div class="detail-section">
         <h3>Matched rule</h3>
-        <div class="detail-row"><span class="label">action</span><span class="value"><span class="badge badge-action-${rule.action}">${rule.action}</span></span></div>
+        <div class="detail-row"><span class="label">labels</span><span class="value">${renderLabelStack(ruleLabels(rule))}</span></div>
         <div class="detail-row"><span class="label">priority</span><span class="value mono">${rule.priority}</span></div>
         ${rule.pathRegex ? `<div class="detail-row"><span class="label">pattern</span><span class="value mono">${rule.pathRegex}</span></div>` : ''}
       </div>
