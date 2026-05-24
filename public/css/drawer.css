@@ -154,6 +154,25 @@
 .collab-actions .link-btn:hover { color: var(--ft-fg-strong); }
 .collab-actions .link-btn.danger { color: var(--ft-red); }
 
+/* Setting row · key/value row inside a settings section */
+.setting-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ft-sp-4);
+  padding: 10px 0;
+  border-bottom: 1px solid var(--ft-hairline);
+  margin-bottom: var(--ft-sp-4);
+}
+.setting-row-title {
+  font-size: var(--ft-fs-13);
+  color: var(--ft-fg-strong);
+}
+.setting-row-sub {
+  font-size: var(--ft-fs-11);
+  color: var(--ft-fg-muted);
+}
+
 /* Share-by-link · Settings drawer */
 .share-by-link {
   margin-top: var(--ft-sp-4);

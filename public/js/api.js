@@ -41,6 +41,10 @@ export async function fetchServers() {
   }
 }
 
+export async function fetchServer(serverId) {
+  return request(`${API_BASE.app}/api/servers/${serverId}`);
+}
+
 export async function createServer(serverData) {
   return request(`${API_BASE.app}/api/servers`, {
     method: 'POST',
@@ -131,6 +135,13 @@ export async function generateInvite(serverId) {
 
 export async function fetchInvite(serverId) {
   return request(`${API_BASE.app}/api/servers/${serverId}/invite`);
+}
+
+export async function updateBehaviour(serverId, body) {
+  return request(`${API_BASE.app}/api/servers/${serverId}/behaviour`, {
+    method: 'PATCH',
+    body: JSON.stringify(body)
+  });
 }
 
 export async function revokeInvite(serverId) {

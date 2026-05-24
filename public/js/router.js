@@ -1,5 +1,5 @@
 import { buildSubdomainUrl } from './config.js';
-import { generateInvite, revokeInvite, fetchInvite, fetchCollaborators, removeCollaborator, leaveServer, makeCollaboratorAdmin, removeCollaboratorAdmin, transferOwnership } from './api.js';
+import { generateInvite, revokeInvite, fetchInvite, fetchCollaborators, removeCollaborator, leaveServer, makeCollaboratorAdmin, removeCollaboratorAdmin, transferOwnership, fetchServer, updateBehaviour } from './api.js';
 import { authManager } from './auth.js';
 import { Icon } from './icons.js';
 import { DangerConfirm } from './components.js';
@@ -45,6 +45,29 @@ class ViewRouter {
       sub: !isOwner ? `You are ${isAdmin ? 'an admin' : 'a collaborator'} on this server.` : null
     });
     drawer.setContent(`
+      ${canAdmin ? `
+      <div class="settings-section">
+        <h3>Behaviour</h3>
+        <div class="setting-row">
+          <div class="setting-row-text">
+            <div class="setting-row-title">Recording</div>
+            <div class="setting-row-sub">Capture every request that flows through this proxy.</div>
+          </div>
+          <label class="toggle-switch"><input type="checkbox" id="recordingToggle"><span class="toggle-slider"></span></label>
+        </div>
+        <div class="form-field">
+          <label for="defaultLatencyInput">Default latency · ms</label>
+          <input type="number" id="defaultLatencyInput" class="input input-mono" min="0" style="width:140px">
+          <span class="form-hint">Applies to requests with no per-rule latency configured.</span>
+        </div>
+        <div class="form-field" style="margin-bottom:0">
+          <label for="preserveHeadersInput">Preserve headers</label>
+          <input type="text" id="preserveHeadersInput" class="input input-mono" placeholder="authorization, x-request-id, x-trace">
+          <span class="form-hint">Comma-separated. These are forwarded verbatim and protected from rule-level removal.</span>
+        </div>
+      </div>
+      ` : ''}
+
       <div class="settings-section">
         <h3>Sharing</h3>
         <div id="collaboratorsList"></div>
@@ -86,10 +109,41 @@ class ViewRouter {
     });
 
     if (canAdmin) {
+      this.initBehaviourSection();
       this.initShareByLink();
     }
 
     this.loadCollaborators(isOwner);
+  }
+
+  async initBehaviourSection() {
+    const recording = document.getElementById('recordingToggle');
+    const latency = document.getElementById('defaultLatencyInput');
+    const preserve = document.getElementById('preserveHeadersInput');
+    if (!recording || !latency || !preserve) return;
+
+    try {
+      const server = await fetchServer(this.currentServerId);
+      recording.checked = server.recording_enabled !== false;
+      latency.value = server.default_latency_ms ?? 0;
+      preserve.value = server.preserve_headers ?? '';
+    } catch (error) {
+      console.error('Failed to load behaviour:', error);
+    }
+
+    const persist = async (patch) => {
+      try {
+        await updateBehaviour(this.currentServerId, patch);
+      } catch (error) {
+        console.error('Failed to save behaviour:', error);
+        const { Toast } = await import('./components.js');
+        Toast.error('Failed to save behaviour');
+      }
+    };
+
+    recording.addEventListener('change', () => persist({ recordingEnabled: recording.checked }));
+    latency.addEventListener('change', () => persist({ defaultLatencyMs: Math.max(0, parseInt(latency.value, 10) || 0) }));
+    preserve.addEventListener('change', () => persist({ preserveHeaders: preserve.value }));
   }
 
   async initShareByLink() {

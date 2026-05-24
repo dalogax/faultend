@@ -362,6 +362,8 @@ async function executeMockRule(serverId, rule, req, res) {
         actualLatency = Math.floor(Math.random() * (latency.max - latency.min + 1)) + latency.min;
       }
     }
+  } else if (req.serverConfig?.defaultLatencyMs) {
+    actualLatency = req.serverConfig.defaultLatencyMs;
   }
 
   console.log(`[MOCK] Executing mock rule: ${rule.name} (${responseObj.status}, latency: ${actualLatency}ms)`);
@@ -379,9 +381,11 @@ async function executeMockRule(serverId, rule, req, res) {
   res.status(responseObj.status).json(responseObj.body);
 
   const { logTransaction } = require('../storage/traffic');
-  
+
   const duration = Date.now() - startTime;
-  
+
+  if (req.serverConfig?.recordingEnabled === false) return;
+
   await logTransaction(serverId, {
     request: {
       method: req.method,
@@ -425,7 +429,10 @@ function computeLatencyMs(latency) {
 async function executeProxyRule(serverId, rule, req, res, next) {
   console.log(`[PROXY RULE] Executing proxy rule: ${rule.name} → ${rule.target}`);
 
-  const delay = computeLatencyMs(rule.latency);
+  let delay = computeLatencyMs(rule.latency);
+  if (!rule.latency && req.serverConfig?.defaultLatencyMs) {
+    delay = req.serverConfig.defaultLatencyMs;
+  }
   if (delay > 0) {
     console.log(`[PROXY RULE] Applying latency: ${delay}ms`);
     await new Promise(resolve => setTimeout(resolve, delay));

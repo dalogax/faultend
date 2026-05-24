@@ -5,7 +5,8 @@ const {
   getServer,
   createServer,
   deleteServer,
-  serverExists
+  serverExists,
+  updateServerBehaviour
 } = require('../storage/storage');
 
 router.use(express.json());
@@ -148,6 +149,40 @@ router.post('/servers', async (req, res) => {
       error: 'Validation Error',
       message: error.message
     });
+  }
+});
+
+router.patch('/servers/:id/behaviour', async (req, res) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ error: 'Unauthorized', message: 'Authentication required' });
+    }
+    const { canAdminServer } = require('../storage/storage');
+    const canAdmin = await canAdminServer(req.params.id, req.user.id);
+    if (!canAdmin) {
+      return res.status(403).json({ error: 'Forbidden', message: 'Only the owner or admin can change behaviour settings' });
+    }
+
+    const { recordingEnabled, defaultLatencyMs, preserveHeaders } = req.body || {};
+    if (defaultLatencyMs !== undefined && (typeof defaultLatencyMs !== 'number' || defaultLatencyMs < 0)) {
+      return res.status(400).json({ error: 'Validation Error', message: 'defaultLatencyMs must be a non-negative number' });
+    }
+    if (preserveHeaders !== undefined && typeof preserveHeaders !== 'string') {
+      return res.status(400).json({ error: 'Validation Error', message: 'preserveHeaders must be a string' });
+    }
+
+    const updated = await updateServerBehaviour(req.params.id, { recordingEnabled, defaultLatencyMs, preserveHeaders });
+    if (!updated) {
+      return res.status(404).json({ error: 'Not Found', message: `Fault server '${req.params.id}' not found` });
+    }
+    res.json({
+      recordingEnabled: updated.recording_enabled,
+      defaultLatencyMs: updated.default_latency_ms,
+      preserveHeaders:  updated.preserve_headers || ''
+    });
+  } catch (error) {
+    console.error('[SERVERS API] Error updating behaviour:', error);
+    res.status(500).json({ error: 'Internal Server Error', message: error.message });
   }
 });
 
