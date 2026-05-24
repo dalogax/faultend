@@ -1,5 +1,5 @@
 import { buildSubdomainUrl } from './config.js';
-import { generateInvite, revokeInvite, fetchCollaborators, removeCollaborator, leaveServer, makeCollaboratorAdmin, removeCollaboratorAdmin, transferOwnership } from './api.js';
+import { generateInvite, revokeInvite, fetchInvite, fetchCollaborators, removeCollaborator, leaveServer, makeCollaboratorAdmin, removeCollaboratorAdmin, transferOwnership } from './api.js';
 import { authManager } from './auth.js';
 import { Icon } from './icons.js';
 import { DangerConfirm } from './components.js';
@@ -47,17 +47,22 @@ class ViewRouter {
     drawer.setContent(`
       <div class="settings-section">
         <h3>Sharing</h3>
+        <div id="collaboratorsList"></div>
         ${canAdmin ? `
-          <div id="inviteLinkContainer" class="invite-link-box" style="display:none">
-            <code id="inviteLink"></code>
-            <div class="invite-link-actions">
-              <button id="copyInviteBtn" class="btn-ghost btn-sm">Copy link</button>
-              <button id="revokeInviteBtn" class="btn-ghost btn-sm">Revoke</button>
+          <div class="share-by-link">
+            <div class="share-by-link-head">
+              <div>
+                <div class="share-by-link-title">Share by link</div>
+                <div class="share-by-link-sub">Anyone with the link can join this server.</div>
+              </div>
+              <label class="toggle-switch"><input type="checkbox" id="shareByLinkToggle"><span class="toggle-slider"></span></label>
+            </div>
+            <div class="share-by-link-url" id="shareByLinkUrlRow" style="display:none">
+              <code id="shareByLinkUrl" class="mono"></code>
+              <button class="btn-ghost btn-sm" id="copyShareLinkBtn">${Icon.copy} Copy link</button>
             </div>
           </div>
-          <button id="generateInviteBtn" class="btn-secondary btn-sm" style="margin-bottom:var(--ft-sp-4)">${Icon.plus} Generate invite link</button>
         ` : ''}
-        <div id="collaboratorsList"></div>
       </div>
     `);
     drawer.setFooter(`
@@ -81,49 +86,63 @@ class ViewRouter {
     });
 
     if (canAdmin) {
-      document.getElementById('generateInviteBtn')?.addEventListener('click', () => this.generateInviteLink());
-      document.getElementById('revokeInviteBtn')?.addEventListener('click', () => this.revokeInviteLink());
-      document.getElementById('copyInviteBtn')?.addEventListener('click', () => this.copyInviteLink());
+      this.initShareByLink();
     }
 
     this.loadCollaborators(isOwner);
   }
 
-  async generateInviteLink() {
-    try {
-      const result = await generateInvite(this.currentServerId);
-      document.getElementById('inviteLink').textContent = result.inviteUrl;
-      document.getElementById('inviteLinkContainer').style.display = 'flex';
-      document.getElementById('generateInviteBtn').style.display = 'none';
-    } catch (error) {
-      console.error('Failed to generate invite:', error);
-      const { Toast } = await import('./components.js');
-      Toast.error('Failed to generate invite link');
-    }
-  }
+  async initShareByLink() {
+    const toggle = document.getElementById('shareByLinkToggle');
+    const urlRow = document.getElementById('shareByLinkUrlRow');
+    const urlEl  = document.getElementById('shareByLinkUrl');
+    const copyBtn = document.getElementById('copyShareLinkBtn');
+    if (!toggle) return;
 
-  async revokeInviteLink() {
     try {
-      await revokeInvite(this.currentServerId);
-      document.getElementById('inviteLinkContainer').style.display = 'none';
-      document.getElementById('generateInviteBtn').style.display = 'inline-flex';
+      const { inviteUrl } = await fetchInvite(this.currentServerId);
+      if (inviteUrl) {
+        toggle.checked = true;
+        urlEl.textContent = inviteUrl;
+        urlRow.style.display = 'flex';
+      }
     } catch (error) {
-      console.error('Failed to revoke invite:', error);
-      const { Toast } = await import('./components.js');
-      Toast.error('Failed to revoke invite link');
+      console.error('Failed to read invite:', error);
     }
-  }
 
-  copyInviteLink() {
-    const linkEl = document.getElementById('inviteLink');
-    if (linkEl) {
-      navigator.clipboard.writeText(linkEl.textContent).then(() => {
-        const btn = document.getElementById('copyInviteBtn');
-        const originalText = btn.textContent;
-        btn.textContent = 'Copied';
-        setTimeout(() => btn.textContent = originalText, 1000);
+    toggle.addEventListener('change', async (e) => {
+      if (e.target.checked) {
+        try {
+          const { inviteUrl } = await generateInvite(this.currentServerId);
+          urlEl.textContent = inviteUrl;
+          urlRow.style.display = 'flex';
+        } catch (error) {
+          console.error('Failed to enable share link:', error);
+          toggle.checked = false;
+          const { Toast } = await import('./components.js');
+          Toast.error('Failed to enable share link');
+        }
+      } else {
+        try {
+          await revokeInvite(this.currentServerId);
+          urlEl.textContent = '';
+          urlRow.style.display = 'none';
+        } catch (error) {
+          console.error('Failed to disable share link:', error);
+          toggle.checked = true;
+          const { Toast } = await import('./components.js');
+          Toast.error('Failed to disable share link');
+        }
+      }
+    });
+
+    copyBtn?.addEventListener('click', () => {
+      navigator.clipboard.writeText(urlEl.textContent).then(() => {
+        const original = copyBtn.innerHTML;
+        copyBtn.textContent = 'Copied';
+        setTimeout(() => copyBtn.innerHTML = original, 1000);
       });
-    }
+    });
   }
 
   async loadCollaborators(isOwner = false) {

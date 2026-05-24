@@ -8,12 +8,22 @@ const {
   removeCollaborator,
   getCollaborators,
   setInviteToken,
+  getInviteToken,
   clearInviteToken,
   findServerByInviteToken,
   makeAdmin,
   removeAdmin,
   transferOwnership
 } = require('../storage/users');
+
+function buildInviteUrl(token) {
+  const rootDomain = process.env.ROOT_DOMAIN || 'localhost';
+  const port = process.env.PORT || 3000;
+  const isLocalhost = rootDomain === 'localhost';
+  const protocol = isLocalhost ? 'http' : 'https';
+  const portSuffix = isLocalhost ? `:${port}` : '';
+  return `${protocol}://app.${rootDomain}${portSuffix}/#invite/${token}`;
+}
 
 function generateInviteToken() {
   return crypto.randomBytes(32).toString('hex');
@@ -32,17 +42,27 @@ router.post('/', async (req, res) => {
     const token = generateInviteToken();
     await setInviteToken(serverId, token);
 
-    const rootDomain = process.env.ROOT_DOMAIN || 'localhost';
-    const port = process.env.PORT || 3000;
-    const isLocalhost = rootDomain === 'localhost';
-    const protocol = isLocalhost ? 'http' : 'https';
-    const portSuffix = isLocalhost ? `:${port}` : '';
-
-    res.json({
-      inviteUrl: `${protocol}://app.${rootDomain}${portSuffix}/#invite/${token}`
-    });
+    res.json({ inviteUrl: buildInviteUrl(token) });
   } catch (error) {
     console.error('[COLLABORATION] Error generating invite:', error);
+    res.status(500).json({ error: 'Internal Server Error', message: error.message });
+  }
+});
+
+router.get('/', async (req, res) => {
+  try {
+    const serverId = req.serverId;
+    const userId = req.session.userId;
+
+    const canAdmin = await canAdminServer(serverId, userId);
+    if (!canAdmin) {
+      return res.status(403).json({ error: 'Forbidden', message: 'Only the owner or admin can view invite links' });
+    }
+
+    const token = await getInviteToken(serverId);
+    res.json({ inviteUrl: token ? buildInviteUrl(token) : null });
+  } catch (error) {
+    console.error('[COLLABORATION] Error fetching invite:', error);
     res.status(500).json({ error: 'Internal Server Error', message: error.message });
   }
 });
