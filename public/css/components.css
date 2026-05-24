@@ -176,6 +176,14 @@
 .badge-action-delay     { background: var(--ft-a-delay-bg);     color: var(--ft-a-delay-fg);     }
 .badge-action-transform { background: var(--ft-a-transform-bg); color: var(--ft-a-transform-fg); }
 
+/* Multi-label stack — sits proxy + delay + transform side by side */
+.badge-stack {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  align-items: center;
+}
+
 /* Outline / meta */
 .badge-outline {
   background: var(--ft-surface);

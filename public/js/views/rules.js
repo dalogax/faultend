@@ -13,6 +13,22 @@ export function getRuleById(id) {
   return rulesList.rules.find(r => r.id === id) || null;
 }
 
+export function ruleLabels(rule) {
+  if (!rule) return [];
+  const labels = [];
+  if (rule.action === 'mock') labels.push('mock');
+  if (rule.action === 'proxy') labels.push('proxy');
+  const latency = rule.action === 'proxy' ? rule.latency : rule.mockResponse?.latency;
+  if (latency) labels.push('delay');
+  if (rule.transform) labels.push('transform');
+  return labels;
+}
+
+export function renderLabelStack(labels) {
+  if (!labels || labels.length === 0) return '';
+  return `<span class="badge-stack">${labels.map(l => `<span class="badge badge-action-${l}">${l}</span>`).join('')}</span>`;
+}
+
 export function loadRulesData(serverId) {
   console.log('Loading rules data for server:', serverId);
 
@@ -122,7 +138,7 @@ class RulesList {
             <span class="path-cell" title="${rule.pathRegex}">${rule.pathRegex}</span>
           </div>
         </td>
-        <td><span class="badge badge-action-${rule.action}">${rule.action}</span></td>
+        <td>${renderLabelStack(ruleLabels(rule))}</td>
         <td>
           <label class="toggle-switch">
             <input type="checkbox" ${rule.enabled ? 'checked' : ''} data-rule-id="${rule.id}">
