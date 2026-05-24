@@ -21,6 +21,20 @@ function deriveServerStatus(server) {
   return 'idle';
 }
 
+router.get('/stats/summary', async (req, res) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ error: 'Unauthorized', message: 'Authentication required' });
+    }
+    const { getStatsSummary } = require('../storage/storage');
+    const summary = await getStatsSummary(req.user.id);
+    res.json(summary);
+  } catch (error) {
+    console.error('[SERVERS API] Error fetching stats summary:', error);
+    res.status(500).json({ error: 'Internal Server Error', message: error.message });
+  }
+});
+
 router.get('/servers', async (req, res) => {
   try {
     if (!req.user) {

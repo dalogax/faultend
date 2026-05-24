@@ -1,7 +1,7 @@
 // Main Application Entry Point
 
 import { buildSubdomainUrl } from './config.js';
-import { fetchServers } from './api.js';
+import { fetchServers, fetchStatsSummary } from './api.js';
 import { Toast } from './components.js';
 import ViewRouter from './router.js';
 import DrawerController from './drawer.js';
@@ -119,27 +119,23 @@ class App {
       return;
     }
 
-    const totalTraffic = this.servers.reduce((n, s) => n + (parseInt(s.traffic_count) || 0), 0);
-    const totalRules = this.servers.reduce((n, s) => n + (parseInt(s.rules_count) || 0), 0);
-    const sharedCount = this.servers.filter(s => (parseInt(s.collaborators_count) || 0) > 0).length;
-
     const strip = `
       <div class="stat-strip">
         <div class="stat">
           <span class="stat-label">Servers</span>
-          <span class="stat-value">${this.servers.length}</span>
+          <span class="stat-value" id="statServers">${this.servers.length}</span>
         </div>
         <div class="stat">
-          <span class="stat-label">Requests logged</span>
-          <span class="stat-value mono">${totalTraffic.toLocaleString()}</span>
+          <span class="stat-label">Requests · 24h</span>
+          <span class="stat-value mono" id="statRequests24h">—</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">p95 latency</span>
+          <span class="stat-value mono" id="statP95">—</span>
         </div>
         <div class="stat">
           <span class="stat-label">Active rules</span>
-          <span class="stat-value">${totalRules}</span>
-        </div>
-        <div class="stat">
-          <span class="stat-label">Shared</span>
-          <span class="stat-value">${sharedCount}</span>
+          <span class="stat-value" id="statRules">—</span>
         </div>
       </div>
     `;
@@ -182,6 +178,21 @@ class App {
         </table>
       </div>
     `;
+    this.hydrateStatsSummary();
+  }
+
+  async hydrateStatsSummary() {
+    try {
+      const summary = await fetchStatsSummary();
+      const r = document.getElementById('statRequests24h');
+      const p = document.getElementById('statP95');
+      const u = document.getElementById('statRules');
+      if (r) r.textContent = (summary.requests24h || 0).toLocaleString();
+      if (p) p.textContent = `${summary.p95Ms || 0}ms`;
+      if (u) u.textContent = summary.rules || 0;
+    } catch (error) {
+      console.error('Failed to load stats summary:', error);
+    }
   }
 
   renderSharingCell(server, collaborators) {

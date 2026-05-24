@@ -144,6 +144,10 @@ export async function updateBehaviour(serverId, body) {
   });
 }
 
+export async function fetchStatsSummary() {
+  return request(`${API_BASE.app}/api/stats/summary`);
+}
+
 export async function revokeInvite(serverId) {
   return request(`${API_BASE.app}/api/servers/${serverId}/invite`, {
     method: 'DELETE'
