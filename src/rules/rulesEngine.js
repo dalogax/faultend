@@ -1,11 +1,12 @@
 const { getServer } = require('../storage/users');
-const { 
-  getAllRules, 
-  getRuleById, 
-  addRule, 
-  updateRule, 
-  deleteRule, 
+const {
+  getAllRules,
+  getRuleById,
+  addRule,
+  updateRule,
+  deleteRule,
   toggleRule,
+  reorderRules,
   importRules,
   exportRules,
   clearRules
@@ -485,6 +486,7 @@ module.exports = {
   updateRule,
   deleteRule,
   toggleRule,
+  reorderRules,
   getAllRules,
   getRuleById,
   clearRules,

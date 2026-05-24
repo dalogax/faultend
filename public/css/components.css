@@ -184,6 +184,19 @@
   align-items: center;
 }
 
+/* Rules table — drag handle + drag preview */
+.rules-table .drag-cell {
+  width: 20px;
+  color: var(--ft-fg-faint);
+  cursor: grab;
+  text-align: center;
+  user-select: none;
+}
+.rules-table .rule-row.dragging {
+  opacity: 0.45;
+  background: var(--ft-surface-2);
+}
+
 /* Server-health dot — live / idle / warn / off */
 .server-status-dot {
   display: inline-block;

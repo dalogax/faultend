@@ -5,6 +5,7 @@ const {
   updateRule,
   deleteRule,
   toggleRule,
+  reorderRules,
   getAllRules,
   getRuleById,
   importRules,
@@ -145,6 +146,25 @@ router.patch('/:id/toggle', async (req, res) => {
       error: 'Not Found',
       message: error.message
     });
+  }
+});
+
+router.post('/reorder', async (req, res) => {
+  const serverId = req.serverId;
+  if (!serverId) {
+    return res.status(400).json({ error: 'Bad Request', message: 'Server ID required.' });
+  }
+  const { orderedIds } = req.body || {};
+  if (!Array.isArray(orderedIds) || orderedIds.some(id => typeof id !== 'string')) {
+    return res.status(400).json({ error: 'Validation Error', message: 'orderedIds must be an array of rule id strings.' });
+  }
+  try {
+    await reorderRules(serverId, orderedIds);
+    const rules = await getAllRules(serverId);
+    res.json({ serverId, rules, count: rules.length });
+  } catch (error) {
+    console.error('[RULES API] Error reordering rules:', error);
+    res.status(500).json({ error: 'Internal Server Error', message: error.message });
   }
 });
 

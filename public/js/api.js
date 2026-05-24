@@ -104,6 +104,13 @@ export async function toggleRule(serverId, ruleId) {
   });
 }
 
+export async function reorderRules(serverId, orderedIds) {
+  return request(`${API_BASE.app}/api/servers/${serverId}/rules/reorder`, {
+    method: 'POST',
+    body: JSON.stringify({ orderedIds })
+  });
+}
+
 export async function exportRules(serverId) {
   return request(`${API_BASE.app}/api/servers/${serverId}/rules/export`, {
     method: 'POST'
