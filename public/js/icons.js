@@ -12,6 +12,7 @@ export const Icon = {
   filter:  '<svg viewBox="0 0 16 16" width="13" height="13" fill="none" aria-hidden="true"><path d="M2 3 L14 3 L10 8 L10 13 L6 11 L6 8 Z" stroke="currentColor" stroke-width="1.2"/></svg>',
   person:  '<svg viewBox="0 0 16 16" width="13" height="13" fill="none" aria-hidden="true"><circle cx="8" cy="5" r="2.4" stroke="currentColor" stroke-width="1.2"/><path d="M2.5 13.5 C3.5 10.5 5.7 9.4 8 9.4 C10.3 9.4 12.5 10.5 13.5 13.5" stroke="currentColor" stroke-width="1.2"/></svg>',
   people:  '<svg viewBox="0 0 16 16" width="13" height="13" fill="none" aria-hidden="true"><circle cx="6" cy="5.5" r="2.2" stroke="currentColor" stroke-width="1.2"/><path d="M1.5 13 C2.5 10.2 4.2 9.2 6 9.2 C7.8 9.2 9.5 10.2 10.5 13" stroke="currentColor" stroke-width="1.2"/><circle cx="11.2" cy="6" r="1.7" stroke="currentColor" stroke-width="1.2"/><path d="M10 9.4 C11.2 9.2 13.5 9.8 14.5 12.4" stroke="currentColor" stroke-width="1.2"/></svg>',
+  drag:    '<svg viewBox="0 0 16 16" width="12" height="12" fill="currentColor" aria-hidden="true"><circle cx="6" cy="3.5" r="1"/><circle cx="10" cy="3.5" r="1"/><circle cx="6" cy="8" r="1"/><circle cx="10" cy="8" r="1"/><circle cx="6" cy="12.5" r="1"/><circle cx="10" cy="12.5" r="1"/></svg>',
 };
 
 /** Lowercased badge-class suffix for an HTTP method. `*` maps to `any`. */

@@ -10,12 +10,46 @@ function generateRuleId() {
 async function getAllRules(serverId) {
   const server = await getServer(serverId);
   if (!server) return [];
-  
+
   const result = await pool.query(
-    'SELECT * FROM rules WHERE server_id = $1 ORDER BY priority DESC',
+    `SELECT r.*, COALESCE(h.hits, 0) AS hits
+       FROM rules r
+       LEFT JOIN (
+         SELECT matched_rule_id, COUNT(*) AS hits
+           FROM traffic
+          WHERE server_id = $1 AND matched_rule_id IS NOT NULL
+          GROUP BY matched_rule_id
+       ) h ON h.matched_rule_id = r.id
+      WHERE r.server_id = $1
+      ORDER BY r.priority DESC`,
     [server.id]
   );
-  return result.rows.map(row => ruleFromRow(row, serverId));
+  return result.rows.map(row => ({ ...ruleFromRow(row, serverId), hits: parseInt(row.hits) || 0 }));
+}
+
+async function reorderRules(serverId, orderedIds) {
+  const server = await getServer(serverId);
+  if (!server) throw new Error(`Server '${serverId}' not found`);
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    // Assign descending priorities so first id has highest priority.
+    const step = 10;
+    let priority = orderedIds.length * step;
+    for (const id of orderedIds) {
+      await client.query(
+        'UPDATE rules SET priority = $1, updated_at = NOW() WHERE id = $2 AND server_id = $3',
+        [priority, id, server.id]
+      );
+      priority -= step;
+    }
+    await client.query('COMMIT');
+  } catch (e) {
+    await client.query('ROLLBACK');
+    throw e;
+  } finally {
+    client.release();
+  }
 }
 
 async function getRuleById(serverId, ruleId) {
@@ -218,6 +252,7 @@ module.exports = {
   updateRule,
   deleteRule,
   toggleRule,
+  reorderRules,
   importRules,
   exportRules,
   clearRules

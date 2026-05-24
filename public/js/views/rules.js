@@ -1,4 +1,4 @@
-import { fetchRules, createRule, updateRule, deleteRule, toggleRule } from '../api.js';
+import { fetchRules, createRule, updateRule, deleteRule, toggleRule, reorderRules } from '../api.js';
 import { Toast, DangerConfirm } from '../components.js';
 import { Icon, methodBadgeClass } from '../icons.js';
 
@@ -113,9 +113,11 @@ class RulesList {
       <table class="rules-table">
         <thead>
           <tr>
-            <th style="width:56px">Pri</th>
+            <th style="width:20px"></th>
+            <th style="width:46px">Pri</th>
             <th>Pattern</th>
-            <th style="width:80px">Action</th>
+            <th style="width:90px">Action</th>
+            <th style="width:60px;text-align:right">Hits</th>
             <th style="width:50px">On</th>
             <th style="width:72px"></th>
           </tr>
@@ -129,8 +131,10 @@ class RulesList {
 
   renderTableRow(rule) {
     const method = rule.method;
+    const hits = typeof rule.hits === 'number' ? rule.hits : 0;
     return `
-      <tr class="rule-row" data-rule-id="${rule.id}" style="opacity:${rule.enabled ? 1 : 0.55}">
+      <tr class="rule-row" draggable="true" data-rule-id="${rule.id}" style="opacity:${rule.enabled ? 1 : 0.55}">
+        <td class="drag-cell" title="Drag to reorder">${Icon.drag}</td>
         <td class="priority-cell">${rule.priority}</td>
         <td>
           <div style="display:flex;align-items:center;gap:8px">
@@ -139,6 +143,7 @@ class RulesList {
           </div>
         </td>
         <td>${renderLabelStack(ruleLabels(rule))}</td>
+        <td class="num mono" style="text-align:right">${hits.toLocaleString()}</td>
         <td>
           <label class="toggle-switch">
             <input type="checkbox" ${rule.enabled ? 'checked' : ''} data-rule-id="${rule.id}">
@@ -172,12 +177,52 @@ class RulesList {
       });
     });
 
+    this.bindDragReorder();
+
     document.querySelectorAll('.delete-rule-btn').forEach(btn => {
       DangerConfirm.wire(btn, {
         idleText: Icon.trash,
         armedText: Icon.trash,
         onConfirm: () => this.deleteRule(btn.dataset.ruleId)
       });
+    });
+  }
+
+  bindDragReorder() {
+    const tbody = document.querySelector('.rules-table tbody');
+    if (!tbody) return;
+    let dragging = null;
+    tbody.querySelectorAll('tr.rule-row').forEach(row => {
+      row.addEventListener('dragstart', (e) => {
+        dragging = row;
+        row.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+        try { e.dataTransfer.setData('text/plain', row.dataset.ruleId); } catch (_) {}
+      });
+      row.addEventListener('dragend', () => {
+        dragging?.classList.remove('dragging');
+        dragging = null;
+      });
+      row.addEventListener('dragover', (e) => {
+        if (!dragging || dragging === row) return;
+        e.preventDefault();
+        const rect = row.getBoundingClientRect();
+        const before = e.clientY < rect.top + rect.height / 2;
+        tbody.insertBefore(dragging, before ? row : row.nextSibling);
+      });
+      row.addEventListener('drop', (e) => e.preventDefault());
+    });
+    tbody.addEventListener('drop', async () => {
+      const orderedIds = Array.from(tbody.querySelectorAll('tr.rule-row')).map(r => r.dataset.ruleId);
+      try {
+        const result = await reorderRules(this.serverId, orderedIds);
+        this.rules = result.rules || [];
+        this.render();
+      } catch (error) {
+        console.error('Failed to reorder rules:', error);
+        Toast.error('Failed to reorder rules');
+        await this.load();
+      }
     });
   }
 
