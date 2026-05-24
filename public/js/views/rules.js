@@ -115,7 +115,7 @@ class RulesList {
       <table class="rules-table">
         <thead>
           <tr>
-            <th style="width:20px"></th>
+            <th class="drag-col"></th>
             <th style="width:46px">Pri</th>
             <th>Pattern</th>
             <th style="width:90px">Action</th>
