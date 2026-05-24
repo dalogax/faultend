@@ -13,6 +13,8 @@ export const Icon = {
   person:  '<svg viewBox="0 0 16 16" width="13" height="13" fill="none" aria-hidden="true"><circle cx="8" cy="5" r="2.4" stroke="currentColor" stroke-width="1.2"/><path d="M2.5 13.5 C3.5 10.5 5.7 9.4 8 9.4 C10.3 9.4 12.5 10.5 13.5 13.5" stroke="currentColor" stroke-width="1.2"/></svg>',
   people:  '<svg viewBox="0 0 16 16" width="13" height="13" fill="none" aria-hidden="true"><circle cx="6" cy="5.5" r="2.2" stroke="currentColor" stroke-width="1.2"/><path d="M1.5 13 C2.5 10.2 4.2 9.2 6 9.2 C7.8 9.2 9.5 10.2 10.5 13" stroke="currentColor" stroke-width="1.2"/><circle cx="11.2" cy="6" r="1.7" stroke="currentColor" stroke-width="1.2"/><path d="M10 9.4 C11.2 9.2 13.5 9.8 14.5 12.4" stroke="currentColor" stroke-width="1.2"/></svg>',
   drag:    '<svg viewBox="0 0 16 16" width="12" height="12" fill="currentColor" aria-hidden="true"><circle cx="6" cy="3.5" r="1"/><circle cx="10" cy="3.5" r="1"/><circle cx="6" cy="8" r="1"/><circle cx="10" cy="8" r="1"/><circle cx="6" cy="12.5" r="1"/><circle cx="10" cy="12.5" r="1"/></svg>',
+  sun:     '<svg viewBox="0 0 16 16" width="14" height="14" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="3" stroke="currentColor" stroke-width="1.2"/><path d="M8 1 L8 3 M8 13 L8 15 M1 8 L3 8 M13 8 L15 8 M3.5 3.5 L5 5 M11 11 L12.5 12.5 M3.5 12.5 L5 11 M11 5 L12.5 3.5" stroke="currentColor" stroke-width="1.2"/></svg>',
+  moon:    '<svg viewBox="0 0 16 16" width="14" height="14" fill="none" aria-hidden="true"><path d="M13.5 9.5 A6 6 0 0 1 6.5 2.5 A6 6 0 1 0 13.5 9.5 Z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg>',
 };
 
 /** Lowercased badge-class suffix for an HTTP method. `*` maps to `any`. */

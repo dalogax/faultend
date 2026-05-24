@@ -9,6 +9,7 @@ import { initTrafficView, loadTrafficData, stopTrafficPolling } from './views/tr
 import { initRulesView, loadRulesData } from './views/rules.js';
 import { authManager } from './auth.js';
 import { Icon } from './icons.js';
+import { initTheme, applyTheme, getEffectiveTheme } from './theme.js';
 
 class App {
   constructor() {
@@ -19,6 +20,9 @@ class App {
 
   async init() {
     console.log('Initializing faultend application...');
+
+    // Apply theme as early as possible to avoid a flash of light theme
+    applyTheme(getEffectiveTheme());
 
     await authManager.init();
 
@@ -69,6 +73,7 @@ class App {
       logoutBtn.style.display = 'inline-flex';
       logoutBtn.addEventListener('click', () => authManager.signOut());
     }
+    initTheme();
   }
 
   async loadServers() {
