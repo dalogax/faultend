@@ -39,6 +39,22 @@ body {
   color: var(--ft-fg-strong);
   flex-shrink: 0;
 }
+.back-btn {
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--ft-fg-muted);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.back-btn:hover {
+  color: var(--ft-fg-strong);
+  background: var(--ft-ink-2);
+}
 .logo {
   width: 20px;
   height: 20px;

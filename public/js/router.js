@@ -30,6 +30,11 @@ class ViewRouter {
       settingsBtn.addEventListener('click', () => this.openServerSettings());
     }
 
+    const backBtn = document.getElementById('backToServersBtn');
+    if (backBtn) {
+      backBtn.addEventListener('click', () => this.navigateToServerList());
+    }
+
     // Mobile bottom tab bar — toggles which dashboard column is visible.
     // The Settings tab opens the existing settings drawer.
     document.querySelectorAll('.mobile-tab').forEach(btn => {
@@ -406,6 +411,8 @@ class ViewRouter {
     this.serverManagementView.style.display = 'none';
     document.getElementById('serverInfo').style.display = 'none';
     document.getElementById('settingsBtn').style.display = 'none';
+    const backBtn = document.getElementById('backToServersBtn');
+    if (backBtn) backBtn.style.display = 'none';
     if (this.statusBar) this.statusBar.style.display = 'none';
     this.triggerViewLoad('serverList');
   }
@@ -425,6 +432,8 @@ class ViewRouter {
     const serverUrl = buildSubdomainUrl(serverId);
     document.getElementById('serverUrl').textContent = serverUrl;
     document.getElementById('settingsBtn').style.display = 'inline-flex';
+    const backBtn = document.getElementById('backToServersBtn');
+    if (backBtn) backBtn.style.display = 'inline-flex';
 
     const copyBtn = document.getElementById('copyUrlBtn');
     if (copyBtn) {
