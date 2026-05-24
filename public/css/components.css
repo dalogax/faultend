@@ -185,17 +185,25 @@
 }
 
 /* Rules table — drag handle + drag preview */
+.rules-table th.drag-col,
 .rules-table .drag-cell {
-  width: 20px;
+  width: 28px;
+  padding-left: 4px;
+  padding-right: 4px;
+}
+.rules-table .drag-cell {
   color: var(--ft-fg-faint);
   cursor: grab;
   text-align: center;
   user-select: none;
 }
+.rules-table .drag-cell:hover { color: var(--ft-fg-muted); }
+.rules-table .drag-cell:active { cursor: grabbing; }
 .rules-table .rule-row.dragging {
   opacity: 0.45;
   background: var(--ft-surface-2);
 }
+.rules-table .rule-row[draggable="true"] { cursor: default; }
 
 /* Server-health dot — live / idle / warn / off */
 .server-status-dot {
