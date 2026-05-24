@@ -1,0 +1,135 @@
+/* ============================================================
+   Faultend · Mobile responsive layer
+   Breakpoint: ≤768px. Above that, desktop CSS in layout.css wins.
+
+   Pieces:
+   - Mobile tap-target tokens (.ft-btn--mobile, .ft-chip--mobile,
+     .ft-iconbtn--mobile, .ft-mbar) — always available.
+   - Mobile bottom tab bar — hidden on desktop.
+   - Below 768px: server-list table → card rows, drawer becomes
+     full-screen sheet, two-column dashboard becomes one column
+     driven by data-mobile-tab on body, status bar collapses.
+   ============================================================ */
+
+/* Tap-target tokens (always available) */
+.ft-btn--mobile { height: 44px; padding: 0 16px; font-size: 14px; }
+.ft-btn--mobile.btn-icon, .ft-btn--mobile-icon {
+  width: 44px; height: 44px; padding: 0;
+}
+.ft-chip--mobile {
+  display: inline-flex; align-items: center; gap: 6px;
+  height: 36px; padding: 0 12px;
+  background: var(--ft-surface);
+  border: 1px solid var(--ft-border);
+  font-size: 13px; color: var(--ft-fg-strong);
+}
+.ft-chip--mobile .label { color: var(--ft-fg-muted); }
+.ft-chip--mobile .value { font-family: var(--ft-mono); font-size: 12px; }
+.ft-iconbtn--mobile {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 44px; height: 44px;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--ft-fg-strong);
+}
+.ft-iconbtn--mobile:hover { background: var(--ft-ink-2); }
+.ft-mbar {
+  display: flex; align-items: center; gap: 8px;
+  min-height: 64px;
+  padding: 6px 12px 14px;
+  background: var(--ft-surface);
+  border-top: 1px solid var(--ft-border-strong);
+  box-sizing: border-box;
+}
+
+/* Mobile bottom tab bar */
+.mobile-tab-bar {
+  display: none;
+  position: fixed; left: 0; right: 0; bottom: 0;
+  background: var(--ft-surface);
+  border-top: 1px solid var(--ft-border-strong);
+  z-index: 1100;
+  height: 56px;
+}
+.mobile-tab {
+  flex: 1;
+  display: inline-flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+  padding: 6px 4px;
+  background: transparent;
+  color: var(--ft-fg-muted);
+  border: none;
+  cursor: pointer;
+  font-family: var(--ft-mono);
+  font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase;
+  border-top: 2px solid transparent;
+}
+.mobile-tab.active {
+  color: var(--ft-fg-strong);
+  background: var(--ft-surface-2);
+  border-top-color: var(--ft-ink-12);
+}
+
+@media (max-width: 768px) {
+  /* Reveal bottom tab bar when a server is selected */
+  body.is-server-view .mobile-tab-bar { display: flex; }
+
+  /* Push content above the tab bar */
+  body.is-server-view #serverManagementView.fills {
+    height: calc(100vh - 44px - 24px - 56px);
+  }
+
+  /* --- Top bar — keep compact --- */
+  .top-bar { gap: var(--ft-sp-3); padding: 0 var(--ft-sp-3); }
+  .url-chip { max-width: 50vw; }
+  .url-chip code { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+  .top-bar-right .btn-ghost.btn-sm { display: none; } /* Settings/Logout hide; tab bar handles Settings */
+
+  /* --- Server list — collapse table into card rows --- */
+  #serverListView { padding: var(--ft-sp-4) var(--ft-sp-4); }
+  .stat-strip { grid-template-columns: 1fr 1fr; }
+  .stat:nth-child(2n) { border-right: none; }
+  .stat:nth-child(n+3) { border-top: 1px solid var(--ft-hairline); }
+  .server-table thead { display: none; }
+  .server-table, .server-table tbody, .server-table tr, .server-table td { display: block; width: 100%; }
+  .server-table tr {
+    border-bottom: 1px solid var(--ft-hairline);
+    padding: 10px 12px;
+    background: var(--ft-surface);
+    position: relative;
+  }
+  .server-table td { padding: 0; border: none; }
+  .server-table td.status-cell {
+    position: absolute; left: 12px; top: 14px; width: auto; padding: 0;
+  }
+  .server-table td.text-strong { padding-left: 18px; font-size: var(--ft-fs-14); }
+  .server-table td .server-url {
+    display: block; padding-left: 18px;
+    font-family: var(--ft-mono); font-size: var(--ft-fs-11); color: var(--ft-fg-muted);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .server-table td.muted { display: none; } /* Created column hidden on mobile */
+  .server-table td:nth-last-child(-n+3) { display: inline-block; padding-left: 18px; margin-right: 12px; font-size: var(--ft-fs-11); color: var(--ft-fg-muted); }
+  .server-table td:last-child { display: none; } /* chevron hidden */
+
+  /* --- Two-column dashboard → one column driven by data-mobile-tab --- */
+  .two-column-layout { grid-template-columns: 1fr; }
+  .two-column-layout .column:first-child { border-right: none; border-bottom: none; }
+  body[data-mobile-tab="rules"]    #trafficView,
+  body[data-mobile-tab="settings"] #trafficView { display: none; }
+  body[data-mobile-tab="traffic"]  #rulesView,
+  body[data-mobile-tab="settings"] #rulesView { display: none; }
+
+  /* --- Drawer becomes full-screen sheet --- */
+  .drawer {
+    width: 100vw; max-width: 100vw;
+    height: 100vh; top: 0; right: 0; bottom: 0;
+    transform: translateX(100%);
+  }
+  .drawer.active { transform: translateX(0); }
+  .drawer-header { padding: 12px 12px 12px 14px; }
+  .drawer-footer { position: sticky; bottom: 0; }
+
+  /* --- Status bar — collapse to essential items only --- */
+  .status-bar { font-size: 10px; padding: 0 var(--ft-sp-3); }
+  .status-bar #liveLatency, .status-bar #liveErr { display: none; }
+}
