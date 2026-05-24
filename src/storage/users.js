@@ -51,7 +51,22 @@ async function createServer({ serverId, name, description, ownerId }) {
 }
 
 async function getServer(serverId) {
-  const result = await pool.query('SELECT * FROM servers WHERE server_id = $1', [serverId]);
+  const result = await pool.query(
+    `SELECT s.*,
+      (SELECT COUNT(*) FROM traffic t
+         WHERE t.server_id = s.id
+           AND t.timestamp > NOW() - INTERVAL '60 seconds') AS live_count,
+      (SELECT COUNT(*) FROM traffic t
+         WHERE t.server_id = s.id
+           AND t.timestamp > NOW() - INTERVAL '5 minutes') AS recent_total,
+      (SELECT COUNT(*) FROM traffic t
+         WHERE t.server_id = s.id
+           AND t.timestamp > NOW() - INTERVAL '5 minutes'
+           AND (t.response->>'statusCode')::int >= 500) AS recent_errors
+     FROM servers s
+     WHERE s.server_id = $1`,
+    [serverId]
+  );
   return result.rows[0] || null;
 }
 
@@ -83,6 +98,16 @@ async function getServerById(id) {
 async function getAllServers(userId) {
   const result = await pool.query(
     `SELECT s.*,
+      (SELECT COUNT(*) FROM traffic t
+         WHERE t.server_id = s.id
+           AND t.timestamp > NOW() - INTERVAL '60 seconds') AS live_count,
+      (SELECT COUNT(*) FROM traffic t
+         WHERE t.server_id = s.id
+           AND t.timestamp > NOW() - INTERVAL '5 minutes') AS recent_total,
+      (SELECT COUNT(*) FROM traffic t
+         WHERE t.server_id = s.id
+           AND t.timestamp > NOW() - INTERVAL '5 minutes'
+           AND (t.response->>'statusCode')::int >= 500) AS recent_errors,
       CASE WHEN s.owner_id = $1 THEN true ELSE false END as is_owner,
       COALESCE(
         (SELECT sc.role = 'admin' FROM server_collaborators sc WHERE sc.server_id = s.id AND sc.user_id = $1),

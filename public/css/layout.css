@@ -113,6 +113,9 @@ body {
   background: var(--ft-ink-5);
 }
 .status-bar .dot.live { background: #5cd97b; box-shadow: 0 0 0 2px rgba(92, 217, 123, 0.18); }
+.status-bar .dot.warn { background: var(--ft-amber-pure); box-shadow: 0 0 0 2px rgba(229, 161, 0, 0.20); }
+.status-bar .dot.off  { background: var(--ft-ink-4); }
+.status-bar .dot.idle { background: var(--ft-ink-5); }
 
 /* ============================================================
    MAIN CONTENT

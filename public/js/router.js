@@ -418,8 +418,13 @@ class ViewRouter {
     const host = serverUrl.replace(/^https?:\/\//, '');
     const traffic = server ? (parseInt(server.traffic_count) || 0) : 0;
     const rules = server ? (parseInt(server.rules_count) || 0) : 0;
+    const status = server?.status || 'idle';
+    const statusLabel = status === 'off' ? 'recording off'
+                      : status === 'warn' ? 'elevated errors'
+                      : status === 'live' ? 'live'
+                      : 'idle';
     this.statusBar.innerHTML = `
-      <span class="status-item"><span class="dot live"></span>proxy</span>
+      <span class="status-item"><span class="dot ${status}"></span>${statusLabel}</span>
       <span class="sep"></span>
       <span class="status-item">${host}</span>
       <span class="spacer"></span>

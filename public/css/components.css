@@ -184,6 +184,18 @@
   align-items: center;
 }
 
+/* Server-health dot — live / idle / warn / off */
+.server-status-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  background: var(--ft-ink-5);
+}
+.server-status-dot.live { background: var(--ft-green); box-shadow: 0 0 0 2px rgba(26, 160, 82, 0.18); }
+.server-status-dot.warn { background: var(--ft-amber-pure); }
+.server-status-dot.off  { background: var(--ft-ink-4); }
+.status-cell { width: 18px; padding-right: 0; }
+
 /* Outline / meta */
 .badge-outline {
   background: var(--ft-surface);
