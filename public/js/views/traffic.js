@@ -1,5 +1,5 @@
 import { fetchTraffic, clearTraffic } from '../api.js';
-import { Toast } from '../components.js';
+import { Toast, DangerConfirm } from '../components.js';
 import { Icon, methodBadgeClass } from '../icons.js';
 import { getRuleById } from './rules.js';
 
@@ -109,7 +109,7 @@ class TrafficTable {
         </div>
         <div class="column-actions">
           <button class="btn-ghost btn-sm" id="refreshTrafficBtn">${Icon.refresh} Refresh</button>
-          <button class="btn-ghost btn-sm" id="clearTrafficBtn">${Icon.trash} Clear</button>
+          <button class="btn-danger btn-sm" id="clearTrafficBtn">${Icon.trash} Clear</button>
         </div>
       </div>
       <div class="traffic-container">
@@ -229,7 +229,11 @@ class TrafficTable {
 
   bindEvents() {
     document.getElementById('refreshTrafficBtn')?.addEventListener('click', () => this.load());
-    document.getElementById('clearTrafficBtn')?.addEventListener('click', () => this.clearAll());
+    DangerConfirm.wire(document.getElementById('clearTrafficBtn'), {
+      idleText: `${Icon.trash} Clear`,
+      armedText: 'Click again to confirm',
+      onConfirm: () => this.clearAll()
+    });
 
     const methodFilter = document.getElementById('methodFilter');
     methodFilter?.addEventListener('change', (e) => {
@@ -272,17 +276,6 @@ class TrafficTable {
   }
 
   async clearAll() {
-    const { ConfirmDialog } = await import('../components.js');
-    const confirmed = await ConfirmDialog.show({
-      title: 'Clear all traffic',
-      message: 'Discard all logged requests for this server? This cannot be undone.',
-      confirmText: 'Clear all',
-      cancelText: 'Cancel',
-      danger: true
-    });
-
-    if (!confirmed) return;
-
     try {
       await clearTraffic(this.serverId);
       this.logs = [];

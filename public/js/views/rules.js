@@ -1,5 +1,5 @@
 import { fetchRules, createRule, updateRule, deleteRule, toggleRule } from '../api.js';
-import { Toast } from '../components.js';
+import { Toast, DangerConfirm } from '../components.js';
 import { Icon, methodBadgeClass } from '../icons.js';
 
 let rulesList = null;
@@ -157,9 +157,10 @@ class RulesList {
     });
 
     document.querySelectorAll('.delete-rule-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        this.deleteRule(btn.dataset.ruleId);
+      DangerConfirm.wire(btn, {
+        idleText: Icon.trash,
+        armedText: Icon.trash,
+        onConfirm: () => this.deleteRule(btn.dataset.ruleId)
       });
     });
   }
@@ -190,17 +191,6 @@ class RulesList {
       Toast.error('Rule not found');
       return;
     }
-
-    const { ConfirmDialog } = await import('../components.js');
-    const confirmed = await ConfirmDialog.show({
-      title: 'Delete rule',
-      message: `Delete the ${rule.method} rule for ${rule.pathRegex}? This cannot be undone.`,
-      confirmText: 'Delete',
-      cancelText: 'Cancel',
-      danger: true
-    });
-
-    if (!confirmed) return;
 
     try {
       await deleteRule(this.serverId, ruleId);

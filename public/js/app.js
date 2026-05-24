@@ -445,17 +445,6 @@ class App {
       return;
     }
 
-    const { ConfirmDialog } = await import('./components.js');
-    const confirmed = await ConfirmDialog.show({
-      title: 'Delete server',
-      message: `Permanently delete server "${serverId}"? This removes all traffic logs and rules. This cannot be undone.`,
-      confirmText: 'Delete server',
-      cancelText: 'Cancel',
-      danger: true
-    });
-
-    if (!confirmed) return;
-
     try {
       const { deleteServer } = await import('./api.js');
       await deleteServer(serverId);
