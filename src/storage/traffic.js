@@ -168,6 +168,32 @@ async function getStats(serverId) {
   };
 }
 
+async function getLiveStats(serverId) {
+  const server = await getServer(serverId);
+  if (!server) return { reqPerSec: 0, p50Ms: 0, p95Ms: 0, errorRate: 0 };
+
+  const rs = await pool.query(
+    `SELECT
+       (SELECT COUNT(*) FROM traffic WHERE server_id = $1 AND timestamp > NOW() - INTERVAL '60 seconds')::float / 60.0 AS req_per_sec,
+       COALESCE((SELECT percentile_cont(0.50) WITHIN GROUP (ORDER BY duration)
+                  FROM traffic WHERE server_id = $1 AND timestamp > NOW() - INTERVAL '5 minutes'), 0) AS p50,
+       COALESCE((SELECT percentile_cont(0.95) WITHIN GROUP (ORDER BY duration)
+                  FROM traffic WHERE server_id = $1 AND timestamp > NOW() - INTERVAL '5 minutes'), 0) AS p95,
+       (SELECT COUNT(*) FROM traffic WHERE server_id = $1 AND timestamp > NOW() - INTERVAL '5 minutes')::int AS total,
+       (SELECT COUNT(*) FROM traffic WHERE server_id = $1 AND timestamp > NOW() - INTERVAL '5 minutes' AND (response->>'statusCode')::int >= 500)::int AS errs`,
+    [server.id]
+  );
+  const r = rs.rows[0];
+  const total = parseInt(r.total) || 0;
+  const errs = parseInt(r.errs) || 0;
+  return {
+    reqPerSec: parseFloat(r.req_per_sec) || 0,
+    p50Ms: Math.round(parseFloat(r.p50) || 0),
+    p95Ms: Math.round(parseFloat(r.p95) || 0),
+    errorRate: total > 0 ? errs / total : 0
+  };
+}
+
 function logFromRow(row) {
   return {
     id: row.request_id,
@@ -187,5 +213,6 @@ module.exports = {
   getLogById,
   filterLogs,
   clearLogs,
+  getLiveStats,
   getStats
 };

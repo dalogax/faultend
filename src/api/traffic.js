@@ -1,10 +1,11 @@
 const express = require('express');
-const { 
-  getAllLogs, 
-  getLogById, 
-  filterLogs, 
-  clearLogs, 
-  getStats 
+const {
+  getAllLogs,
+  getLogById,
+  filterLogs,
+  clearLogs,
+  getStats,
+  getLiveStats
 } = require('../storage/traffic');
 
 const router = express.Router();
@@ -46,16 +47,25 @@ router.get('/', async (req, res) => {
 
 router.get('/stats', async (req, res) => {
   const serverId = req.serverId;
-  
+
   if (!serverId) {
     return res.status(400).json({
       error: 'Bad Request',
       message: 'Server ID required'
     });
   }
-  
+
   const stats = await getStats(serverId);
   res.json({ serverId, ...stats });
+});
+
+router.get('/live-stats', async (req, res) => {
+  const serverId = req.serverId;
+  if (!serverId) {
+    return res.status(400).json({ error: 'Bad Request', message: 'Server ID required' });
+  }
+  const live = await getLiveStats(serverId);
+  res.json({ serverId, ...live });
 });
 
 router.get('/:id', async (req, res) => {
