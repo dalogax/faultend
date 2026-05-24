@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Faultend · Design System</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=swap" />
+  <link rel="stylesheet" href="tokens.css" />
+  <style>
+    html, body { margin: 0; height: 100%; background: #f0eee9; font-family: 'Inter', system-ui, sans-serif; }
+    #root { width: 100%; height: 100%; }
+  </style>
+
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+  <script type="text/babel" src="design-canvas.jsx"></script>
+  <script type="text/babel" src="atoms.jsx"></script>
+  <script type="text/babel" src="foundations.jsx"></script>
+  <script type="text/babel" src="components.jsx"></script>
+  <script type="text/babel" src="screens-chrome.jsx"></script>
+  <script type="text/babel" src="screens-auth-list.jsx"></script>
+  <script type="text/babel" src="screens-dashboard.jsx"></script>
+  <script type="text/babel" src="screens-drawers.jsx"></script>
+  <script type="text/babel" src="screens-landing.jsx"></script>
+  <script type="text/babel" src="ios-frame.jsx"></script>
+  <script type="text/babel" src="screens-mobile.jsx"></script>
+  <script type="text/babel" src="screens-landing-mobile.jsx"></script>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState } = React;
+
+    function App() {
+      return (
+        <DesignCanvas>
+          {/* ============================================================
+              00 · BRAND
+          ============================================================ */}
+          <DCSection id="brand" title="Faultend · Design System" subtitle="A monochrome, sharp-edged developer tool. Color only as signal — never decoration.">
+            <DCArtboard id="brand-mark" label="00 · Brand mark & lockup" width={1100} height={620}>
+              <ABBrand />
+            </DCArtboard>
+          </DCSection>
+
+          {/* ============================================================
+              01 · FOUNDATIONS
+          ============================================================ */}
+          <DCSection id="foundations" title="Foundations" subtitle="Tokens that every component is built on.">
+            <DCArtboard id="f-color-neutrals" label="01.A · Color · Ink scale" width={1100} height={620}>
+              <ABColorNeutrals />
+            </DCArtboard>
+            <DCArtboard id="f-color-badges"   label="01.B · Color · Signal palette" width={1100} height={620}>
+              <ABColorBadges />
+            </DCArtboard>
+            <DCArtboard id="f-typography"     label="01.C · Typography" width={1100} height={620}>
+              <ABTypography />
+            </DCArtboard>
+            <DCArtboard id="f-spacing"        label="01.D · Spacing, borders & elevation" width={1100} height={620}>
+              <ABSpacing />
+            </DCArtboard>
+            <DCArtboard id="f-mobile-taps"    label="01.E · Mobile tap targets" width={1100} height={780}>
+              <ABMobileTaps />
+            </DCArtboard>
+          </DCSection>
+
+          {/* ============================================================
+              02 · COMPONENTS
+          ============================================================ */}
+          <DCSection id="components" title="Components" subtitle="The shared vocabulary the application is built from.">
+            <DCArtboard id="c-buttons"  label="02.A · Buttons" width={1100} height={620}>
+              <ABButtons />
+            </DCArtboard>
+            <DCArtboard id="c-forms"    label="02.B · Form atoms" width={1100} height={760}>
+              <ABForms />
+            </DCArtboard>
+            <DCArtboard id="c-badges"   label="02.C · Badges, dots & keyboard hints" width={1100} height={620}>
+              <ABBadgesEtc />
+            </DCArtboard>
+            <DCArtboard id="c-tables"   label="02.D · Tables, code blocks & empty state" width={1100} height={620}>
+              <ABTables />
+            </DCArtboard>
+            <DCArtboard id="c-overlays" label="02.E · Drawers, inline confirm & toasts" width={1100} height={620}>
+              <ABOverlays />
+            </DCArtboard>
+          </DCSection>
+
+          {/* ============================================================
+              03 · MARKETING
+          ============================================================ */}
+          <DCSection id="marketing" title="Marketing site" subtitle="faultend.com — restyled in the in-house design language. The same monochrome chassis, signal amber as the only color, mono captions as structure.">
+            <DCArtboard id="m-landing"      label="03.A · Landing page · full scroll" width={1320} height={2700}>
+              <ScreenLanding />
+            </DCArtboard>
+            <DCArtboard id="m-landing-dark" label="03.B · Landing page · dark theme"   width={1320} height={2700}>
+              <ScreenLanding theme="dark" />
+            </DCArtboard>
+          </DCSection>
+
+          {/* ============================================================
+              04 · APPLICATION
+          ============================================================ */}
+          <DCSection id="screens" title="Application screens" subtitle="High-fidelity prototypes — every state lives in the same chassis.">
+            <DCArtboard id="s-login"        label="04.A · Login" width={1320} height={860}>
+              <ScreenLogin />
+            </DCArtboard>
+            <DCArtboard id="s-login-dark"   label="04.B · Login · dark theme" width={1320} height={860}>
+              <ScreenLogin theme="dark" />
+            </DCArtboard>
+            <DCArtboard id="s-list"         label="04.C · Server list" width={1320} height={860}>
+              <ScreenServerList />
+            </DCArtboard>
+            <DCArtboard id="s-dash"         label="04.D · Server dashboard" width={1320} height={860}>
+              <ScreenDashboard />
+            </DCArtboard>
+            <DCArtboard id="s-dash-dark"    label="04.E · Server dashboard · dark theme" width={1320} height={860}>
+              <ScreenDashboard theme="dark" />
+            </DCArtboard>
+            <DCArtboard id="s-traffic-detail" label="04.F · Traffic detail drawer" width={1320} height={860}>
+              <ScreenDashboard focus="traffic-detail" />
+            </DCArtboard>
+            <DCArtboard id="s-create-rule"  label="04.G · Create rule · proxy mode" width={1320} height={860}>
+              <ScreenDashboard focus="create-rule" />
+            </DCArtboard>
+            <DCArtboard id="s-create-rule-full" label="04.G′ · Create rule · mock mode · full drawer (scrollable)" width={520} height={1400}>
+              <DrawerCreateRuleStandalone />
+            </DCArtboard>
+            <DCArtboard id="s-create-server" label="04.H · Add server" width={1320} height={860}>
+              <ScreenServerListWithDrawer />
+            </DCArtboard>
+            <DCArtboard id="s-settings"     label="04.I · Server settings" width={1320} height={860}>
+              <ScreenDashboard focus="settings" />
+            </DCArtboard>
+          </DCSection>
+
+          {/* ============================================================
+              05 · MOBILE SCREENS
+              The same product, expressed in ~390px. Two-column dashboard
+              becomes four tabs (Traffic / Rules / Stats / More); right
+              drawers become full-screen sheets; tables become 2-line rows.
+          ============================================================ */}
+          <DCSection id="mobile" title="Mobile screens" subtitle="The Faultend app on iPhone — same data model, navigation broken into tabs and full-screen sheets. The monochrome, sharp-edged vocabulary is preserved inside the iOS bezel.">
+            <DCArtboard id="m-login"          label="05.A · Login"                              width={462} height={934}>
+              <MobileLogin />
+            </DCArtboard>
+            <DCArtboard id="m-login-dark"     label="05.B · Login · dark theme"                 width={462} height={934}>
+              <MobileLogin theme="dark" />
+            </DCArtboard>
+            <DCArtboard id="m-list"           label="05.C · Server list"                        width={462} height={934}>
+              <MobileServerList />
+            </DCArtboard>
+            <DCArtboard id="m-dash-traffic"   label="05.D · Dashboard · Traffic tab"            width={462} height={934}>
+              <MobileDashboardTraffic />
+            </DCArtboard>
+            <DCArtboard id="m-dash-rules"     label="05.E · Dashboard · Rules tab"              width={462} height={934}>
+              <MobileDashboardRules />
+            </DCArtboard>
+            <DCArtboard id="m-dash-more"      label="05.F · Dashboard · Settings tab"           width={462} height={934}>
+              <MobileDashboardMore />
+            </DCArtboard>
+            <DCArtboard id="m-traffic-detail" label="05.G · Traffic detail · full sheet"        width={462} height={1140}>
+              <MobileTrafficDetail height={1080} />
+            </DCArtboard>
+            <DCArtboard id="m-create-rule"    label="05.H · Create rule · full sheet"           width={462} height={1560}>
+              <MobileCreateRule height={1500} />
+            </DCArtboard>
+            <DCArtboard id="m-add-server"     label="05.I · Add server · manual"                width={462} height={934}>
+              <MobileAddServer tab="manual" />
+            </DCArtboard>
+            <DCArtboard id="m-add-server-import" label="05.I′ · Add server · import"             width={462} height={934}>
+              <MobileAddServer tab="import" />
+            </DCArtboard>
+          </DCSection>
+
+          {/* ============================================================
+              06 · MOBILE MARKETING
+              The faultend.com landing page expressed in ~390px. The
+              wide editorial layouts of the desktop site (split heroes,
+              3-col feature grids, 3-col step rows) collapse into a
+              single column with stronger horizontal rules. Presented
+              section-by-section so they can sit alongside the desktop
+              landing for comparison.
+          ============================================================ */}
+          <DCSection id="mobile-marketing" title="Mobile marketing site" subtitle="faultend.com on iPhone — same monochrome chassis, single column, mono captions as the structural element.">
+            <DCArtboard id="mm-full"      label="06.A · Landing · full scroll"        width={462} height={4620}>
+              <MobileLandingFull />
+            </DCArtboard>
+            <DCArtboard id="mm-full-dark" label="06.B · Landing · full · dark theme"   width={462} height={4620}>
+              <MobileLandingFull theme="dark" />
+            </DCArtboard>
+          </DCSection>
+        </DesignCanvas>
+      );
+    }
+
+    /* Create-rule drawer rendered on its own, at full natural height — no clipping */
+    function DrawerCreateRuleStandalone() {
+      return (
+        <div className="ft ft-theme-light" style={{ width: '100%', minHeight: '100%', background: 'var(--ft-bg)', padding: 0 }}>
+          <div style={{ width: '100%', height: '100%' }}>
+            <DrawerCreateRule />
+          </div>
+        </div>
+      );
+    }
+
+    /* List view with the create-server drawer on top */
+    function ScreenServerListWithDrawer() {
+      return (
+        <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+          <ScreenServerList />
+          <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.35)', zIndex: 1 }} />
+          <div style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: 520, zIndex: 2 }}>
+            <div className="ft ft-theme-light" style={{ width: '100%', height: '100%' }}>
+              <DrawerCreateServer />
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>
