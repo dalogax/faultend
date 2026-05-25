@@ -1,5 +1,5 @@
 import { buildSubdomainUrl } from './config.js';
-import { generateInvite, revokeInvite, fetchInvite, fetchCollaborators, removeCollaborator, leaveServer, makeCollaboratorAdmin, removeCollaboratorAdmin, transferOwnership, fetchServer, updateBehaviour, fetchLiveStats } from './api.js';
+import { generateInvite, revokeInvite, fetchInvite, fetchCollaborators, removeCollaborator, leaveServer, makeCollaboratorAdmin, removeCollaboratorAdmin, transferOwnership, fetchServer, updateBehaviour } from './api.js';
 import { authManager } from './auth.js';
 import { Icon } from './icons.js';
 import { DangerConfirm } from './components.js';
@@ -9,7 +9,6 @@ class ViewRouter {
     this.currentServerId = null;
     this.serverListView = document.getElementById('serverListView');
     this.serverManagementView = document.getElementById('serverManagementView');
-    this.statusBar = document.getElementById('statusBar');
 
     this.bindEvents();
   }
@@ -414,7 +413,6 @@ class ViewRouter {
 
   showServerList() {
     this.currentServerId = null;
-    this.stopLiveStatsPolling();
     document.body.classList.remove('is-server-view');
     delete document.body.dataset.mobileTab;
     this.serverListView.classList.add('active');
@@ -425,7 +423,6 @@ class ViewRouter {
     document.getElementById('settingsBtn').style.display = 'none';
     const backBtn = document.getElementById('backToServersBtn');
     if (backBtn) backBtn.style.display = 'none';
-    if (this.statusBar) this.statusBar.style.display = 'none';
     this.triggerViewLoad('serverList');
   }
 
@@ -452,59 +449,8 @@ class ViewRouter {
       copyBtn.onclick = () => this.copyServerUrl(serverUrl);
     }
 
-    this.updateStatusBar(serverId, serverUrl);
-
     this.triggerViewLoad('traffic');
     this.triggerViewLoad('rules');
-  }
-
-  updateStatusBar(serverId, serverUrl) {
-    if (!this.statusBar) return;
-    const server = window.faultendApp?.servers?.find(s => s.server_id === serverId);
-    const host = serverUrl.replace(/^https?:\/\//, '');
-    const rules = server ? (parseInt(server.rules_count) || 0) : 0;
-    const status = server?.status || 'idle';
-    const statusLabel = status === 'off' ? 'recording off'
-                      : status === 'warn' ? 'elevated errors'
-                      : status === 'live' ? 'live'
-                      : 'idle';
-    this.statusBar.innerHTML = `
-      <span class="status-item"><span class="dot ${status}"></span>${statusLabel}</span>
-      <span class="sep"></span>
-      <span class="status-item">${host}</span>
-      <span class="spacer"></span>
-      <span class="status-item mono" id="liveReqRate">—</span>
-      <span class="sep"></span>
-      <span class="status-item mono" id="liveLatency">p50 — · p95 —</span>
-      <span class="sep"></span>
-      <span class="status-item mono" id="liveErr">err —</span>
-      <span class="sep"></span>
-      <span class="status-item">${rules} rules</span>
-    `;
-    this.statusBar.style.display = 'flex';
-    this.startLiveStatsPolling(serverId);
-  }
-
-  startLiveStatsPolling(serverId) {
-    this.stopLiveStatsPolling();
-    const tick = async () => {
-      if (this.currentServerId !== serverId) { this.stopLiveStatsPolling(); return; }
-      try {
-        const s = await fetchLiveStats(serverId);
-        const r = document.getElementById('liveReqRate');
-        const l = document.getElementById('liveLatency');
-        const e = document.getElementById('liveErr');
-        if (r) r.textContent = `${s.reqPerSec >= 1 ? s.reqPerSec.toFixed(1) : s.reqPerSec.toFixed(2)} req/s`;
-        if (l) l.textContent = `p50 ${s.p50Ms}ms · p95 ${s.p95Ms}ms`;
-        if (e) e.textContent = `err ${(s.errorRate * 100).toFixed(1)}%`;
-      } catch (error) { /* silent */ }
-    };
-    tick();
-    this.liveStatsTimer = setInterval(tick, 5000);
-  }
-
-  stopLiveStatsPolling() {
-    if (this.liveStatsTimer) { clearInterval(this.liveStatsTimer); this.liveStatsTimer = null; }
   }
 
   async showInviteAcceptance(token) {

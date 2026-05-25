@@ -135,10 +135,6 @@ class App {
           <span class="stat-value mono" id="statRequests24h">—</span>
         </div>
         <div class="stat">
-          <span class="stat-label">p95 latency</span>
-          <span class="stat-value mono" id="statP95">—</span>
-        </div>
-        <div class="stat">
           <span class="stat-label">Active rules</span>
           <span class="stat-value" id="statRules">—</span>
         </div>
@@ -190,10 +186,8 @@ class App {
     try {
       const summary = await fetchStatsSummary();
       const r = document.getElementById('statRequests24h');
-      const p = document.getElementById('statP95');
       const u = document.getElementById('statRules');
       if (r) r.textContent = (summary.requests24h || 0).toLocaleString();
-      if (p) p.textContent = `${summary.p95Ms || 0}ms`;
       if (u) u.textContent = summary.rules || 0;
     } catch (error) {
       console.error('Failed to load stats summary:', error);

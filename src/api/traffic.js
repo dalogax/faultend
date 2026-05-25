@@ -4,8 +4,7 @@ const {
   getLogById,
   filterLogs,
   clearLogs,
-  getStats,
-  getLiveStats
+  getStats
 } = require('../storage/traffic');
 
 const router = express.Router();
@@ -57,15 +56,6 @@ router.get('/stats', async (req, res) => {
 
   const stats = await getStats(serverId);
   res.json({ serverId, ...stats });
-});
-
-router.get('/live-stats', async (req, res) => {
-  const serverId = req.serverId;
-  if (!serverId) {
-    return res.status(400).json({ error: 'Bad Request', message: 'Server ID required' });
-  }
-  const live = await getLiveStats(serverId);
-  res.json({ serverId, ...live });
 });
 
 router.get('/:id', async (req, res) => {
