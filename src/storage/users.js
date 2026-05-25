@@ -142,7 +142,12 @@ async function getAllServers(userId) {
       ) as is_admin,
       (SELECT COUNT(*) FROM server_collaborators WHERE server_id = s.id) as collaborators_count,
       (SELECT COUNT(*) FROM rules WHERE server_id = s.id) as rules_count,
-      (SELECT COUNT(*) FROM traffic WHERE server_id = s.id) as traffic_count
+      (SELECT COUNT(*) FROM traffic WHERE server_id = s.id) as traffic_count,
+      (SELECT MAX(timestamp) FROM traffic WHERE server_id = s.id) as last_traffic_at,
+      GREATEST(
+        s.updated_at,
+        COALESCE((SELECT MAX(updated_at) FROM rules WHERE server_id = s.id), s.updated_at)
+      ) as config_updated_at
      FROM servers s
      WHERE s.owner_id = $1
         OR s.id IN (SELECT server_id FROM server_collaborators WHERE user_id = $1)
