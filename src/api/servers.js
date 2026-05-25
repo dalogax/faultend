@@ -42,7 +42,11 @@ router.get('/servers', async (req, res) => {
     }
     
     const servers = await getAllServers(req.user.id);
-    const decorated = servers.map(s => ({ ...s, status: deriveServerStatus(s) }));
+    const decorated = servers.map(s => ({
+      ...s,
+      status: deriveServerStatus(s),
+      role: s.is_owner ? 'owner' : (s.is_admin ? 'admin' : 'collaborator')
+    }));
     res.json({
       servers: decorated,
       count: decorated.length

@@ -150,9 +150,11 @@ class App {
           <td class="status-cell" title="${status}"><span class="server-status-dot ${status}"></span></td>
           <td class="text-strong">${server.server_id}</td>
           <td><span class="server-url">${serverUrl}</span></td>
-          <td class="muted">${this.formatDate(server.created_at)}</td>
+          <td><span class="role-badge role-${server.role || 'collaborator'}">${(server.role || 'collaborator')}</span></td>
           <td>${this.renderSharingCell(server, collaborators)}</td>
+          <td class="muted">${this.formatRelativeTime(server.config_updated_at)}</td>
           <td class="num" style="text-align:right">${(parseInt(server.traffic_count) || 0).toLocaleString()}</td>
+          <td class="muted">${this.formatRelativeTime(server.last_traffic_at)}</td>
           <td class="num" style="text-align:right">${parseInt(server.rules_count) || 0}</td>
           <td style="width:32px;color:var(--ft-fg-faint)">${Icon.chevronRight}</td>
         </tr>
@@ -168,10 +170,12 @@ class App {
               <th style="width:18px"></th>
               <th>Server</th>
               <th>Endpoint</th>
-              <th style="width:120px">Created</th>
-              <th style="width:200px">Sharing</th>
-              <th style="width:110px;text-align:right">Traffic</th>
-              <th style="width:90px;text-align:right">Rules</th>
+              <th style="width:90px">Role</th>
+              <th style="width:170px">Sharing</th>
+              <th style="width:110px">Updated</th>
+              <th style="width:100px;text-align:right">Requests</th>
+              <th style="width:110px">Traffic</th>
+              <th style="width:70px;text-align:right">Rules</th>
               <th></th>
             </tr>
           </thead>
@@ -180,6 +184,19 @@ class App {
       </div>
     `;
     this.hydrateStatsSummary();
+  }
+
+  formatRelativeTime(timestamp) {
+    if (!timestamp) return '—';
+    const date = new Date(timestamp);
+    const sec = Math.max(0, Math.floor((Date.now() - date.getTime()) / 1000));
+    if (sec < 5) return 'just now';
+    if (sec < 60) return `${sec}s ago`;
+    if (sec < 3600) return `${Math.floor(sec / 60)}m ago`;
+    if (sec < 86400) return `${Math.floor(sec / 3600)}h ago`;
+    const days = Math.floor(sec / 86400);
+    if (days < 30) return `${days}d ago`;
+    return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
   }
 
   async hydrateStatsSummary() {
@@ -195,8 +212,11 @@ class App {
   }
 
   renderSharingCell(server, collaborators) {
+    // Owner viewing: collaborators_count = number of OTHERS they shared with
+    // Non-owner viewing: collaborators_count includes "me", and the owner is
+    // implicit — others-who-share = collaborators_count (others) + 1 (owner) − 1 (me) = collaborators_count
     if (!server.is_owner) {
-      return `<span class="share-cell">${Icon.person}<span class="share-label">Shared with me</span></span>`;
+      return `<span class="share-cell">${Icon.people}<span class="share-label">Shared</span><span class="share-meta">· ${collaborators}</span></span>`;
     }
     if (collaborators > 0) {
       return `<span class="share-cell">${Icon.people}<span class="share-label">Shared</span><span class="share-meta">· ${collaborators}</span></span>`;

@@ -184,6 +184,22 @@
   align-items: center;
 }
 
+/* Role pill in server list */
+.role-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 8px;
+  font-family: var(--ft-mono);
+  font-size: var(--ft-fs-11);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  border: 1px solid var(--ft-border);
+  color: var(--ft-fg-muted);
+  background: var(--ft-surface-2);
+}
+.role-badge.role-owner { background: var(--ft-ink-12); color: var(--ft-ink-0); border-color: var(--ft-ink-12); }
+.role-badge.role-admin { color: var(--ft-fg-strong); border-color: var(--ft-fg-strong); }
+
 /* Auto-refresh toggle (lives in Traffic column-actions) */
 .auto-refresh-toggle {
   display: inline-flex;
