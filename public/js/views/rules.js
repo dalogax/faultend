@@ -194,16 +194,40 @@ class RulesList {
     const tbody = document.querySelector('.rules-table tbody');
     if (!tbody) return;
     let dragging = null;
+    let initialOrder = null;
+
+    const currentOrder = () =>
+      Array.from(tbody.querySelectorAll('tr.rule-row')).map(r => r.dataset.ruleId);
+
+    const persistIfChanged = async () => {
+      const ordered = currentOrder();
+      if (!initialOrder || ordered.join(',') === initialOrder.join(',')) return;
+      try {
+        const result = await reorderRules(this.serverId, ordered);
+        this.rules = result.rules || [];
+        this.render();
+      } catch (error) {
+        console.error('Failed to reorder rules:', error);
+        Toast.error('Failed to reorder rules');
+        await this.load();
+      }
+    };
+
     tbody.querySelectorAll('tr.rule-row').forEach(row => {
       row.addEventListener('dragstart', (e) => {
         dragging = row;
+        initialOrder = currentOrder();
         row.classList.add('dragging');
         e.dataTransfer.effectAllowed = 'move';
         try { e.dataTransfer.setData('text/plain', row.dataset.ruleId); } catch (_) {}
       });
-      row.addEventListener('dragend', () => {
+      // dragend always fires when drag terminates (drop, escape, off-window).
+      // drop only fires if released over a valid target — too fragile to rely on.
+      row.addEventListener('dragend', async () => {
         dragging?.classList.remove('dragging');
         dragging = null;
+        await persistIfChanged();
+        initialOrder = null;
       });
       row.addEventListener('dragover', (e) => {
         if (!dragging || dragging === row) return;
@@ -213,18 +237,6 @@ class RulesList {
         tbody.insertBefore(dragging, before ? row : row.nextSibling);
       });
       row.addEventListener('drop', (e) => e.preventDefault());
-    });
-    tbody.addEventListener('drop', async () => {
-      const orderedIds = Array.from(tbody.querySelectorAll('tr.rule-row')).map(r => r.dataset.ruleId);
-      try {
-        const result = await reorderRules(this.serverId, orderedIds);
-        this.rules = result.rules || [];
-        this.render();
-      } catch (error) {
-        console.error('Failed to reorder rules:', error);
-        Toast.error('Failed to reorder rules');
-        await this.load();
-      }
     });
   }
 
