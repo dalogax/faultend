@@ -135,14 +135,18 @@
   .drawer-footer { position: sticky; bottom: 0; }
 
   /* --- Settings tab appearance: sits between top bar and tab bar,
-         no close X, no overlay scrim — looks like an in-app tab. --- */
+         no close X, no overlay scrim — looks like an in-app tab.
+         Skip the slide-in transition so it doesn't feel like a drawer. --- */
   body[data-mobile-tab="settings"] .drawer-overlay { display: none; }
-  body[data-mobile-tab="settings"] .drawer {
+  body[data-mobile-tab="settings"] .drawer,
+  body[data-mobile-tab="settings"] .drawer.active {
     top: 44px;
     bottom: calc(56px + env(safe-area-inset-bottom, 0px));
     height: auto;
     border-left: none;
     box-shadow: none;
+    transform: none;
+    transition: none;
   }
   body[data-mobile-tab="settings"] #drawerClose { display: none; }
   body[data-mobile-tab="settings"] .drawer-header { padding-right: 14px; }

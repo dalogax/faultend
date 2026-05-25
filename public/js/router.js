@@ -45,7 +45,12 @@ class ViewRouter {
           this.openServerSettings();
           return;
         }
+        // Set the new tab *first* so the drawer.onCloseOnce fallback
+        // (which only fires when data-mobile-tab is still 'settings')
+        // won't overwrite our chosen tab.
         this.setMobileTab(tab);
+        const drawer = window.faultendApp.getDrawer();
+        if (drawer.isOpen()) drawer.close();
       });
     });
   }
