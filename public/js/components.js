@@ -114,6 +114,39 @@ export const DangerConfirm = {
 };
 
 /**
+ * JSON syntax highlighting → returns an HTML string with token <span>s.
+ * Falls back to plain escaped text if the value can't be JSON-stringified.
+ */
+function escapeHtml(s) {
+  return String(s).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+}
+
+export function highlightJSON(value) {
+  let json;
+  try {
+    const parsed = typeof value === 'string' ? JSON.parse(value) : value;
+    json = JSON.stringify(parsed, null, 2);
+  } catch (_) {
+    return escapeHtml(typeof value === 'string' ? value : JSON.stringify(value, null, 2) ?? '');
+  }
+  if (typeof json !== 'string') return '';
+  return escapeHtml(json).replace(
+    /("(?:\\.|[^"\\])*")(\s*:)?|\b(true|false|null)\b|(-?\d+\.?\d*(?:[eE][+-]?\d+)?)/g,
+    (match, str, colon, kw, num) => {
+      if (str) {
+        return colon
+          ? `<span class="json-key">${str}</span>${colon}`
+          : `<span class="json-string">${str}</span>`;
+      }
+      if (kw === 'null') return `<span class="json-null">${kw}</span>`;
+      if (kw) return `<span class="json-bool">${kw}</span>`;
+      if (num) return `<span class="json-num">${num}</span>`;
+      return match;
+    }
+  );
+}
+
+/**
  * Confirmation Dialog
  */
 export const ConfirmDialog = {

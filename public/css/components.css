@@ -527,6 +527,14 @@ textarea.input {
   color: var(--ft-red-ink);
 }
 
+/* JSON syntax colors — matches the action-badge palette */
+.json-pre { color: var(--ft-fg-muted); }
+.json-key    { color: var(--ft-a-mock-fg); }
+.json-string { color: var(--ft-fg-strong); }
+.json-num    { color: var(--ft-a-proxy-fg); }
+.json-bool   { color: var(--ft-a-proxy-fg); font-weight: 500; }
+.json-null   { color: var(--ft-fg-faint); font-style: italic; }
+
 /* ============================================================
    FORM LAYOUT
    ============================================================ */

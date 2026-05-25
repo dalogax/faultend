@@ -1,5 +1,5 @@
 import { fetchTraffic, clearTraffic } from '../api.js';
-import { Toast, DangerConfirm } from '../components.js';
+import { Toast, DangerConfirm, highlightJSON } from '../components.js';
 import { Icon, methodBadgeClass } from '../icons.js';
 import { getRuleById, ruleLabels, renderLabelStack } from './rules.js';
 
@@ -404,16 +404,16 @@ class TrafficDetail {
         <h3>Request</h3>
         <div class="code-block">
           <h4>Headers</h4>
-          <pre>${JSON.stringify(this.log.request.headers, null, 2)}</pre>
+          <pre class="json-pre">${highlightJSON(this.log.request.headers)}</pre>
         </div>
         ${hasQuery ? `
           <div class="code-block">
             <h4>Query parameters</h4>
-            <pre>${JSON.stringify(this.log.request.query, null, 2)}</pre>
+            <pre class="json-pre">${highlightJSON(this.log.request.query)}</pre>
           </div>
         ` : ''}
         ${this.log.request.body
-          ? `<div class="code-block"><h4>Body</h4><pre>${JSON.stringify(this.log.request.body, null, 2)}</pre></div>`
+          ? `<div class="code-block"><h4>Body</h4><pre class="json-pre">${highlightJSON(this.log.request.body)}</pre></div>`
           : '<p class="empty-state-small">// no request body</p>'}
       </div>
     `;
@@ -425,13 +425,13 @@ class TrafficDetail {
         <h3>Response</h3>
         <div class="code-block">
           <h4>Headers</h4>
-          <pre>${JSON.stringify(this.log.response.headers, null, 2)}</pre>
+          <pre class="json-pre">${highlightJSON(this.log.response.headers)}</pre>
         </div>
         ${this.log.response.body
-          ? `<div class="code-block"><h4>Body</h4><pre>${JSON.stringify(this.log.response.body, null, 2)}</pre></div>`
+          ? `<div class="code-block"><h4>Body</h4><pre class="json-pre">${highlightJSON(this.log.response.body)}</pre></div>`
           : '<p class="empty-state-small">// no response body</p>'}
         ${this.log.error
-          ? `<div class="code-block error-block"><h4>Error</h4><pre>${JSON.stringify(this.log.error, null, 2)}</pre></div>`
+          ? `<div class="code-block error-block"><h4>Error</h4><pre class="json-pre">${highlightJSON(this.log.error)}</pre></div>`
           : ''}
       </div>
     `;
