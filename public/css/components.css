@@ -451,6 +451,10 @@ textarea.input {
 .server-table tbody tr:hover td { background: var(--ft-ink-2); }
 .traffic-table tbody tr,
 .server-table tbody tr { cursor: pointer; }
+/* Healthy traffic: 2xx with low latency gets a subtle green left accent */
+.traffic-table .traffic-row.is-healthy td:first-child {
+  box-shadow: inset 2px 0 0 0 var(--ft-green);
+}
 .traffic-table .num,
 .rules-table .num,
 .server-table .num {

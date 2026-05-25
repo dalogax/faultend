@@ -219,6 +219,7 @@ class TrafficTable {
     const statusCode = log.response.statusCode;
     const statusFamily = Math.floor(statusCode / 100);
     const isError = statusFamily >= 5;
+    const isHealthy = statusFamily === 2 && log.duration < 200;
     const matched = log.matchedRule ? getRuleById(log.matchedRule) : null;
     const rule = log.matchedRule
       ? (matched
@@ -227,7 +228,7 @@ class TrafficTable {
       : '<span class="muted">—</span>';
 
     return `
-      <tr class="traffic-row" data-log-id="${log.id}">
+      <tr class="traffic-row${isHealthy ? ' is-healthy' : ''}" data-log-id="${log.id}">
         <td class="time-cell">${this.formatTime(log.timestamp)}</td>
         <td><span class="badge badge-${methodBadgeClass(method)}">${method}</span></td>
         <td class="path-cell" title="${log.request.path}">${path}</td>
