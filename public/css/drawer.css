@@ -49,7 +49,7 @@
   color: var(--ft-fg-faint);
 }
 .drawer-title {
-  font-size: var(--ft-fs-20);
+  font-size: var(--ft-fs-18);
   font-weight: 500;
   letter-spacing: -0.015em;
   color: var(--ft-fg-strong);
