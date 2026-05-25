@@ -12,6 +12,8 @@ body {
   line-height: 1.45;
   letter-spacing: -0.005em;
   -webkit-font-smoothing: antialiased;
+  padding-top: 44px;
+  box-sizing: border-box;
 }
 
 /* ============================================================
@@ -40,16 +42,19 @@ body {
   flex-shrink: 0;
 }
 .back-btn {
-  width: 28px;
   height: 28px;
+  padding: 0 var(--ft-sp-3);
   display: inline-flex;
   align-items: center;
-  justify-content: center;
+  gap: var(--ft-sp-2);
   background: transparent;
   border: 1px solid transparent;
   color: var(--ft-fg-muted);
   cursor: pointer;
   flex-shrink: 0;
+  font-family: var(--ft-mono);
+  font-size: var(--ft-fs-11);
+  letter-spacing: 0.08em;
 }
 .back-btn:hover {
   color: var(--ft-fg-strong);
@@ -137,7 +142,6 @@ body {
    MAIN CONTENT
    ============================================================ */
 .main-content {
-  margin-top: 44px;
   min-width: 0;
 }
 .view { display: none; }

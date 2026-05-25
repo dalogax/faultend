@@ -82,6 +82,9 @@
 
   /* --- Top bar — keep compact --- */
   .top-bar { gap: var(--ft-sp-3); padding: 0 var(--ft-sp-3); }
+  .top-bar .brand { display: none; }                /* logo image only — saves width for url-chip */
+  .back-btn .back-btn-label { display: none; }      /* show icon only on mobile */
+  .back-btn { padding: 0 var(--ft-sp-2); }
   .url-chip { max-width: 50vw; }
   .url-chip code { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
   .top-bar-right .btn-ghost.btn-sm { display: none !important; } /* Settings/Logout hide; tab bar handles Settings */
