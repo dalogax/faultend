@@ -125,33 +125,48 @@ class TrafficTable {
   }
 
   render() {
+    // Mount the shell once. Subsequent loads only swap the rows region so
+    // the filter input keeps focus + selection across auto-refresh ticks.
+    if (!this._shellMounted) {
+      this.container.innerHTML = `
+        <div class="column-header">
+          <div class="column-title">
+            <h2>Traffic</h2>
+            <span class="count" id="trafficCount">${this.logs.length}</span>
+          </div>
+          <div class="column-actions">
+            <label class="auto-refresh-toggle" title="Auto-refresh traffic every ${POLL_MS / 1000}s">
+              <span class="toggle-switch"><input type="checkbox" id="autoRefreshToggle" ${this.autoRefresh ? 'checked' : ''}><span class="toggle-slider"></span></span>
+              <span class="auto-refresh-label">Live</span>
+            </label>
+            <button class="btn-ghost btn-sm" id="refreshTrafficBtn">${Icon.refresh} Refresh</button>
+            <button class="btn-danger btn-sm" id="clearTrafficBtn">${Icon.trash} Clear</button>
+          </div>
+        </div>
+        <div class="traffic-container">
+          ${this.renderFilters()}
+          <div id="trafficRowsRegion"></div>
+        </div>
+      `;
+      this._shellMounted = true;
+      this.bindShellEvents();
+    }
+    this.renderRows();
+  }
+
+  renderRows() {
+    const region = document.getElementById('trafficRowsRegion');
+    if (!region) return;
     const filteredLogs = this.getClientFilteredLogs();
-
-    this.container.innerHTML = `
-      <div class="column-header">
-        <div class="column-title">
-          <h2>Traffic</h2>
-          <span class="count">${this.logs.length}</span>
-        </div>
-        <div class="column-actions">
-          <label class="auto-refresh-toggle" title="Auto-refresh traffic every ${POLL_MS / 1000}s">
-            <span class="toggle-switch"><input type="checkbox" id="autoRefreshToggle" ${this.autoRefresh ? 'checked' : ''}><span class="toggle-slider"></span></span>
-            <span class="auto-refresh-label">Live</span>
-          </label>
-          <button class="btn-ghost btn-sm" id="refreshTrafficBtn">${Icon.refresh} Refresh</button>
-          <button class="btn-danger btn-sm" id="clearTrafficBtn">${Icon.trash} Clear</button>
-        </div>
-      </div>
-      <div class="traffic-container">
-        ${this.renderFilters()}
-        ${this.lastUpdate ? `<div class="last-update">last updated · ${this.getTimeAgo(this.lastUpdate)}</div>` : ''}
-        ${filteredLogs.length === 0
-          ? this.renderEmptyState()
-          : `<div class="traffic-table-container">${this.renderTable(filteredLogs)}</div>`}
-      </div>
+    const count = document.getElementById('trafficCount');
+    if (count) count.textContent = this.logs.length;
+    region.innerHTML = `
+      ${this.lastUpdate ? `<div class="last-update">last updated · ${this.getTimeAgo(this.lastUpdate)}</div>` : ''}
+      ${filteredLogs.length === 0
+        ? this.renderEmptyState()
+        : `<div class="traffic-table-container">${this.renderTable(filteredLogs)}</div>`}
     `;
-
-    this.bindEvents();
+    this.bindRowEvents();
   }
 
   renderFilters() {
@@ -258,7 +273,7 @@ class TrafficTable {
     return date.toLocaleTimeString('en-GB', { hour12: false });
   }
 
-  bindEvents() {
+  bindShellEvents() {
     document.getElementById('refreshTrafficBtn')?.addEventListener('click', () => this.load());
     document.getElementById('autoRefreshToggle')?.addEventListener('change', (e) => {
       this.setAutoRefresh(e.target.checked);
@@ -278,7 +293,7 @@ class TrafficTable {
     const statusFilter = document.getElementById('statusFilter');
     statusFilter?.addEventListener('change', (e) => {
       this.filters.status = e.target.value;
-      this.render();
+      this.renderRows();
     });
 
     const pathSearch = document.getElementById('pathSearch');
@@ -292,7 +307,9 @@ class TrafficTable {
         }, 300);
       });
     }
+  }
 
+  bindRowEvents() {
     document.querySelectorAll('.traffic-row').forEach(row => {
       row.addEventListener('click', () => this.openDetail(row.dataset.logId));
     });
