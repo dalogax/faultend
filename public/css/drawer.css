@@ -40,7 +40,7 @@
   border-bottom: 1px solid var(--ft-border);
   flex-shrink: 0;
 }
-.drawer-heading { display: flex; flex-direction: column; gap: var(--ft-sp-1); min-width: 0; }
+.drawer-heading { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
 .drawer-eyebrow {
   font-family: var(--ft-mono);
   font-size: var(--ft-fs-10);
@@ -89,7 +89,7 @@
   display: grid;
   grid-template-columns: 110px 1fr;
   align-items: center;
-  padding: 5px 0;
+  padding: 6px 0;
   font-size: var(--ft-fs-13);
 }
 .detail-row .label {
