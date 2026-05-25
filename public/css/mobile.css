@@ -82,7 +82,7 @@
   .top-bar { gap: var(--ft-sp-3); padding: 0 var(--ft-sp-3); }
   .url-chip { max-width: 50vw; }
   .url-chip code { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
-  .top-bar-right .btn-ghost.btn-sm { display: none; } /* Settings/Logout hide; tab bar handles Settings */
+  .top-bar-right .btn-ghost.btn-sm { display: none !important; } /* Settings/Logout hide; tab bar handles Settings */
 
   /* --- Server list — collapse table into card rows --- */
   #serverListView { padding: var(--ft-sp-4) var(--ft-sp-4); }
@@ -128,6 +128,19 @@
   .drawer.active { transform: translateX(0); }
   .drawer-header { padding: 12px 12px 12px 14px; }
   .drawer-footer { position: sticky; bottom: 0; }
+
+  /* --- Settings tab appearance: sits between top bar and tab bar,
+         no close X, no overlay scrim — looks like an in-app tab. --- */
+  body[data-mobile-tab="settings"] .drawer-overlay { display: none; }
+  body[data-mobile-tab="settings"] .drawer {
+    top: 44px;
+    bottom: 56px;
+    height: auto;
+    border-left: none;
+    box-shadow: none;
+  }
+  body[data-mobile-tab="settings"] #drawerClose { display: none; }
+  body[data-mobile-tab="settings"] .drawer-header { padding-right: 14px; }
 
   /* --- Status bar — collapse to essential items only --- */
   .status-bar { font-size: 10px; padding: 0 var(--ft-sp-3); }

@@ -31,8 +31,18 @@ class DrawerController {
   }
 
   close() {
+    const wasOpen = this.isOpen();
     this.overlay.classList.remove('active');
     this.drawer.classList.remove('active');
+    if (wasOpen && typeof this._onCloseOnce === 'function') {
+      const fn = this._onCloseOnce;
+      this._onCloseOnce = null;
+      fn();
+    }
+  }
+
+  onCloseOnce(fn) {
+    this._onCloseOnce = fn;
   }
 
   isOpen() {

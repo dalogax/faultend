@@ -41,6 +41,7 @@ class ViewRouter {
       btn.addEventListener('click', () => {
         const tab = btn.dataset.mobileTab;
         if (tab === 'settings') {
+          this.setMobileTab('settings');
           this.openServerSettings();
           return;
         }
@@ -120,6 +121,12 @@ class ViewRouter {
         : '<button id="leaveServerBtn" class="btn-danger btn-sm">Leave server</button>'}
     `);
     drawer.open();
+    drawer.onCloseOnce(() => {
+      // When the settings sheet closes on mobile, fall back to the Traffic tab.
+      if (document.body.dataset.mobileTab === 'settings') {
+        this.setMobileTab('traffic');
+      }
+    });
 
     document.getElementById('exportConfigBtn')?.addEventListener('click', () => this.exportServerConfig());
     DangerConfirm.wire(document.getElementById('deleteServerBtn'), {
