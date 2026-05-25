@@ -224,7 +224,6 @@ class App {
     }
 
     console.log(`Loading data for view: ${view}, server: ${serverId}`);
-    stopTrafficPolling();
 
     switch (view) {
       case 'traffic':

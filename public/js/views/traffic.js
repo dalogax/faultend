@@ -36,6 +36,9 @@ function latBar(ms, isError) {
   return `<span class="lat"><span class="lat-bar"><i class="${cls}" style="width:${pct}%"></i></span><span>${ms}<span class="unit">ms</span></span></span>`;
 }
 
+const AUTO_REFRESH_KEY = 'faultend.autoRefresh';
+const POLL_MS = 2000;
+
 class TrafficTable {
   constructor(containerId, serverId) {
     this.container = document.getElementById(containerId);
@@ -45,6 +48,30 @@ class TrafficTable {
     this.pollInterval = null;
     this.lastUpdate = null;
     this.isLoading = false;
+    this.autoRefresh = this.readAutoRefresh();
+    this._onVis = () => this.applyAutoRefresh();
+    document.addEventListener('visibilitychange', this._onVis);
+  }
+
+  readAutoRefresh() {
+    const stored = localStorage.getItem(AUTO_REFRESH_KEY);
+    return stored === null ? true : stored === 'true';
+  }
+
+  setAutoRefresh(on) {
+    this.autoRefresh = on;
+    localStorage.setItem(AUTO_REFRESH_KEY, String(on));
+    this.applyAutoRefresh();
+  }
+
+  applyAutoRefresh() {
+    const shouldPoll = this.autoRefresh && document.visibilityState === 'visible';
+    if (shouldPoll && !this.pollInterval) {
+      this.pollInterval = setInterval(() => this.load(), POLL_MS);
+    } else if (!shouldPoll && this.pollInterval) {
+      clearInterval(this.pollInterval);
+      this.pollInterval = null;
+    }
   }
 
   async load() {
@@ -87,8 +114,7 @@ class TrafficTable {
   }
 
   startPolling() {
-    this.stopPolling();
-    this.pollInterval = setInterval(() => this.load(), 2000);
+    this.applyAutoRefresh();
   }
 
   stopPolling() {
@@ -108,6 +134,10 @@ class TrafficTable {
           <span class="count">${this.logs.length}</span>
         </div>
         <div class="column-actions">
+          <label class="auto-refresh-toggle" title="Auto-refresh traffic every ${POLL_MS / 1000}s">
+            <span class="toggle-switch"><input type="checkbox" id="autoRefreshToggle" ${this.autoRefresh ? 'checked' : ''}><span class="toggle-slider"></span></span>
+            <span class="auto-refresh-label">Live</span>
+          </label>
           <button class="btn-ghost btn-sm" id="refreshTrafficBtn">${Icon.refresh} Refresh</button>
           <button class="btn-danger btn-sm" id="clearTrafficBtn">${Icon.trash} Clear</button>
         </div>
@@ -229,6 +259,9 @@ class TrafficTable {
 
   bindEvents() {
     document.getElementById('refreshTrafficBtn')?.addEventListener('click', () => this.load());
+    document.getElementById('autoRefreshToggle')?.addEventListener('change', (e) => {
+      this.setAutoRefresh(e.target.checked);
+    });
     DangerConfirm.wire(document.getElementById('clearTrafficBtn'), {
       idleText: `${Icon.trash} Clear`,
       armedText: 'Click again to confirm',

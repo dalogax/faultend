@@ -184,6 +184,21 @@
   align-items: center;
 }
 
+/* Auto-refresh toggle (lives in Traffic column-actions) */
+.auto-refresh-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ft-sp-2);
+  font-size: var(--ft-fs-11);
+  color: var(--ft-fg-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  user-select: none;
+}
+.auto-refresh-toggle .auto-refresh-label { line-height: 1; }
+.auto-refresh-toggle:hover .auto-refresh-label { color: var(--ft-fg-strong); }
+
 /* Rules table — drag handle + drag preview */
 .rules-table th.drag-col,
 .rules-table .drag-cell {
