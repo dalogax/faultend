@@ -77,7 +77,7 @@
 
   /* Push content above the tab bar */
   body.is-server-view #serverManagementView.fills {
-    height: calc(100vh - 44px - 24px - 56px - env(safe-area-inset-bottom, 0px));
+    height: calc(100vh - 44px - 56px - env(safe-area-inset-bottom, 0px));
   }
 
   /* --- Top bar — keep compact --- */
@@ -152,6 +152,4 @@
   body[data-mobile-tab="settings"] .drawer-header { padding-right: 14px; }
 
   /* --- Status bar — collapse to essential items only --- */
-  .status-bar { font-size: 10px; padding: 0 var(--ft-sp-3); }
-  .status-bar #liveLatency, .status-bar #liveErr { display: none; }
 }

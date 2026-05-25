@@ -105,40 +105,6 @@ body {
 .url-chip:hover { background: var(--ft-ink-3); }
 
 /* ============================================================
-   STATUS BAR (VS Code style, server pages only)
-   ============================================================ */
-.status-bar {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 24px;
-  display: flex;
-  align-items: center;
-  gap: var(--ft-sp-5);
-  padding: 0 var(--ft-sp-4);
-  background: var(--ft-ink-12);
-  color: var(--ft-ink-0);
-  font-family: var(--ft-mono);
-  font-size: var(--ft-fs-11);
-  letter-spacing: 0.02em;
-  z-index: 1000;
-}
-.status-bar .sep { width: 1px; height: 12px; background: rgba(255, 255, 255, 0.18); }
-.status-bar .spacer { flex: 1; }
-.status-bar .status-item { display: inline-flex; align-items: center; gap: var(--ft-sp-2); }
-.status-bar .dot {
-  width: 6px;
-  height: 6px;
-  display: inline-block;
-  background: var(--ft-ink-5);
-}
-.status-bar .dot.live { background: #5cd97b; box-shadow: 0 0 0 2px rgba(92, 217, 123, 0.18); }
-.status-bar .dot.warn { background: var(--ft-amber-pure); box-shadow: 0 0 0 2px rgba(229, 161, 0, 0.20); }
-.status-bar .dot.off  { background: var(--ft-ink-4); }
-.status-bar .dot.idle { background: var(--ft-ink-5); }
-
-/* ============================================================
    MAIN CONTENT
    ============================================================ */
 .main-content {
@@ -154,7 +120,7 @@ body {
 #serverManagementView { display: none; }
 #serverManagementView.fills {
   display: block;
-  height: calc(100vh - 44px - 24px);
+  height: calc(100vh - 44px);
 }
 
 /* ============================================================

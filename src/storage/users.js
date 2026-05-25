@@ -79,14 +79,11 @@ async function getStatsSummary(userId) {
   );
   const serverIds = accessibleServers.rows.map(r => r.id);
   if (serverIds.length === 0) {
-    return { servers: 0, requests24h: 0, p95Ms: 0, rules: 0, shared: 0 };
+    return { servers: 0, requests24h: 0, rules: 0, shared: 0 };
   }
   const aggResult = await pool.query(
     `SELECT
         COALESCE((SELECT COUNT(*) FROM traffic WHERE server_id = ANY($1::bigint[]) AND timestamp > NOW() - INTERVAL '24 hours'), 0) AS requests24h,
-        COALESCE((SELECT percentile_cont(0.95) WITHIN GROUP (ORDER BY duration)
-                    FROM traffic
-                   WHERE server_id = ANY($1::bigint[]) AND timestamp > NOW() - INTERVAL '24 hours'), 0) AS p95_ms,
         COALESCE((SELECT COUNT(*) FROM rules WHERE server_id = ANY($1::bigint[]) AND enabled = true), 0) AS rules,
         COALESCE((SELECT COUNT(DISTINCT server_id) FROM server_collaborators WHERE server_id = ANY($1::bigint[])), 0) AS shared`,
     [serverIds]
@@ -95,7 +92,6 @@ async function getStatsSummary(userId) {
   return {
     servers: serverIds.length,
     requests24h: parseInt(row.requests24h) || 0,
-    p95Ms: Math.round(parseFloat(row.p95_ms) || 0),
     rules: parseInt(row.rules) || 0,
     shared: parseInt(row.shared) || 0
   };

@@ -68,10 +68,6 @@ export async function fetchTrafficStats(serverId) {
   return request(`${API_BASE.app}/api/servers/${serverId}/traffic/stats`);
 }
 
-export async function fetchLiveStats(serverId) {
-  return request(`${API_BASE.app}/api/servers/${serverId}/traffic/live-stats`);
-}
-
 export async function clearTraffic(serverId) {
   return request(`${API_BASE.app}/api/servers/${serverId}/traffic`, {
     method: 'DELETE'
