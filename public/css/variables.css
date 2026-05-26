@@ -157,3 +157,25 @@
   --ft-fg-faint:    var(--ft-ink-7);
   --ft-fg-on-fill:  var(--ft-ink-0);
 }
+
+/* ============================================================
+   SCROLLBARS — thin, sharp-edged, theme-aware
+   ============================================================ */
+
+/* Firefox */
+* { scrollbar-width: thin; scrollbar-color: var(--ft-ink-5) transparent; }
+
+/* Chromium / Safari */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: var(--ft-ink-5);
+  border-radius: 0;
+}
+::-webkit-scrollbar-thumb:hover { background: var(--ft-ink-7); }
+::-webkit-scrollbar-corner { background: transparent; }
+
+/* Dark-mode overrides */
+[data-theme="dark"] * { scrollbar-color: var(--ft-ink-5) transparent; }
+[data-theme="dark"] ::-webkit-scrollbar-thumb { background: var(--ft-ink-5); }
+[data-theme="dark"] ::-webkit-scrollbar-thumb:hover { background: var(--ft-ink-7); }
