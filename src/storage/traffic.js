@@ -1,5 +1,5 @@
 const pool = require('../db/pool');
-const { getServer } = require('./users');
+const { getServer, getServerByPublicId } = require('./users');
 
 const MAX_LOGS = 1000;
 
@@ -8,7 +8,7 @@ function generateId() {
 }
 
 async function logTransaction(serverId, transactionData) {
-  const server = await getServer(serverId);
+  const server = await getServerByPublicId(serverId);
   if (!server) {
     console.log(`[TRAFFIC] Cannot log transaction - server '${serverId}' does not exist`);
     return null;

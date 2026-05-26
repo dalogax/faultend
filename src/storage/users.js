@@ -1,4 +1,5 @@
 const pool = require('../db/pool');
+const serverCache = require('./serverCache');
 
 async function createUser({ email, name, avatarUrl }) {
   const result = await pool.query(
@@ -68,6 +69,19 @@ async function getServer(serverId) {
     [serverId]
   );
   return result.rows[0] || null;
+}
+
+async function getServerByPublicId(serverId) {
+  const cached = serverCache.get(serverId);
+  if (cached) return cached;
+
+  const result = await pool.query(
+    'SELECT id, server_id, name, recording_enabled, default_latency_ms, preserve_headers FROM servers WHERE server_id = $1',
+    [serverId]
+  );
+  const server = result.rows[0] || null;
+  if (server) serverCache.set(serverId, server);
+  return server;
 }
 
 async function getStatsSummary(userId) {
@@ -344,6 +358,7 @@ module.exports = {
   linkProvider,
   createServer,
   getServer,
+  getServerByPublicId,
   getServerById,
   updateServerBehaviour,
   getStatsSummary,
