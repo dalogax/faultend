@@ -88,6 +88,7 @@ router.use('/', async (req, res, next) => {
       matchedRule: null
     });
     
+    incProxyRequest(serverId, 502, 'unmatched');
     return res.status(502).json({
       error: 'No matching rule',
       message: `No proxy or mock rule configured for ${req.method} ${req.path}`,
@@ -95,9 +96,12 @@ router.use('/', async (req, res, next) => {
       serverId: serverId
     });
   }
-  
+
   console.log(`[PROXY ROUTER] [${serverId}] Matched rule: ${rule.name} (priority: ${rule.priority}, action: ${rule.action})`);
-  
+
+  res.on('finish', () => {
+    incProxyRequest(serverId, res.statusCode, rule.action);
+  });
   executeRule(serverId, rule, req, res, next);
 });
 
