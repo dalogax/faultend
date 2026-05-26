@@ -28,7 +28,7 @@
       --s-4xx-bg:#f0e3b8; --s-4xx-fg:#5c4318;
       --s-5xx-bg:#f0cacd; --s-5xx-fg:#5c1f22;
       --a-mock-bg:#dcdff5; --a-mock-fg:#1f2659;
-      --a-proxy-bg:#cfe8dc; --a-proxy-fg:#1a3f2a;
+      --a-proxy-bg:#d0e8f5; --a-proxy-fg:#1a3a5a;
       --a-delay-bg:#f3e2c4; --a-delay-fg:#5a3f15;
       --bg:var(--ink-1); --surface:var(--ink-0); --surface-2:var(--ink-2);
       --hairline:var(--ink-3); --border:var(--ink-4); --border-strong:var(--ink-12);
@@ -410,7 +410,7 @@
             <p>Match each request by HTTP method and a regex path pattern. Rules are evaluated in priority order — the first match wins.</p>
           </div>
           <div class="step-aside">
-            <span class="badge badge--lg a-proxy">5 RULES · ordered</span>
+            <span class="badge badge--lg a-mock">5 RULES · ordered</span>
             <div class="code">200  GET   ^/users/[0-9]+$   → mock
 180  GET   ^/products$       → mock
 100  *     .*                → proxy</div>
@@ -436,7 +436,7 @@ DELETE /posts/1    403      9ms   ✓</div>
             <p>Switch any rule to Mock mode. Pick a status code, write a JSON body, and dial in a fixed delay or a random range. Toggle it on or off live.</p>
           </div>
           <div class="step-aside">
-            <span class="badge badge--lg a-mock">MOCK · armed</span>
+            <span class="badge badge--lg a-delay">MOCK · armed</span>
             <div class="code">Mock   ^/products$   500   {}
 Latency  range  100–500ms</div>
           </div>
