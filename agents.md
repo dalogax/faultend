@@ -8,6 +8,12 @@
 
 > **Before performing ANY action related to a domain below, read the linked document first.**
 
+### Hard Rules (Non-Negotiable)
+
+| Rule | Why | Enforcement |
+|------|-----|-------------|
+| **Never commit with failing tests** | A broken test suite means the code is either wrong or the tests are stale — both block the team. | `npm test` (or the project's test command) **must pass** before any `git commit` or PR is created. If tests fail, fix them first. No exceptions. |
+
 | Before you... | Read this | Why |
 |---------------|-----------|-----|
 | **Modify code** (backend, frontend, API, routing) | [Architecture](./docs/architecture.md) | Codebase structure, tech stack, routing logic, subdomain system |

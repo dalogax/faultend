@@ -28,7 +28,7 @@ async function getAllRules(serverId) {
 }
 
 async function reorderRules(serverId, orderedIds) {
-  const server = await getServer(serverId);
+  const server = await getServerByPublicId(serverId);
   if (!server) throw new Error(`Server '${serverId}' not found`);
   const client = await pool.connect();
   try {
@@ -53,7 +53,7 @@ async function reorderRules(serverId, orderedIds) {
 }
 
 async function getRuleById(serverId, ruleId) {
-  const server = await getServer(serverId);
+  const server = await getServerByPublicId(serverId);
   if (!server) return null;
   
   const result = await pool.query(
@@ -64,7 +64,7 @@ async function getRuleById(serverId, ruleId) {
 }
 
 async function addRule(serverId, ruleData) {
-  const server = await getServer(serverId);
+  const server = await getServerByPublicId(serverId);
   if (!server) throw new Error(`Server '${serverId}' not found`);
   
   const ruleId = ruleData.id || generateRuleId();
@@ -96,7 +96,7 @@ async function addRule(serverId, ruleData) {
 }
 
 async function updateRule(serverId, ruleId, updates) {
-  const server = await getServer(serverId);
+  const server = await getServerByPublicId(serverId);
   if (!server) throw new Error(`Server '${serverId}' not found`);
   
   const existing = await getRuleById(serverId, ruleId);
@@ -132,7 +132,7 @@ async function updateRule(serverId, ruleId, updates) {
 }
 
 async function deleteRule(serverId, ruleId) {
-  const server = await getServer(serverId);
+  const server = await getServerByPublicId(serverId);
   if (!server) throw new Error(`Server '${serverId}' not found`);
   
   const result = await pool.query(
@@ -161,7 +161,7 @@ async function toggleRule(serverId, ruleId) {
 
 async function importRules(serverId, rulesArray, mode = 'merge') {
   if (mode === 'replace') {
-    const server = await getServer(serverId);
+    const server = await getServerByPublicId(serverId);
     if (server) {
       await pool.query('DELETE FROM rules WHERE server_id = $1', [server.id]);
     }
@@ -186,7 +186,7 @@ async function exportRules(serverId) {
 }
 
 async function clearRules(serverId) {
-  const server = await getServer(serverId);
+  const server = await getServerByPublicId(serverId);
   if (!server) return;
   
   await pool.query('DELETE FROM rules WHERE server_id = $1', [server.id]);
