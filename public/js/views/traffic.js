@@ -235,10 +235,12 @@ class TrafficTable {
     const statusFamily = Math.floor(statusCode / 100);
     const isError = statusFamily >= 5;
     const isHealthy = statusFamily === 2 && log.duration < 200;
-    const matched = log.matchedRule ? getRuleById(log.matchedRule) : null;
+    // Prefer immutable snapshot saved at request time; fall back to live lookup
+    // for records that pre-date the snapshot column.
+    const ruleData = log.matchedRuleSnapshot || (log.matchedRule ? getRuleById(log.matchedRule) : null);
     const rule = log.matchedRule
-      ? (matched
-          ? renderLabelStack(ruleLabels(matched))
+      ? (ruleData
+          ? renderLabelStack(ruleLabels(ruleData))
           : '<span class="badge badge-outline">matched</span>')
       : '<span class="muted">—</span>';
 
@@ -396,7 +398,8 @@ class TrafficDetail {
         </div>
       `;
     }
-    const rule = getRuleById(this.log.matchedRule);
+    // Prefer snapshot; fall back to live lookup for pre-snapshot records
+    const rule = this.log.matchedRuleSnapshot || getRuleById(this.log.matchedRule);
     if (!rule) {
       return `
         <div class="detail-section">
@@ -411,6 +414,7 @@ class TrafficDetail {
         <div class="detail-row"><span class="label">labels</span><span class="value">${renderLabelStack(ruleLabels(rule))}</span></div>
         <div class="detail-row"><span class="label">priority</span><span class="value mono">${rule.priority}</span></div>
         ${rule.pathRegex ? `<div class="detail-row"><span class="label">pattern</span><span class="value mono">${rule.pathRegex}</span></div>` : ''}
+        ${rule.name ? `<div class="detail-row"><span class="label">name</span><span class="value mono">${rule.name}</span></div>` : ''}
       </div>
     `;
   }

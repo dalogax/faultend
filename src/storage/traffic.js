@@ -16,9 +16,23 @@ async function logTransaction(serverId, transactionData) {
   
   const requestId = transactionData.id || generateId();
   
+  const rule = transactionData.matchedRule || null;
+  const ruleSnapshot = rule ? {
+    id:           rule.id,
+    name:         rule.name,
+    action:       rule.action,
+    method:       rule.method,
+    pathRegex:    rule.pathRegex,
+    priority:     rule.priority,
+    enabled:      rule.enabled,
+    latency:      rule.latency,
+    mockResponse: rule.mockResponse,
+    transform:    rule.transform
+  } : null;
+
   await pool.query(
-    `INSERT INTO traffic (server_id, request_id, request, response, duration, target, matched_rule_id, error)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+    `INSERT INTO traffic (server_id, request_id, request, response, duration, target, matched_rule_id, matched_rule_snapshot, error)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
     [
       server.id,
       requestId,
@@ -26,7 +40,8 @@ async function logTransaction(serverId, transactionData) {
       transactionData.response ? JSON.stringify(transactionData.response) : null,
       transactionData.duration || 0,
       transactionData.target || null,
-      transactionData.matchedRule?.id || null,
+      rule?.id || null,
+      ruleSnapshot ? JSON.stringify(ruleSnapshot) : null,
       transactionData.error || null
     ]
   );
@@ -177,6 +192,9 @@ function logFromRow(row) {
     duration: row.duration,
     target: row.target,
     matchedRule: row.matched_rule_id,
+    matchedRuleSnapshot: row.matched_rule_snapshot
+      ? (typeof row.matched_rule_snapshot === 'string' ? JSON.parse(row.matched_rule_snapshot) : row.matched_rule_snapshot)
+      : null,
     error: row.error
   };
 }

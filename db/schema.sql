@@ -172,9 +172,21 @@ CREATE TABLE IF NOT EXISTS traffic (
   duration      INTEGER,
   target        TEXT,
   matched_rule_id VARCHAR(255) REFERENCES rules(id) ON DELETE SET NULL,
+  matched_rule_snapshot JSONB,
   error         TEXT,
   created_at    TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Migration: Add matched_rule_snapshot column to traffic
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'traffic' AND column_name = 'matched_rule_snapshot'
+    ) THEN
+        ALTER TABLE traffic ADD COLUMN matched_rule_snapshot JSONB;
+    END IF;
+END $$;
 
 -- Migration: Add role column to server_collaborators
 DO $$
