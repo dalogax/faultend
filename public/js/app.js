@@ -108,7 +108,8 @@ class App {
       const view = e.detail.view;
       if (view === 'serverList') {
         stopTrafficPolling();
-        this.renderServerList();
+        // Always re-fetch so last-seen traffic, counts etc. are current
+        this.loadServers().then(() => this.renderServerList());
       } else {
         this.loadViewData(view);
       }
@@ -153,8 +154,8 @@ class App {
           <td><span class="role-badge role-${server.role || 'collaborator'}">${(server.role || 'collaborator')}</span></td>
           <td>${this.renderSharingCell(server, collaborators)}</td>
           <td class="muted">${this.formatRelativeTime(server.config_updated_at)}</td>
-          <td class="num" style="text-align:right">${(parseInt(server.traffic_count) || 0).toLocaleString()}</td>
           <td class="muted">${this.formatRelativeTime(server.last_traffic_at)}</td>
+          <td class="num" style="text-align:right">${(parseInt(server.traffic_count) || 0).toLocaleString()}</td>
           <td class="num" style="text-align:right">${parseInt(server.rules_count) || 0}</td>
           <td style="width:32px;color:var(--ft-fg-faint)">${Icon.chevronRight}</td>
         </tr>
@@ -173,8 +174,8 @@ class App {
               <th style="width:90px">Role</th>
               <th style="width:170px">Sharing</th>
               <th style="width:110px">Updated</th>
+              <th style="width:110px">Last traffic</th>
               <th style="width:100px;text-align:right">Requests</th>
-              <th style="width:110px">Traffic</th>
               <th style="width:70px;text-align:right">Rules</th>
               <th></th>
             </tr>
