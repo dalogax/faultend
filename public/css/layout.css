@@ -241,6 +241,15 @@ body {
   flex: 1;
   min-height: 0;
 }
+/* trafficRowsRegion sits between .traffic-container and .traffic-table-container;
+   without explicit flex properties it grows to content height and breaks scroll */
+#trafficRowsRegion {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
 .traffic-table-container,
 .rules-table-container {
   flex: 1;
