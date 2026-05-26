@@ -300,7 +300,7 @@ class RuleForm {
         enabled: this.existingRule.enabled !== false,
         target: this.existingRule.target || '',
         mockStatusCode: this.existingRule.mockResponse?.statusCode || 200,
-        mockBody: JSON.stringify(this.existingRule.mockResponse?.body || {}, null, 2),
+        mockBody: (() => { const b = this.existingRule.mockResponse?.body; if (b === undefined || b === null) return '{}'; return typeof b === 'string' ? b : JSON.stringify(b, null, 2); })(),
         latencyEnabled: latencyType !== 'none',
         latencyMode: latencyType === 'range' ? 'range' : 'fixed',
         latencyValue: this.getLatencyValue(latencySource) || 100,
@@ -319,7 +319,7 @@ class RuleForm {
         enabled: true,
         target: this.trafficLog.target || '',
         mockStatusCode: this.trafficLog.response?.statusCode || 200,
-        mockBody: JSON.stringify(this.trafficLog.response?.body || {}, null, 2),
+        mockBody: (() => { const b = this.trafficLog.response?.body; if (b === undefined || b === null) return '{}'; return typeof b === 'string' ? b : JSON.stringify(b, null, 2); })(),
         latencyEnabled: false,
         latencyMode: 'fixed',
         latencyValue: 100,
@@ -428,9 +428,11 @@ class RuleForm {
               ${this.renderError('mockStatusCode')}
             </div>
             <div class="form-field" style="margin-bottom:0">
-              <label for="mockBody">Response body</label>
-              <textarea id="mockBody" class="input" rows="6">${d.mockBody}</textarea>
-              <span class="form-hint">Supports <code>{{timestamp()}}</code>, <code>{{uuid()}}</code>, <code>{{random(min,max)}}</code>.</span>
+              <label for="mockBody">Response body<span id="mockBodyJsonIndicator" class="json-indicator"></span></label>
+              <div class="mock-body-editor">
+                <textarea id="mockBody" class="input" rows="6">${d.mockBody.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</textarea>
+              </div>
+              <span class="form-hint">Any text payload. Supports <code>{{timestamp()}}</code>, <code>{{uuid()}}</code>, <code>{{random(min,max)}}</code>. Valid JSON is sent with <code>application/json</code>; otherwise <code>text/plain</code>.</span>
               ${this.renderError('mockBody')}
             </div>
           </div>
@@ -500,6 +502,9 @@ class RuleForm {
           b.classList.toggle('active', b === btn));
         document.getElementById('proxyFields').style.display = action === 'proxy' ? 'block' : 'none';
         document.getElementById('mockFields').style.display = action === 'mock' ? 'block' : 'none';
+        if (action === 'mock' && this._mockBodyEditor) {
+          setTimeout(() => this._mockBodyEditor.refresh(), 0);
+        }
       });
     });
 
@@ -521,6 +526,52 @@ class RuleForm {
     document.getElementById('latencyEnabled')?.addEventListener('change', (e) => {
       document.getElementById('latencyFields').style.display = e.target.checked ? 'block' : 'none';
     });
+
+    this._initMockBodyEditor();
+  }
+
+  _initMockBodyEditor() {
+    const el = document.getElementById('mockBody');
+    if (!el || typeof CodeMirror === 'undefined') return;
+
+    this._mockBodyEditor = CodeMirror.fromTextArea(el, {
+      mode: { name: 'javascript', json: true },
+      lineNumbers: false,
+      lineWrapping: true,
+      tabSize: 2,
+      indentWithTabs: false,
+      autofocus: false,
+      extraKeys: { Tab: cm => cm.execCommand('indentMore'), 'Shift-Tab': cm => cm.execCommand('indentLess') }
+    });
+
+    this._mockBodyEditor.on('change', () => this._updateJsonIndicator());
+    this._updateJsonIndicator();
+
+    // If mock fields are currently visible, ensure CM renders properly
+    const mockFields = document.getElementById('mockFields');
+    if (mockFields && mockFields.style.display !== 'none') {
+      setTimeout(() => this._mockBodyEditor.refresh(), 0);
+    }
+  }
+
+  _updateJsonIndicator() {
+    const indicator = document.getElementById('mockBodyJsonIndicator');
+    if (!indicator) return;
+    const val = this._mockBodyEditor ? this._mockBodyEditor.getValue() : (document.getElementById('mockBody')?.value || '');
+    const trimmed = val.trim();
+    if (!trimmed) {
+      indicator.textContent = '';
+      indicator.className = 'json-indicator';
+      return;
+    }
+    try {
+      JSON.parse(trimmed);
+      indicator.textContent = '✓ valid json';
+      indicator.className = 'json-indicator valid';
+    } catch {
+      indicator.textContent = 'plain text';
+      indicator.className = 'json-indicator invalid';
+    }
   }
 
   collectLatency() {
@@ -552,9 +603,12 @@ class RuleForm {
       data.target = document.getElementById('proxyTarget').value.trim();
       if (latency) data.latency = latency;
     } else {
+      const rawBody = this._mockBodyEditor
+        ? this._mockBodyEditor.getValue()
+        : (document.getElementById('mockBody')?.value || '');
       data.mockResponse = {
         statusCode: parseInt(document.getElementById('mockStatusCode').value),
-        body: JSON.parse(document.getElementById('mockBody').value)
+        body: rawBody
       };
       if (latency) data.mockResponse.latency = latency;
     }
@@ -614,15 +668,7 @@ class RuleForm {
   async save() {
     if (this._saving) return;
 
-    let data;
-    try {
-      data = this.collectFormData();
-    } catch (error) {
-      this.errors.mockBody = 'Invalid JSON in the response body.';
-      this.reRender();
-      Toast.error('Response body is not valid JSON');
-      return;
-    }
+    const data = this.collectFormData();
 
     if (!this.validate(data)) {
       this.reRender();

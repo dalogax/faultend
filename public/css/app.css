@@ -32,3 +32,77 @@ code { font-family: var(--ft-mono); }
 .mb-sm { margin-bottom: var(--ft-sp-3); }
 .mb-md { margin-bottom: var(--ft-sp-5); }
 .mb-lg { margin-bottom: var(--ft-sp-7); }
+
+/* ============================================================
+   JSON validity indicator (mock body editor)
+   ============================================================ */
+.json-indicator {
+  font-family: var(--ft-mono);
+  font-size: var(--ft-fs-10);
+  letter-spacing: 0.04em;
+  padding: 1px 5px;
+  border: 1px solid transparent;
+  margin-left: var(--ft-sp-2);
+  vertical-align: middle;
+  display: inline-block;
+  line-height: 1.6;
+}
+.json-indicator.valid {
+  color: #2d7a3c;
+  background: #e6f4ea;
+  border-color: #b6dfc0;
+}
+.json-indicator.invalid {
+  color: var(--ft-fg-muted);
+  background: var(--ft-surface-2);
+  border-color: var(--ft-border);
+}
+[data-theme="dark"] .json-indicator.valid {
+  color: #7ec87e;
+  background: #1a2e1e;
+  border-color: #3a6e42;
+}
+
+/* ============================================================
+   CodeMirror – mock body editor
+   ============================================================ */
+.mock-body-editor .CodeMirror {
+  font-family: var(--ft-mono);
+  font-size: var(--ft-fs-12);
+  background: var(--ft-surface-2);
+  color: var(--ft-fg-strong);
+  border: 1px solid var(--ft-border);
+  border-radius: 0;
+  height: auto;
+  min-height: 120px;
+  line-height: 1.55;
+  padding: 2px 0;
+}
+.mock-body-editor .CodeMirror-scroll {
+  min-height: 120px;
+}
+.mock-body-editor .CodeMirror-focused {
+  border-color: var(--ft-ink-8);
+  outline: none;
+}
+.mock-body-editor .CodeMirror-cursor {
+  border-left-color: var(--ft-fg-strong);
+}
+.mock-body-editor .CodeMirror-selected {
+  background: var(--ft-ink-3);
+}
+/* Syntax tokens */
+.mock-body-editor .cm-string  { color: #3d7a45; }
+.mock-body-editor .cm-string-2 { color: #3d7a45; }
+.mock-body-editor .cm-number  { color: #7060d8; }
+.mock-body-editor .cm-atom    { color: #b05520; }
+.mock-body-editor .cm-keyword { color: #b05520; }
+.mock-body-editor .cm-comment { color: var(--ft-fg-faint); font-style: italic; }
+.mock-body-editor .cm-property { color: var(--ft-fg-strong); }
+[data-theme="dark"] .mock-body-editor .cm-string   { color: #7ec87e; }
+[data-theme="dark"] .mock-body-editor .cm-string-2  { color: #7ec87e; }
+[data-theme="dark"] .mock-body-editor .cm-number   { color: #a89fff; }
+[data-theme="dark"] .mock-body-editor .cm-atom     { color: #e08050; }
+[data-theme="dark"] .mock-body-editor .cm-keyword  { color: #e08050; }
+[data-theme="dark"] .mock-body-editor .CodeMirror  { background: var(--ft-surface-2); }
+[data-theme="dark"] .mock-body-editor .CodeMirror-focused { border-color: var(--ft-ink-5); }
