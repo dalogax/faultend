@@ -14,6 +14,8 @@ const collaboratorsRouter = require('./api/collaborators');
 const inviteRouter = require('./api/invite');
 const passport = require('./auth/passport');
 const { authRequired, requireServerAccess, requireOwner } = require('./auth/middleware');
+const metrics = require('./observability/metrics');
+const { version } = require('../package.json');
 
 
 const app = express();
@@ -54,16 +56,43 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 
-app.get('/health', (req, res) => {
-  res.json({ 
-    status: 'ok', 
+app.get('/health', async (req, res) => {
+  let dbStatus = 'ok';
+  try {
+    const client = await pool.connect();
+    await client.query('SELECT 1');
+    client.release();
+  } catch {
+    dbStatus = 'error';
+  }
+
+  res.json({
+    status: dbStatus === 'ok' ? 'ok' : 'degraded',
+    db: dbStatus,
+    uptime_seconds: Math.floor(process.uptime()),
+    version,
     service: 'Faultend',
-    version: '0.1.0',
-    subdomain: req.subdomain,
-    routeType: req.routeType,
-    serverId: req.serverId || null,
     timestamp: new Date().toISOString()
   });
+});
+
+app.get('/metrics', async (req, res) => {
+  const token = process.env.METRICS_TOKEN;
+  if (token) {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || authHeader !== `Bearer ${token}`) {
+      res.set('WWW-Authenticate', 'Bearer');
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+  }
+
+  if (!metrics.isEnabled()) {
+    return res.status(404).json({ error: 'Metrics not enabled. Set METRICS_ENABLED=true.' });
+  }
+
+  const data = await metrics.getMetrics();
+  res.set('Content-Type', metrics.getContentType());
+  res.end(data);
 });
 
 const staticMiddleware = express.static(path.join(__dirname, '../public'), { maxAge: 3600000 });

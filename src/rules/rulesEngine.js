@@ -1,4 +1,5 @@
 const { getServer } = require('../storage/users');
+const ruleCache = require('./ruleCache');
 const {
   getAllRules,
   getRuleById,
@@ -288,7 +289,11 @@ function matchesConditions(conditions, request) {
 }
 
 async function findMatchingRule(serverId, request) {
-  const rules = await getAllRules(serverId);
+  let rules = ruleCache.get(serverId);
+  if (!rules) {
+    rules = await getAllRules(serverId);
+    ruleCache.set(serverId, rules);
+  }
   if (!rules || rules.length === 0) {
     return null;
   }

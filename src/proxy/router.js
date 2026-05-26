@@ -1,7 +1,8 @@
 const express = require('express');
 const { findMatchingRule, executeRule } = require('../rules/rulesEngine');
 const { logTransaction } = require('../storage/traffic');
-const { serverExists, getServer } = require('../storage/users');
+const { serverExists, getServerByPublicId } = require('../storage/users');
+const { incProxyRequest } = require('../observability/metrics');
 
 const router = express.Router();
 
@@ -25,7 +26,7 @@ router.use('/', async (req, res, next) => {
     });
   }
   
-  const server = await getServer(serverId);
+  const server = await getServerByPublicId(serverId);
   if (!server) {
     console.log(`[PROXY ROUTER] Server '${serverId}' does not exist`);
     return res.status(404).json({

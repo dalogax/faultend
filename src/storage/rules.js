@@ -1,5 +1,5 @@
 const pool = require('../db/pool');
-const { getServer } = require('./users');
+const { getServerByPublicId } = require('./users');
 
 function generateRuleId() {
   const timestamp = Date.now();
@@ -8,7 +8,7 @@ function generateRuleId() {
 }
 
 async function getAllRules(serverId) {
-  const server = await getServer(serverId);
+  const server = await getServerByPublicId(serverId);
   if (!server) return [];
 
   const result = await pool.query(
