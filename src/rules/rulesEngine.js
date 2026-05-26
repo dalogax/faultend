@@ -379,7 +379,32 @@ async function executeMockRule(serverId, rule, req, res) {
     });
   }
 
-  res.status(responseObj.status).json(responseObj.body);
+  // Send body: if string, auto-detect JSON vs plain text.
+  // responseObj.body may have been mutated by a transform, so use it (not the raw `body`).
+  // If the rule headers already set a Content-Type, respect it.
+  const sentBody = responseObj.body;
+  let sentContentType;
+  if (typeof sentBody === 'string') {
+    const trimmed = sentBody.trim();
+    let isJson = false;
+    if (trimmed.length > 0) {
+      try { JSON.parse(trimmed); isJson = true; } catch {}
+    }
+    const explicitCT = res.getHeader('content-type');
+    if (isJson && !explicitCT) {
+      res.setHeader('Content-Type', 'application/json; charset=utf-8');
+      sentContentType = 'application/json';
+    } else if (!explicitCT) {
+      res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+      sentContentType = 'text/plain';
+    } else {
+      sentContentType = String(explicitCT).split(';')[0].trim();
+    }
+    res.status(responseObj.status).send(sentBody);
+  } else {
+    sentContentType = 'application/json';
+    res.status(responseObj.status).json(sentBody);
+  }
 
   const { logTransaction } = require('../storage/traffic');
 
@@ -387,6 +412,7 @@ async function executeMockRule(serverId, rule, req, res) {
 
   if (req.serverConfig?.recordingEnabled === false) return;
 
+  const bodyStr = typeof sentBody === 'string' ? sentBody : JSON.stringify(sentBody);
   await logTransaction(serverId, {
     request: {
       method: req.method,
@@ -402,9 +428,9 @@ async function executeMockRule(serverId, rule, req, res) {
       statusCode: responseObj.status,
       statusMessage: res.statusMessage,
       headers: responseObj.headers || {},
-      body: responseObj.body,
-      bodySize: Buffer.byteLength(JSON.stringify(responseObj.body)),
-      contentType: 'application/json'
+      body: sentBody,
+      bodySize: Buffer.byteLength(bodyStr),
+      contentType: sentContentType
     },
     duration: duration,
     target: 'MOCK',
