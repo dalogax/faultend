@@ -438,6 +438,11 @@ textarea.input {
   border-collapse: collapse;
   font-size: var(--ft-fs-13);
 }
+/* Fixed layout so the Pattern column absorbs leftover width
+   instead of the table expanding past its container */
+.rules-table {
+  table-layout: fixed;
+}
 .traffic-table th,
 .rules-table th,
 .server-table th {
@@ -491,15 +496,33 @@ textarea.input {
   background: var(--ft-surface);
 }
 
-.traffic-table .path-cell,
+/* Traffic path — single line with ellipsis; full URL shown in detail panel */
+.traffic-table .path-cell {
+  font-family: var(--ft-mono);
+  font-size: var(--ft-fs-12);
+  color: var(--ft-fg-strong);
+  max-width: 320px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* Align badge + pattern to top when pattern wraps to multiple lines */
+.rules-table td > div {
+  align-items: flex-start !important;
+}
+/* Rules path — wraps rather than scrolling; break-all handles
+   long uninterrupted regex segments like [a-zA-Z0-9_-]{32,64}.
+   flex:1 + min-width:0 lets it shrink inside the flex row that
+   holds the method badge next to it. */
 .rules-table .path-cell {
   font-family: var(--ft-mono);
   font-size: var(--ft-fs-12);
   color: var(--ft-fg-strong);
-  max-width: 360px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  white-space: normal;
+  word-break: break-all;
+  overflow-wrap: anywhere;
+  flex: 1;
+  min-width: 0;
 }
 .traffic-table .time-cell {
   font-family: var(--ft-mono);
