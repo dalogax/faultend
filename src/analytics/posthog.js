@@ -10,7 +10,7 @@ function getClient() {
   if (!key) return null;
   const { PostHog } = require('posthog-node');
   _client = new PostHog(key, {
-    host: 'https://eu.i.posthog.com',
+    host: process.env.POSTHOG_HOST || 'https://eu.i.posthog.com',
     flushAt: 20,
     flushInterval: 10000 // ms
   });
