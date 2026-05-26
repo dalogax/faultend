@@ -186,7 +186,7 @@ body {
    ============================================================ */
 .two-column-layout {
   display: grid;
-  grid-template-columns: 1.6fr 1fr;
+  grid-template-columns: 1.17fr 1fr;
   height: 100%;
   min-width: 0;
 }
