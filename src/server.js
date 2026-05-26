@@ -66,7 +66,7 @@ app.get('/health', (req, res) => {
   });
 });
 
-const staticMiddleware = express.static(path.join(__dirname, '../public'));
+const staticMiddleware = express.static(path.join(__dirname, '../public'), { maxAge: 3600000 });
 
 app.use((req, res, next) => {
   const { routeType } = req;
