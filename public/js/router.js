@@ -18,10 +18,9 @@ class ViewRouter {
 
     const logoLink = document.querySelector('.logo-link');
     if (logoLink) {
-      logoLink.addEventListener('click', (e) => {
-        e.preventDefault();
-        this.navigateToServerList();
-      });
+      // Navigate to the landing page (root domain, strip 'app.' prefix)
+      const landingUrl = window.location.protocol + '//' + window.location.host.replace(/^app\./, '');
+      logoLink.href = landingUrl;
     }
 
     const settingsBtn = document.getElementById('settingsBtn');
