@@ -2,91 +2,208 @@ import { test, expect } from '@playwright/test';
 
 const APP_URL = 'http://app.localhost:3000';
 
+// ─── Shared helpers ──────────────────────────────────────────────────────────
+
 async function login(page) {
   await page.goto(`${APP_URL}/api/auth/dev-login`);
   await page.waitForURL(APP_URL);
+  await page.waitForLoadState('networkidle');
+  // Wait for SPA auth state to settle and main content to appear
+  await expect(page.locator('#mainContent')).toBeVisible({ timeout: 5000 });
 }
+
+/**
+ * Open the create-server drawer, fill in the ID, click Create,
+ * wait for the drawer to close and the router to navigate.
+ */
+async function createServer(page, serverId) {
+  await page.click('#createServerBtn');
+  await expect(page.locator('#drawer.active')).toBeVisible({ timeout: 3000 });
+  await page.fill('#server-id', serverId);
+  // The "Create server" button — NOT a submit input; it's type="button" with id="serverCreateBtn"
+  await page.click('#serverCreateBtn');
+  await expect(page.locator('#drawer.active')).not.toBeVisible({ timeout: 8000 });
+}
+
+/**
+ * Go to the server list and click the row for the given serverId,
+ * then wait for the server management view to be visible.
+ */
+async function navigateToServer(page, serverId) {
+  await page.goto(APP_URL);
+  await page.waitForLoadState('networkidle');
+  const row = page.locator('.server-table tbody tr', { hasText: serverId });
+  await expect(row).toBeVisible({ timeout: 5000 });
+  await row.click();
+  await expect(page.locator('#serverManagementView')).toBeVisible({ timeout: 5000 });
+}
+
+/**
+ * Open the create-rule drawer and fill it in for a proxy rule.
+ * Proxy is the default action, but we click the seg-option explicitly to exercise the UI.
+ */
+async function createProxyRule(page, { priority = '100', pathRegex = '.*', target }) {
+  await expect(page.locator('#createRuleBtn')).toBeVisible({ timeout: 5000 });
+  await page.click('#createRuleBtn');
+  await expect(page.locator('#drawer.active')).toBeVisible({ timeout: 3000 });
+
+  await page.fill('#rulePriority', priority);
+  await page.fill('#rulePathRegex', pathRegex);
+
+  // Action is a segmented control — click the Proxy option
+  await page.locator('.seg-option[data-action="proxy"]').click();
+  await expect(page.locator('#proxyFields')).toBeVisible();
+
+  await page.fill('#proxyTarget', target);
+  await page.click('#saveRuleBtn');
+
+  // Drawer closes after save
+  await expect(page.locator('#drawer.active')).not.toBeVisible({ timeout: 8000 });
+}
+
+// ─── Tests ───────────────────────────────────────────────────────────────────
 
 test.describe.configure({ mode: 'serial' });
 
 test.describe('Faultend E2E', () => {
+
+  // ── Authentication ────────────────────────────────────────────────────────
+
   test('login via dev-login', async ({ page }) => {
-    await login(page);
+    await page.goto(`${APP_URL}/api/auth/dev-login`);
+    await page.waitForURL(APP_URL);
+    await page.waitForLoadState('networkidle');
     await expect(page).toHaveTitle('Faultend');
+
+    // Allow a brief moment for the SPA auth state to settle
+    await page.waitForTimeout(500);
+
     await expect(page.locator('#loginOverlay')).not.toBeVisible();
     await expect(page.locator('#mainContent')).toBeVisible();
+    // The logout button appears once the user is authenticated
+    await expect(page.locator('#logoutBtn')).toBeVisible();
   });
 
-  test('create server and view it', async ({ page }) => {
+  // ── Server management ─────────────────────────────────────────────────────
+
+  test('create server and navigate to it', async ({ page }) => {
     await login(page);
 
-    await page.click('#createServerBtn');
-    await page.waitForTimeout(300);
+    await createServer(page, 'e2e-test-server');
 
-    await page.fill('#server-id', 'e2e-test-server');
-    await page.click('button[type="submit"]');
-
-    await page.waitForSelector('#drawer:not(.active)', { timeout: 5000 });
+    // After creation the router navigates to the new server
     await expect(page).toHaveURL(/#server\/e2e-test-server/);
+    await expect(page.locator('#serverManagementView')).toBeVisible();
   });
 
-  test('add rule and verify it appears', async ({ page }) => {
+  test('created server appears in the server list', async ({ page }) => {
     await login(page);
 
-    await page.click('#createServerBtn');
-    await page.waitForTimeout(300);
-    await page.fill('#server-id', 'e2e-rule-server');
-    await page.click('button[type="submit"]');
-    await page.waitForSelector('#drawer:not(.active)', { timeout: 5000 });
+    await createServer(page, 'e2e-list-server');
 
+    // Return to the server list and verify the row is there
     await page.goto(APP_URL);
-    const row = page.locator('.server-table tbody tr', { hasText: 'e2e-rule-server' });
-    await row.click();
-    await page.waitForTimeout(300);
-
-    await page.click('#createRuleBtn');
-    await page.waitForTimeout(300);
-
-    await page.fill('#rulePriority', '100');
-    await page.fill('#rulePathRegex', '.*');
-    await page.locator('input[name="action"][value="proxy"]').check();
-    await page.fill('#proxyTarget', 'https://jsonplaceholder.typicode.com');
-
-    await page.click('#saveRuleBtn');
-    await page.waitForTimeout(800);
-
-    await expect(page.locator('.rules-table tbody tr')).toHaveCount(1);
+    await page.waitForLoadState('networkidle');
+    await expect(page.locator('.server-table tbody tr', { hasText: 'e2e-list-server' }))
+      .toBeVisible({ timeout: 5000 });
   });
 
-  test('proxy request generates traffic log', async ({ page, request }) => {
+  // ── Rules ─────────────────────────────────────────────────────────────────
+
+  test('add a proxy rule and verify it appears in the rules table', async ({ page }) => {
     await login(page);
 
-    await page.click('#createServerBtn');
-    await page.waitForTimeout(300);
-    await page.fill('#server-id', 'e2e-traffic-server');
-    await page.click('button[type="submit"]');
-    await page.waitForSelector('#drawer:not(.active)', { timeout: 5000 });
+    // Create a dedicated server for rule tests
+    await createServer(page, 'e2e-rule-server');
 
-    await page.click('#createRuleBtn');
-    await page.waitForTimeout(300);
-    await page.fill('#rulePriority', '100');
-    await page.fill('#rulePathRegex', '.*');
-    await page.locator('input[name="action"][value="proxy"]').check();
-    await page.fill('#proxyTarget', 'https://jsonplaceholder.typicode.com');
-    await page.click('#saveRuleBtn');
-    await page.waitForTimeout(800);
+    // The router already navigated to the server; create a rule in one step
+    await createProxyRule(page, { target: 'https://jsonplaceholder.typicode.com' });
 
+    // One rule row should now be listed
+    await expect(page.locator('.rules-table tbody tr')).toHaveCount(1, { timeout: 5000 });
+    // The path-cell inside the rules table should show the regex pattern
+    await expect(page.locator('.rules-table .path-cell').first()).toContainText('.*');
+  });
+
+  test('toggle a rule off then back on', async ({ page }) => {
+    await login(page);
+
+    await navigateToServer(page, 'e2e-rule-server');
+
+    // Wait for the rule row to appear
+    await expect(page.locator('.rules-table tbody tr').first()).toBeVisible({ timeout: 5000 });
+
+    // The native checkbox inside a custom toggle switch is visually hidden (CSS pattern).
+    // We read state from the input but click the label (.toggle-switch) so the browser
+    // fires the change event properly — same as a real user interaction.
+    const firstRow = page.locator('.rules-table tbody tr').first();
+    const toggleLabel = firstRow.locator('.toggle-switch');
+    const toggleInput = firstRow.locator('.toggle-switch input[type="checkbox"]');
+
+    // New rules are enabled by default
+    await expect(toggleInput).toBeChecked();
+
+    // Toggle off — click the label, wait for API round-trip + re-render
+    await toggleLabel.click();
+    await expect(
+      page.locator('.rules-table tbody tr').first()
+        .locator('.toggle-switch input[type="checkbox"]'),
+    ).toBeChecked({ checked: false, timeout: 5000 });
+
+    // Toggle back on
+    await page.locator('.rules-table tbody tr').first().locator('.toggle-switch').click();
+    await expect(
+      page.locator('.rules-table tbody tr').first()
+        .locator('.toggle-switch input[type="checkbox"]'),
+    ).toBeChecked({ timeout: 5000 });
+  });
+
+  // ── Traffic ───────────────────────────────────────────────────────────────
+
+  test('proxy request generates a traffic log entry', async ({ page }) => {
+    await login(page);
+
+    await createServer(page, 'e2e-traffic-server');
+
+    // Create a proxy rule pointing at a real upstream
+    await createProxyRule(page, { target: 'https://jsonplaceholder.typicode.com' });
+
+    // Hit the server subdomain to generate traffic
     await page.goto('http://e2e-traffic-server.localhost:3000/posts/1');
     await page.waitForTimeout(2000);
 
-    await page.goto(APP_URL);
-    await page.waitForSelector('.server-table tbody tr', { timeout: 5000 });
-    const trafficRow = page.locator('.server-table tbody tr', { hasText: 'e2e-traffic-server' });
-    await trafficRow.click();
-    await page.waitForTimeout(1000);
+    // Return to the server and check the traffic view
+    await navigateToServer(page, 'e2e-traffic-server');
 
+    // At least one traffic row for /posts/1 should appear
     const trafficRows = page.locator('.traffic-table tbody tr');
     await expect(trafficRows).toHaveCount(1, { timeout: 10000 });
     await expect(trafficRows.first().locator('.path-cell')).toContainText('/posts/1');
   });
+
+  // ── Config export ─────────────────────────────────────────────────────────
+
+  test('config export downloads a JSON file', async ({ page }) => {
+    await login(page);
+
+    await navigateToServer(page, 'e2e-rule-server');
+
+    // On desktop the Settings button is in the top-bar (shown once in server view)
+    await expect(page.locator('#settingsBtn')).toBeVisible({ timeout: 3000 });
+    await page.click('#settingsBtn');
+    await expect(page.locator('#drawer.active')).toBeVisible({ timeout: 3000 });
+
+    // Export button is in the drawer footer
+    const exportBtn = page.locator('#exportConfigBtn');
+    await expect(exportBtn).toBeVisible({ timeout: 3000 });
+
+    // Intercept the download event triggered by the blob URL
+    const [download] = await Promise.all([
+      page.waitForEvent('download', { timeout: 5000 }),
+      exportBtn.click(),
+    ]);
+
+    expect(download.suggestedFilename()).toMatch(/faultend-e2e-rule-server.*\.json/);
+  });
+
 });
