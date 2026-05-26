@@ -10,6 +10,7 @@ import { initRulesView, loadRulesData } from './views/rules.js';
 import { authManager } from './auth.js';
 import { Icon } from './icons.js';
 import { initTheme, applyTheme, getEffectiveTheme } from './theme.js';
+import { track } from './analytics.js';
 
 class App {
   constructor() {
@@ -377,6 +378,7 @@ class App {
     try {
       const { createServer } = await import('./api.js');
       await createServer({ id });
+      track('server_created', { creation_mode: 'manual' });
       this.drawer.close();
       await this.loadServers();
       this.renderServerList();
@@ -461,6 +463,7 @@ class App {
         });
       }
 
+      track('server_created', { creation_mode: 'import' });
       this.drawer.close();
       await this.loadServers();
       this.renderServerList();
@@ -481,6 +484,7 @@ class App {
     try {
       const { deleteServer } = await import('./api.js');
       await deleteServer(serverId);
+      track('server_deleted');
       this.drawer.close();
       this.router.navigateToServerList();
       await this.loadServers();

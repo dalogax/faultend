@@ -2,6 +2,7 @@
 
 import { fetchRules } from '../api.js';
 import { Toast } from '../components.js';
+import { track } from '../analytics.js';
 
 export function initConfigView() {
   console.log('Config view initialized');
@@ -73,6 +74,7 @@ async function handleExport(serverId) {
     a.click();
     URL.revokeObjectURL(url);
     
+    track('config_exported');
     Toast.success('Configuration exported');
   } catch (error) {
     console.error('Export failed:', error);

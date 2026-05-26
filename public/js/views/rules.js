@@ -1,6 +1,7 @@
 import { fetchRules, createRule, updateRule, deleteRule, toggleRule, reorderRules } from '../api.js';
 import { Toast, DangerConfirm } from '../components.js';
 import { Icon, methodBadgeClass } from '../icons.js';
+import { track } from '../analytics.js';
 
 let rulesList = null;
 
@@ -168,7 +169,7 @@ class RulesList {
     document.querySelectorAll('.rules-table .toggle-switch input').forEach(toggle => {
       toggle.addEventListener('change', async (e) => {
         e.stopPropagation();
-        await this.toggleRule(e.target.dataset.ruleId);
+        await this.toggleRule(e.target.dataset.ruleId, e.target.checked);
       });
     });
 
@@ -240,9 +241,10 @@ class RulesList {
     });
   }
 
-  async toggleRule(ruleId) {
+  async toggleRule(ruleId, enabled) {
     try {
       await toggleRule(this.serverId, ruleId);
+      track('rule_toggled', { enabled });
       await this.load();
     } catch (error) {
       console.error('Failed to toggle rule:', error);
@@ -269,6 +271,7 @@ class RulesList {
 
     try {
       await deleteRule(this.serverId, ruleId);
+      track('rule_deleted', { action_type: rule.action });
       await this.load();
     } catch (error) {
       console.error('Failed to delete rule:', error);
@@ -685,6 +688,11 @@ class RuleForm {
         await updateRule(this.serverId, this.existingRule.id, data);
       } else {
         await createRule(this.serverId, data);
+        track('rule_created', {
+          action_type: data.action,
+          has_latency: !!(data.latency || data.mockResponse?.latency),
+          has_transform: !!data.transform
+        });
       }
 
       window.faultendApp.getDrawer().close();

@@ -3,22 +3,26 @@ const router = express.Router();
 const passport = require('./passport');
 const { findUserById } = require('../storage/users');
 
-function handleOAuthCallback(req, res) {
-  const userId = req.user.id;
-  const redirectTo = req.session.redirectTo || '/';
+function handleOAuthCallback(provider) {
+  return (req, res) => {
+    const userId = req.user.id;
+    const redirectTo = req.session.redirectTo || '/';
 
-  req.session.regenerate((err) => {
-    if (err) {
-      console.error('[AUTH] Session regenerate error:', err);
-      return res.redirect('/?error=session_error');
-    }
+    req.session.regenerate((err) => {
+      if (err) {
+        console.error('[AUTH] Session regenerate error:', err);
+        return res.redirect('/?error=session_error');
+      }
 
-    req.session.userId = userId;
-    req.session.save((err) => {
-      if (err) console.error('[AUTH] Session save error:', err);
-      res.redirect(redirectTo);
+      req.session.userId = userId;
+      // Consumed once by /api/auth/me so the frontend can fire user_signed_in.
+      req.session.signedIn = provider;
+      req.session.save((err) => {
+        if (err) console.error('[AUTH] Session save error:', err);
+        res.redirect(redirectTo);
+      });
     });
-  });
+  };
 }
 
 router.get('/google', (req, res, next) => {
@@ -29,7 +33,7 @@ router.get('/google', (req, res, next) => {
 
 router.get('/google/callback',
   passport.authenticate('google', { failureRedirect: '/?error=auth_failed' }),
-  handleOAuthCallback
+  handleOAuthCallback('google')
 );
 
 router.get('/github', (req, res, next) => {
@@ -40,7 +44,7 @@ router.get('/github', (req, res, next) => {
 
 router.get('/github/callback',
   passport.authenticate('github', { failureRedirect: '/?error=auth_failed' }),
-  handleOAuthCallback
+  handleOAuthCallback('github')
 );
 
 if (process.env.MOCK_AUTH_ENABLED === 'true') {
@@ -83,11 +87,21 @@ router.get('/me', async (req, res) => {
       return res.status(401).json({ error: 'Unauthorized', message: 'User not found' });
     }
 
+    // Consume the one-shot signedIn flag so the frontend can fire user_signed_in.
+    const signedIn = req.session.signedIn || null;
+    if (signedIn) {
+      delete req.session.signedIn;
+      req.session.save((err) => {
+        if (err) console.error('[AUTH] Failed to clear signedIn flag:', err);
+      });
+    }
+
     res.json({
       id: user.id,
       email: user.email,
       name: user.name,
-      avatarUrl: user.avatar_url
+      avatarUrl: user.avatar_url,
+      signedIn  // 'google' | 'github' | null — present only once after OAuth
     });
   } catch (error) {
     console.error('[AUTH] Error fetching user:', error);

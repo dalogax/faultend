@@ -1,5 +1,6 @@
 const passport = require('passport');
 const { findUserByEmail, findUserByProvider, findUserByGoogleId, createUser, linkProvider } = require('../storage/users');
+const analytics = require('../analytics/posthog');
 
 const ROOT_DOMAIN = process.env.ROOT_DOMAIN || 'localhost';
 const isLocalhost = ROOT_DOMAIN === 'localhost' || ROOT_DOMAIN.endsWith('.localhost');
@@ -38,6 +39,9 @@ async function handleOAuthProfile(provider, profile, done) {
         });
 
         await linkProvider(user.id, provider, profile.id);
+
+        // Track new user server-side — reliable regardless of browser JS.
+        analytics.track(user.id, 'user_signed_up', { provider });
       }
     }
 
