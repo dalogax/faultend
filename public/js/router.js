@@ -2,7 +2,7 @@ import { buildSubdomainUrl } from './config.js';
 import { generateInvite, revokeInvite, fetchInvite, fetchCollaborators, removeCollaborator, leaveServer, makeCollaboratorAdmin, removeCollaboratorAdmin, transferOwnership, fetchServer, updateBehaviour } from './api.js';
 import { authManager } from './auth.js';
 import { Icon } from './icons.js';
-import { DangerConfirm } from './components.js';
+import { DangerConfirm, escapeHtml } from './components.js';
 
 class ViewRouter {
   constructor() {
@@ -263,9 +263,9 @@ class ViewRouter {
         return `
           <div class="collab-row">
             <div class="collab-id">
-              <span class="collab-avatar">${name.slice(0, 2).toUpperCase()}</span>
-              <span class="collab-name">${name}</span>
-              <span class="badge badge-${roleClass}">${roleLabel}</span>
+              <span class="collab-avatar">${escapeHtml(name.slice(0, 2).toUpperCase())}</span>
+              <span class="collab-name">${escapeHtml(name)}</span>
+              <span class="badge badge-${escapeHtml(roleClass)}">${escapeHtml(roleLabel)}</span>
             </div>
             <div class="collab-actions">${actions.join('')}</div>
           </div>

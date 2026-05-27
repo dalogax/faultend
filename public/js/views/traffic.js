@@ -1,5 +1,5 @@
 import { fetchTraffic, clearTraffic } from '../api.js';
-import { Toast, DangerConfirm, highlightJSON } from '../components.js';
+import { Toast, DangerConfirm, highlightJSON, escapeHtml } from '../components.js';
 import { Icon, methodBadgeClass } from '../icons.js';
 import { getRuleById, ruleLabels, renderLabelStack } from './rules.js';
 
@@ -248,7 +248,7 @@ class TrafficTable {
       <tr class="traffic-row${isHealthy ? ' is-healthy' : ''}" data-log-id="${log.id}">
         <td class="time-cell">${this.formatTime(log.timestamp)}</td>
         <td><span class="badge badge-${methodBadgeClass(method)}">${method}</span></td>
-        <td class="path-cell" title="${log.request.path}">${path}</td>
+        <td class="path-cell" title="${escapeHtml(log.request.path)}">${escapeHtml(path)}</td>
         <td><span class="badge badge-status-${statusFamily}xx">${statusCode}</span></td>
         <td>${latBar(log.duration, isError)}</td>
         <td>${rule}</td>
@@ -380,11 +380,11 @@ class TrafficDetail {
       <div class="detail-section">
         <h3>Overview</h3>
         <div class="detail-row"><span class="label">method</span><span class="value"><span class="badge badge-lg badge-${methodBadgeClass(method)}">${method}</span></span></div>
-        <div class="detail-row"><span class="label">path</span><span class="value mono">${this.log.request.path}</span></div>
-        <div class="detail-row"><span class="label">status</span><span class="value"><span class="badge badge-lg badge-status-${statusFamily}xx">${statusCode} ${this.log.response.statusMessage || ''}</span></span></div>
+        <div class="detail-row"><span class="label">path</span><span class="value mono">${escapeHtml(this.log.request.path)}</span></div>
+        <div class="detail-row"><span class="label">status</span><span class="value"><span class="badge badge-lg badge-status-${statusFamily}xx">${statusCode} ${escapeHtml(this.log.response.statusMessage || '')}</span></span></div>
         <div class="detail-row"><span class="label">duration</span><span class="value mono">${this.log.duration}ms</span></div>
-        <div class="detail-row"><span class="label">timestamp</span><span class="value mono">${timestamp}</span></div>
-        <div class="detail-row"><span class="label">target</span><span class="value mono">${this.log.target || '—'}</span></div>
+        <div class="detail-row"><span class="label">timestamp</span><span class="value mono">${escapeHtml(timestamp)}</span></div>
+        <div class="detail-row"><span class="label">target</span><span class="value mono">${escapeHtml(this.log.target || '—')}</span></div>
       </div>
     `;
   }
@@ -413,8 +413,8 @@ class TrafficDetail {
         <h3>Matched rule</h3>
         <div class="detail-row"><span class="label">labels</span><span class="value">${renderLabelStack(ruleLabels(rule))}</span></div>
         <div class="detail-row"><span class="label">priority</span><span class="value mono">${rule.priority}</span></div>
-        ${rule.pathRegex ? `<div class="detail-row"><span class="label">pattern</span><span class="value mono">${rule.pathRegex}</span></div>` : ''}
-        ${rule.name ? `<div class="detail-row"><span class="label">name</span><span class="value mono">${rule.name}</span></div>` : ''}
+        ${rule.pathRegex ? `<div class="detail-row"><span class="label">pattern</span><span class="value mono">${escapeHtml(rule.pathRegex)}</span></div>` : ''}
+        ${rule.name ? `<div class="detail-row"><span class="label">name</span><span class="value mono">${escapeHtml(rule.name)}</span></div>` : ''}
       </div>
     `;
   }

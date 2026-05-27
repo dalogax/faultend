@@ -3,6 +3,18 @@ const router = express.Router();
 const passport = require('./passport');
 const { findUserById } = require('../storage/users');
 
+/**
+ * Prevent open-redirect abuse of the post-OAuth redirectTo parameter.
+ * Only relative paths starting with a single / are accepted; everything
+ * else (absolute URLs, protocol-relative //evil.com, etc.) falls back to /.
+ */
+function sanitizeRedirect(raw) {
+  if (typeof raw === 'string' && /^\/(?!\/)/.test(raw)) {
+    return raw;
+  }
+  return '/';
+}
+
 function handleOAuthCallback(provider) {
   return (req, res) => {
     const userId = req.user.id;
@@ -26,7 +38,7 @@ function handleOAuthCallback(provider) {
 }
 
 router.get('/google', (req, res, next) => {
-  const redirectTo = req.query.redirectTo || '/';
+  const redirectTo = sanitizeRedirect(req.query.redirectTo);
   req.session.redirectTo = redirectTo;
   passport.authenticate('google', { scope: ['profile', 'email'] })(req, res, next);
 });
@@ -37,7 +49,7 @@ router.get('/google/callback',
 );
 
 router.get('/github', (req, res, next) => {
-  const redirectTo = req.query.redirectTo || '/';
+  const redirectTo = sanitizeRedirect(req.query.redirectTo);
   req.session.redirectTo = redirectTo;
   passport.authenticate('github', { scope: ['user:email'] })(req, res, next);
 });
@@ -69,7 +81,7 @@ if (process.env.MOCK_AUTH_ENABLED === 'true') {
       }
 
       req.session.userId = user.id;
-      const redirectTo = req.query.redirectTo || '/';
+      const redirectTo = sanitizeRedirect(req.query.redirectTo);
       res.redirect(redirectTo);
     });
   });

@@ -117,8 +117,14 @@ export const DangerConfirm = {
  * JSON syntax highlighting → returns an HTML string with token <span>s.
  * Falls back to plain escaped text if the value can't be JSON-stringified.
  */
-function escapeHtml(s) {
-  return String(s).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+// Exported so traffic.js, router.js, and other views can escape
+// user-controlled strings before injecting them into innerHTML.
+// Covers both element-content context (< > &) and attribute context (").
+export function escapeHtml(s) {
+  return String(s ?? '').replace(
+    /[&<>"]/g,
+    (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])
+  );
 }
 
 export function highlightJSON(value) {

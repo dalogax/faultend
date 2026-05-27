@@ -126,6 +126,36 @@ function validateRule(ruleData) {
   if (ruleData.action === 'proxy') {
     if (!ruleData.target || typeof ruleData.target !== 'string') {
       errors.push('target is required for proxy action and must be a non-empty string');
+    } else {
+      // SSRF prevention: only allow public http/https targets
+      try {
+        const targetUrl = new URL(ruleData.target);
+        if (!['http:', 'https:'].includes(targetUrl.protocol)) {
+          errors.push('target must use http or https protocol');
+        }
+        const hostname = targetUrl.hostname.toLowerCase();
+        const blockedHostnames = ['localhost', '169.254.169.254', 'metadata.google.internal'];
+        if (blockedHostnames.includes(hostname)) {
+          errors.push(`target hostname '${hostname}' is not allowed`);
+        }
+        // Block private/loopback IPv4 ranges (RFC 1918 + link-local + loopback)
+        const ipv4 = hostname.match(/^(\d+)\.(\d+)\.(\d+)\.(\d+)$/);
+        if (ipv4) {
+          const [, a, b] = ipv4.map(Number);
+          if (
+            a === 127 ||                              // 127.x.x.x loopback
+            a === 10 ||                               // 10.x.x.x private
+            (a === 172 && b >= 16 && b <= 31) ||     // 172.16–31.x.x private
+            (a === 192 && b === 168) ||               // 192.168.x.x private
+            (a === 169 && b === 254) ||               // 169.254.x.x link-local (IMDS)
+            a === 0                                   // 0.x.x.x reserved
+          ) {
+            errors.push('target must not point to a private or reserved IP address');
+          }
+        }
+      } catch {
+        errors.push('target must be a valid URL (e.g. https://api.example.com)');
+      }
     }
 
     if (ruleData.modifyRequestHeaders !== undefined) {
