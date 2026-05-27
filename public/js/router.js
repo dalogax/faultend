@@ -453,45 +453,31 @@ class ViewRouter {
   }
 
   async showInviteAcceptance(token) {
+    const { Toast } = await import('./components.js');
+    const { acceptInvite } = await import('./api.js');
+
     try {
-      const { previewInvite, acceptInvite } = await import('./api.js');
-      const preview = await previewInvite(token);
-
-      const drawer = window.faultendApp.getDrawer();
-      drawer.setHeader({ eyebrow: 'Invitation', title: 'Join server' });
-      drawer.setContent(`
-        <div class="settings-section" style="margin-bottom:0">
-          <p>You've been invited to collaborate on <strong class="text-strong">${preview.serverName}</strong>.</p>
-          <p class="form-hint" style="margin-top:0">Owner · ${preview.ownerName}</p>
-        </div>
-      `);
-      drawer.setFooter(`
-        <button id="declineInviteBtn" class="btn-ghost btn-sm">Decline</button>
-        <button id="acceptInviteBtn" class="btn btn-sm">Join server</button>
-      `);
-      drawer.open();
-
-      document.getElementById('acceptInviteBtn').addEventListener('click', async () => {
-        try {
-          const result = await acceptInvite(token);
-          drawer.close();
-          this.navigateToServer(result.serverId);
-        } catch (error) {
-          console.error('Failed to accept invite:', error);
-          const { Toast } = await import('./components.js');
-          Toast.error('Failed to join server');
-        }
-      });
-
-      document.getElementById('declineInviteBtn').addEventListener('click', () => {
-        drawer.close();
-        this.navigateToServerList();
-      });
+      const result = await acceptInvite(token);
+      Toast.success(`Added to "${result.serverName}"`);
+      this.navigateToServer(result.serverId);
     } catch (error) {
-      console.error('Invalid invite:', error);
-      const { Toast } = await import('./components.js');
-      Toast.error('Invalid or expired invite link');
-      this.navigateToServerList();
+      // Try to parse structured error body from "HTTP 4xx: {json}" message format
+      let body = null;
+      try {
+        const jsonPart = error.message.replace(/^HTTP \d+:\s*/, '');
+        body = JSON.parse(jsonPart);
+      } catch (_) { /* not JSON, ignore */ }
+
+      if (body && body.serverId) {
+        // Already a member (owner or collaborator) — navigate to the server
+        Toast.info(`Already a member of "${body.serverName}"`);
+        this.navigateToServer(body.serverId);
+      } else {
+        console.error('Failed to accept invite:', error);
+        const message = body?.message || 'Invalid or expired invite link';
+        Toast.error(message);
+        this.navigateToServerList();
+      }
     }
   }
 

@@ -37,12 +37,12 @@ router.post('/:token', async (req, res) => {
     }
     
     if (server.owner_id === userId) {
-      return res.status(400).json({ error: 'Bad Request', message: 'You are already the owner of this server' });
+      return res.status(400).json({ error: 'Bad Request', message: 'You are already the owner of this server', serverId: server.server_id, serverName: server.name });
     }
-    
+
     const alreadyCollaborator = await isCollaborator(server.server_id, userId);
     if (alreadyCollaborator) {
-      return res.status(400).json({ error: 'Bad Request', message: 'You are already a collaborator on this server' });
+      return res.status(400).json({ error: 'Bad Request', message: 'You are already a collaborator on this server', serverId: server.server_id, serverName: server.name });
     }
     
     await addCollaborator(server.server_id, userId);
