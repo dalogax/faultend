@@ -28,10 +28,17 @@ class App {
     await authManager.init();
 
     if (!authManager.isLoggedIn()) {
-      this.showLoginOverlay();
+      // Known user with an expired/invalidated session → bounce through OAuth silently.
+      // First-time visitor (no stored provider) → show the login overlay as normal.
+      if (!authManager.tryAutoLogin()) {
+        this.showLoginOverlay();
+      }
       return;
     }
 
+    // Successful auth — clear the redirect guard so future expirations
+    // can trigger a fresh auto-login attempt.
+    sessionStorage.removeItem('autoAuthRedirect');
     this.hideLoginOverlay();
     this.wireUserControls();
 
