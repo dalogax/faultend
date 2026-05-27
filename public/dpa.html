@@ -25,71 +25,79 @@
     <h1>Data Processing Agreement</h1>
     <div class="legal-meta">Last updated: May 2026 · Incorporated by reference into the <a href="/terms">Terms of Service</a></div>
 
-    <p>This Data Processing Agreement ("DPA") is between you ("Controller") and Daniel Lopez Garcia operating Faultend ("Processor"). It governs the processing of personal data under GDPR Art. 28 whenever you route traffic that contains personal data of third parties (your end-users) through Faultend fault servers.</p>
-    <p>By using Faultend you accept this DPA. No separate signature is required.</p>
+    <p>This Data Processing Agreement ("DPA") is entered into between <strong>Faultend</strong> ("Processor") and the user of the Faultend service ("Controller"). It applies whenever the Controller routes HTTP traffic containing personal data of third parties through a Faultend fault server, and is required by GDPR Article 28.</p>
+    <p>By using Faultend you agree to this DPA. No separate signature is required.</p>
 
-    <h2>1. Roles</h2>
-    <p><strong>You are the data controller.</strong> You determine the purposes and means of processing (what traffic you route, whether recording is enabled, what rules you set).</p>
-    <p><strong>Faultend is the data processor.</strong> We process personal data only on your documented instructions — namely, to proxy and (optionally) log the HTTP traffic you direct through your fault server.</p>
+    <h2>1. Definitions</h2>
+    <p>"Personal data", "data subject", "processing", "controller", and "processor" have the meanings given in GDPR Article 4. "Services" means the Faultend proxy and traffic inspection platform available at faultend.com.</p>
 
-    <h2>2. Subject matter and nature of processing</h2>
-    <p>Faultend receives HTTP requests from your application and forwards them to the backend URL(s) specified in your rules. When recording is enabled, it stores a copy of each request and response in our database for debugging and inspection purposes. Authentication headers are redacted before storage (<code>Authorization</code>, <code>Cookie</code>, <code>Proxy-Authorization</code>, <code>X-API-Key</code>, <code>X-Auth-Token</code>).</p>
+    <h2>2. Roles and responsibilities</h2>
+    <p>The Controller determines the purposes and means of processing — including which traffic to route through Faultend, whether recording is enabled, and what rules are configured. Faultend acts solely as Processor and processes personal data only on the Controller's documented instructions.</p>
 
-    <h2>3. Categories of data and data subjects</h2>
-    <p>The categories of personal data and data subjects depend entirely on the traffic you route. Common examples include:</p>
+    <h2>3. Subject matter and nature of processing</h2>
+    <p>Faultend receives HTTP requests originating from the Controller's application and, depending on the configured rules, forwards them to one or more backend URLs and/or returns mock responses. When recording is enabled, Faultend stores a copy of each request and response for the Controller's inspection. The following technical measures apply to all stored traffic:</p>
     <ul>
-      <li>End-user identifiers (user IDs, email addresses in request paths or bodies)</li>
-      <li>API authentication tokens (partially redacted per §2)</li>
-      <li>Any personal data contained in JSON request or response bodies</li>
-    </ul>
-    <p><strong>You are responsible for ensuring you have a lawful basis to route this data through a third-party processor.</strong> Do not route payment card data (PCI DSS), protected health information (HIPAA), or special-category data (GDPR Art. 9) without our prior written agreement.</p>
-
-    <h2>4. Duration</h2>
-    <p>This DPA applies for the duration of your use of Faultend. Traffic logs are retained for <strong>7 days</strong> and then automatically deleted. On account deletion, all logs and configuration data are permanently erased within 30 days.</p>
-
-    <h2>5. Processor obligations</h2>
-    <p>We commit to:</p>
-    <ul>
-      <li>Process personal data only on your instructions (the rules and recording settings you configure).</li>
-      <li>Ensure that staff with access to personal data are bound by confidentiality obligations.</li>
-      <li>Implement appropriate technical and organisational measures (HTTPS in transit, encrypted database at rest, access controls).</li>
-      <li>Notify you within 72 hours of becoming aware of a personal data breach affecting your data.</li>
-      <li>Delete your data upon account termination or on request.</li>
-      <li>Make available information reasonably necessary to demonstrate compliance with GDPR Art. 28.</li>
+      <li>Authentication and credential headers (<code>Authorization</code>, <code>Cookie</code>, <code>Proxy-Authorization</code>, <code>X-API-Key</code>, <code>X-Auth-Token</code>) are replaced with <code>[redacted]</code> before being written to the database.</li>
+      <li>Stored traffic logs are automatically deleted after 7 days.</li>
+      <li>Recording can be disabled entirely per fault server.</li>
     </ul>
 
-    <h2>6. Sub-processors</h2>
-    <p>We use the following sub-processors that may handle personal data flowing through fault servers:</p>
+    <h2>4. Categories of personal data and data subjects</h2>
+    <p>The categories of personal data and data subjects processed depend entirely on the HTTP traffic the Controller routes through Faultend. Typical examples in a development and testing context include identifiers (user IDs, email addresses in paths or bodies) and behavioural data in API responses. The Controller is solely responsible for ensuring the categories of data routed are consistent with the intended use described in Section 6.</p>
+
+    <h2>5. Duration</h2>
+    <p>This DPA applies for the duration of the Controller's use of the Services. Traffic logs are retained for a maximum of 7 days and then automatically deleted. Upon account deletion, all remaining data is permanently erased within 30 days.</p>
+
+    <h2>6. Permitted purposes and instructions</h2>
+    <p>Faultend processes personal data only for the purpose of providing the Services as configured by the Controller. The Controller's instructions are expressed through the fault server configuration (routing rules, recording settings, headers to preserve). Faultend will promptly inform the Controller if, in its opinion, an instruction infringes applicable data protection law.</p>
+
+    <h2>7. Processor obligations</h2>
+    <p>Faultend agrees to:</p>
+    <ul>
+      <li>Process personal data only on the Controller's documented instructions.</li>
+      <li>Ensure that persons authorised to process the data are bound by appropriate confidentiality obligations.</li>
+      <li>Implement appropriate technical and organisational security measures, including encrypted transit (HTTPS), httpOnly and Secure session cookies, and access-controlled database infrastructure.</li>
+      <li>Notify the Controller without undue delay and within 72 hours of becoming aware of a personal data breach affecting data processed under this DPA.</li>
+      <li>Assist the Controller in fulfilling its obligations to respond to data subject requests, to the extent possible given the nature of the processing.</li>
+      <li>Delete or return all personal data upon termination of the Services, at the Controller's choice, unless storage is required by applicable law.</li>
+      <li>Make available to the Controller all information reasonably necessary to demonstrate compliance with GDPR Article 28.</li>
+    </ul>
+
+    <h2>8. Sub-processors</h2>
+    <p>The Controller authorises Faultend to engage the following sub-processors:</p>
     <table class="legal-table">
       <thead><tr><th>Sub-processor</th><th>Purpose</th><th>Location</th></tr></thead>
       <tbody>
-        <tr><td>Hosting / infrastructure provider</td><td>Database and application hosting</td><td>EU</td></tr>
-        <tr><td>PostHog (EU region)</td><td>Product analytics (controller-side data only — does not receive proxy traffic)</td><td>EU</td></tr>
+        <tr><td>Infrastructure / hosting provider</td><td>Application and database hosting</td><td>European Union</td></tr>
+        <tr><td>PostHog (EU region)</td><td>Product analytics — processes Faultend account data only, not proxy traffic</td><td>European Union</td></tr>
       </tbody>
     </table>
-    <p>We will notify you of any intended changes to sub-processors. You may object within 14 days; if we cannot accommodate the objection you may terminate your account.</p>
+    <p>Faultend will notify the Controller of any intended addition or replacement of sub-processors. The Controller may object within 14 days of notification. If the parties cannot resolve the objection, the Controller may terminate the Services without penalty.</p>
 
-    <h2>7. Your obligations</h2>
-    <p>As controller you are responsible for:</p>
+    <h2>9. Controller obligations</h2>
+    <p>The Controller represents and warrants that:</p>
     <ul>
-      <li>Having a lawful basis under GDPR (or equivalent applicable law) for routing personal data through Faultend.</li>
-      <li>Providing transparent information to your end-users about the use of Faultend as a test proxy where required.</li>
-      <li>Not routing data that requires additional agreements (PHI, PCI, special-category data) without our prior consent.</li>
-      <li>Disabling recording or using Faultend only with non-production / anonymised data when processing real personal data is not necessary for your test.</li>
+      <li>It has a lawful basis under applicable data protection law for routing any personal data through Faultend.</li>
+      <li>It will not route payment card data (PCI DSS scope), protected health information (HIPAA scope), or special-category data under GDPR Article 9 without Faultend's prior written consent.</li>
+      <li>Where its end-users' personal data will be processed, it has provided appropriate transparency to those individuals about the use of Faultend as a development proxy.</li>
+      <li>It will prefer non-production, anonymised, or synthetic data for testing where feasible.</li>
     </ul>
 
-    <h2>8. Data subject rights</h2>
-    <p>We will assist you in responding to data subject requests relating to data stored in traffic logs. You can delete all logs for a server instantly from the settings panel. For other requests, contact <a href="mailto:dalogax@gmail.com">dalogax@gmail.com</a>.</p>
+    <h2>10. Data subject rights</h2>
+    <p>Faultend will assist the Controller in responding to data subject requests to the extent technically possible. The Controller can delete all traffic logs for a server instantly from the server settings panel. For other assistance, contact <a href="mailto:dalogax@gmail.com">dalogax@gmail.com</a>.</p>
 
-    <h2>9. Governing law</h2>
-    <p>This DPA is governed by Spanish law and, where applicable, EU law. Disputes are subject to the courts of Spain.</p>
+    <h2>11. International transfers</h2>
+    <p>Faultend stores and processes all data within the European Union. Should any transfer outside the EEA become necessary, Faultend will ensure appropriate safeguards are in place (e.g. Standard Contractual Clauses) before the transfer occurs.</p>
 
-    <h2>10. Contact</h2>
-    <p>Daniel Lopez Garcia · <a href="mailto:dalogax@gmail.com">dalogax@gmail.com</a></p>
+    <h2>12. Governing law</h2>
+    <p>This DPA is governed by the laws of the European Union and, where applicable, Spanish law. Disputes are subject to the jurisdiction of the courts of Spain, without prejudice to the Controller's right to bring proceedings before the courts of its place of establishment.</p>
+
+    <h2>13. Contact</h2>
+    <p>Questions about this DPA: <a href="mailto:dalogax@gmail.com">dalogax@gmail.com</a></p>
   </div>
 
   <footer class="legal-footer">
-    <span>© <span class="year"></span> Faultend · Daniel Lopez Garcia</span>
+    <span>© <span class="year"></span> Faultend</span>
     <span>
       <a href="/privacy">Privacy</a> ·
       <a href="/terms">Terms</a> ·
