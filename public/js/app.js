@@ -69,10 +69,6 @@ class App {
     if (overlay) {
       overlay.style.display = 'none';
     }
-    const mainContent = document.getElementById('mainContent');
-    if (mainContent) {
-      mainContent.style.visibility = 'visible';
-    }
   }
 
   wireUserControls() {
