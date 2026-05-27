@@ -13,12 +13,19 @@ class AuthManager {
       this.user = await fetchMe();
 
       if (this.user) {
-        // Identify the user in PostHog on every session restore so person
-        // properties stay current. PostHog deduplicates by distinct_id.
-        identify(this.user.id, {
-          email: this.user.email,
-          name: this.user.name
-        });
+        // Identify the user in PostHog only when the user has consented to
+        // analytics. Sends email/name only with consent; falls back to
+        // anonymous identify (ID only) when PostHog has been loaded without
+        // full profile properties being appropriate.
+        if (localStorage.getItem('faultend.consent') === 'accepted') {
+          identify(this.user.id, {
+            email: this.user.email,
+            name: this.user.name
+          });
+        } else {
+          // Pseudonymous: track by internal ID only, no PII
+          identify(this.user.id, {});
+        }
 
         // signedIn is set once by the server after a fresh OAuth callback;
         // the server clears it after this first /me response.

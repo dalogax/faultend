@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Privacy Policy · Faultend</title>
+  <link rel="icon" type="image/x-icon" href="/img/favicon.ico">
+  <link rel="stylesheet" href="/fonts/fonts.css">
+  <link rel="stylesheet" href="/css/reset.css">
+  <link rel="stylesheet" href="/css/variables.css">
+  <link rel="stylesheet" href="/css/legal.css">
+</head>
+<body>
+
+  <nav class="legal-nav">
+    <a href="/" class="logo">
+      <svg viewBox="0 0 1024 1024" preserveAspectRatio="xMidYMid meet" aria-hidden="true"><g transform="translate(0,1024) scale(0.1,-0.1)" fill="currentColor" stroke="none"><path d="M4803 6933 c-98 -119 -314 -383 -481 -587 -374 -457 -349 -429 -364 -424 -7 3 -79 85 -160 183 -191 231 -222 263 -288 294 -81 38 -155 34 -460 -27 -219 -44 -591 -117 -1230 -241 -820 -159 -805 -156 -841 -197 -47 -54 -52 -81 -52 -265 1 -195 8 -231 54 -275 28 -27 36 -29 102 -28 40 0 160 17 267 38 107 20 290 55 405 76 116 22 296 56 400 75 105 20 298 56 430 81 132 24 310 58 395 75 229 46 268 36 385 -98 143 -162 185 -215 185 -232 0 -9 -412 -532 -915 -1161 -503 -629 -915 -1148 -915 -1152 0 -5 185 -7 412 -6 l412 3 77 95 c41 52 163 205 269 340 312 394 418 528 515 650 50 63 190 239 310 390 119 151 225 281 233 288 40 32 54 19 231 -218 95 -126 190 -244 212 -261 22 -17 62 -40 89 -50 87 -33 84 -33 830 82 179 27 370 57 425 65 55 8 154 24 220 34 66 11 228 35 360 55 132 19 371 55 530 80 160 24 393 60 519 79 238 37 278 36 257 -2 -5 -9 -95 -131 -200 -271 -105 -140 -189 -256 -187 -258 5 -5 142 53 381 162 105 48 237 109 295 135 523 237 1171 543 1211 571 38 27 52 61 38 92 -17 38 3 30 -519 217 -308 111 -837 298 -1205 426 -148 52 -280 99 -293 104 -52 23 -54 10 -7 -42 153 -167 280 -303 350 -376 86 -90 96 -107 68 -116 -23 -6 -209 -34 -688 -101 -214 -30 -640 -90 -945 -135 -1123 -163 -1050 -153 -1103 -141 -27 6 -65 23 -85 38 -69 50 -332 374 -332 408 0 19 278 368 729 915 180 217 661 818 661 824 0 3 -182 6 -404 6 l-405 0 -178 -217z"/></g></svg>
+      <span>faultend</span>
+    </a>
+    <a class="back" href="/">← Back</a>
+  </nav>
+
+  <div class="legal-wrap">
+    <div class="legal-eyebrow">Legal</div>
+    <h1>Privacy Policy</h1>
+    <div class="legal-meta">Last updated: May 2026 · Applies to faultend.com and app.faultend.com</div>
+
+    <h2>1. Who we are</h2>
+    <p>
+      Faultend (<strong>faultend.com</strong>) is operated by <strong>Daniel Lopez Garcia</strong>
+      (NIF: <em>[your NIF]</em>, address: <em>[your address]</em>, Spain).
+      Contact for data protection matters: <a href="mailto:dalogax@gmail.com">dalogax@gmail.com</a>.
+    </p>
+    <p>
+      We act as <strong>data controller</strong> for the personal data of our registered users.
+      When users route their own application traffic through Faultend, we act as a
+      <strong>data processor</strong> on their behalf — see the <a href="/dpa">Data Processing Agreement</a>.
+    </p>
+
+    <h2>2. Data we collect and why</h2>
+
+    <h3>2.1 Account data</h3>
+    <p>When you sign in via Google or GitHub OAuth we receive and store your email address, display name, avatar URL, and the OAuth provider identifier. This is required to create and maintain your account.</p>
+    <p><strong>Legal basis:</strong> performance of a contract (GDPR Art. 6(1)(b)).</p>
+
+    <h3>2.2 Session data</h3>
+    <p>We issue a session cookie (<code>faultend.sid</code>) to keep you authenticated across page loads. The session record is stored in our database and expires after 30 days of inactivity.</p>
+    <p><strong>Legal basis:</strong> legitimate interest in providing a secure, stateful service (GDPR Art. 6(1)(f)); strictly necessary — exempt from consent under ePrivacy Directive Recital 25.</p>
+
+    <h3>2.3 Traffic logs (proxy data)</h3>
+    <p>When you use a Faultend fault server, every HTTP request and response passing through it is captured and stored. This includes request method, path, headers, body (up to 10 MB), response status, response body, and timing. Sensitive headers (<code>Authorization</code>, <code>Cookie</code>, <code>Proxy-Authorization</code>, <code>X-API-Key</code>, <code>X-Auth-Token</code>) are <strong>redacted before storage</strong> and replaced with <code>[redacted]</code>.</p>
+    <p>Traffic logs are deleted automatically after <strong>7 days</strong>. You can also delete them manually at any time from the server settings. Recording can be disabled entirely per server.</p>
+    <p><strong>Legal basis:</strong> performance of a contract (GDPR Art. 6(1)(b)); the logging is the core feature you signed up for.</p>
+    <p><strong>Important:</strong> Traffic logs may contain personal data of your application's end-users. You are the data controller for that data; we are your data processor. Please review our <a href="/dpa">DPA</a> and our <a href="/terms">Terms of Service</a> before routing production traffic through Faultend.</p>
+
+    <h3>2.4 Analytics (optional, consent-gated)</h3>
+    <p>With your permission, we use <a href="https://posthog.com" target="_blank" rel="noopener noreferrer">PostHog</a> (EU region, <code>eu.i.posthog.com</code>) to collect usage events (e.g., sign-up, sign-in) and anonymised page-view data. We send PostHog your internal user ID; email and name are only shared if you explicitly consent to analytics.</p>
+    <p><strong>Legal basis:</strong> consent (GDPR Art. 6(1)(a)). You can withdraw consent at any time via the cookie preferences link in the footer.</p>
+
+    <h2>3. Data retention</h2>
+    <table class="legal-table">
+      <thead><tr><th>Data</th><th>Retention</th></tr></thead>
+      <tbody>
+        <tr><td>Account (email, name, avatar)</td><td>Until you delete your account</td></tr>
+        <tr><td>OAuth provider links</td><td>Until you delete your account</td></tr>
+        <tr><td>Session records</td><td>30 days from last use</td></tr>
+        <tr><td>Traffic logs</td><td>7 days (automatic), or until manually cleared</td></tr>
+        <tr><td>Server rules &amp; configuration</td><td>Until you delete the server or your account</td></tr>
+        <tr><td>Analytics events (PostHog)</td><td>Governed by PostHog's retention settings (default 1 year); you can request erasure via dalogax@gmail.com</td></tr>
+      </tbody>
+    </table>
+
+    <h2>4. Third-party processors</h2>
+    <table class="legal-table">
+      <thead><tr><th>Processor</th><th>Purpose</th><th>Transfer safeguard</th></tr></thead>
+      <tbody>
+        <tr><td>PostHog (EU region)</td><td>Product analytics</td><td>EU-hosted; GDPR-compliant</td></tr>
+        <tr><td>Google (OAuth)</td><td>Authentication</td><td>Standard Contractual Clauses</td></tr>
+        <tr><td>GitHub (OAuth)</td><td>Authentication</td><td>Standard Contractual Clauses</td></tr>
+        <tr><td>Hosting provider</td><td>Infrastructure (EU)</td><td>Within EU/EEA</td></tr>
+      </tbody>
+    </table>
+
+    <h2>5. Your rights</h2>
+    <p>Under GDPR you have the right to:</p>
+    <ul>
+      <li><strong>Access</strong> — request a copy of the data we hold about you.</li>
+      <li><strong>Rectification</strong> — ask us to correct inaccurate data.</li>
+      <li><strong>Erasure</strong> — ask us to delete your account and all associated data (account deletion is available in your profile settings; traffic logs delete automatically after 7 days).</li>
+      <li><strong>Portability</strong> — receive your data in a structured, machine-readable format.</li>
+      <li><strong>Restriction</strong> — ask us to restrict processing while a dispute is resolved.</li>
+      <li><strong>Objection</strong> — object to processing based on legitimate interest.</li>
+      <li><strong>Withdraw consent</strong> — withdraw analytics consent at any time via cookie preferences.</li>
+    </ul>
+    <p>To exercise any right, contact <a href="mailto:dalogax@gmail.com">dalogax@gmail.com</a>. We will respond within 30 days. You also have the right to lodge a complaint with the Spanish data protection authority (<a href="https://www.aepd.es" target="_blank" rel="noopener noreferrer">AEPD</a>) or the supervisory authority in your country of residence.</p>
+
+    <h2>6. Cookies and local storage</h2>
+    <table class="legal-table">
+      <thead><tr><th>Name</th><th>Type</th><th>Purpose</th><th>Duration</th><th>Consent required?</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><code>faultend.sid</code></td>
+          <td>HTTP cookie (first-party)</td>
+          <td>Session authentication — keeps you logged in</td>
+          <td>30 days</td>
+          <td>No — strictly necessary</td>
+        </tr>
+        <tr>
+          <td><code>ph_*</code> (PostHog)</td>
+          <td>HTTP cookie (first-party, set by PostHog JS)</td>
+          <td>Analytics — tracks usage events</td>
+          <td>1 year</td>
+          <td><strong>Yes</strong> — only set after acceptance</td>
+        </tr>
+        <tr>
+          <td><code>lastAuthProvider</code></td>
+          <td>localStorage (first-party)</td>
+          <td>Remembers your OAuth provider for silent re-authentication</td>
+          <td>Indefinite (cleared on logout)</td>
+          <td>No — strictly necessary for the re-auth feature</td>
+        </tr>
+        <tr>
+          <td><code>faultend.consent</code></td>
+          <td>localStorage (first-party)</td>
+          <td>Stores your cookie preference (accepted / rejected)</td>
+          <td>Indefinite</td>
+          <td>No — necessary to honour your preference</td>
+        </tr>
+      </tbody>
+    </table>
+    <p>To change your analytics preference, use the <button onclick="window.__faultendConsent?.reset()" style="background:none;border:none;padding:0;text-decoration:underline;cursor:pointer;color:inherit;font:inherit;">cookie preferences</button> link.</p>
+
+    <h2>7. Changes to this policy</h2>
+    <p>We may update this policy when we change how we process data or to comply with updated law. Material changes will be announced by updating the "last updated" date above. Continued use of Faultend after a change constitutes acceptance of the revised policy.</p>
+
+    <h2>8. Contact</h2>
+    <p>
+      Daniel Lopez Garcia · <a href="mailto:dalogax@gmail.com">dalogax@gmail.com</a><br>
+      For LSSI-CE Art. 10 identification: NIF <em>[your NIF]</em> · <em>[your address]</em>, Spain.
+    </p>
+  </div>
+
+  <footer class="legal-footer">
+    <span>© <span class="year"></span> Faultend · Daniel Lopez Garcia</span>
+    <span>
+      <a href="/privacy">Privacy</a> ·
+      <a href="/terms">Terms</a> ·
+      <a href="/dpa">DPA</a>
+    </span>
+  </footer>
+
+  <script>document.querySelectorAll('.year').forEach(e => e.textContent = new Date().getFullYear());</script>
+</body>
+</html>

@@ -6,7 +6,29 @@ const { migrateWithRetry } = require('./db/migrate');
 const { testConnection } = require('./db/pool');
 const { createUser, findUserByGoogleId, createServer, serverExists } = require('./storage/users');
 const { addRule } = require('./rules/rulesEngine');
+const { purgeExpiredLogs } = require('./storage/traffic');
 const metrics = require('./observability/metrics');
+
+const TRAFFIC_RETENTION_DAYS = parseInt(process.env.TRAFFIC_RETENTION_DAYS || '7', 10);
+const CLEANUP_INTERVAL_MS = 24 * 60 * 60 * 1000; // 24 hours
+
+async function runTrafficCleanup() {
+  try {
+    const deleted = await purgeExpiredLogs(TRAFFIC_RETENTION_DAYS);
+    if (deleted > 0) {
+      console.log(`[CLEANUP] Purged ${deleted} traffic log(s) older than ${TRAFFIC_RETENTION_DAYS} days`);
+    }
+  } catch (err) {
+    console.error('[CLEANUP] Traffic retention purge failed:', err.message);
+  }
+}
+
+function scheduleTrafficCleanup() {
+  // Run once immediately (clears any pre-existing logs beyond the window),
+  // then repeat every 24 hours.
+  runTrafficCleanup();
+  setInterval(runTrafficCleanup, CLEANUP_INTERVAL_MS);
+}
 
 const PORT = process.env.PORT || 3000;
 const ROOT_DOMAIN = process.env.ROOT_DOMAIN || 'localhost';
@@ -217,6 +239,10 @@ async function runPrimary() {
       console.error('[INIT] Sample data error (non-fatal):', error.message);
     }
   }
+
+  // Schedule nightly traffic log retention cleanup (default: 7 days)
+  scheduleTrafficCleanup();
+  console.log(`[INIT] Traffic retention: ${TRAFFIC_RETENTION_DAYS} days (cleanup every 24 h)`);
 
   console.log(`[INIT] Primary ${process.pid} spawning ${numWorkers} workers`);
   for (let i = 0; i < numWorkers; i++) {

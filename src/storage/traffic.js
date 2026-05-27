@@ -199,11 +199,25 @@ function logFromRow(row) {
   };
 }
 
+/**
+ * Delete traffic logs older than the configured retention window (default 7 days).
+ * Called by the nightly cleanup job in src/index.js.
+ * Returns the number of rows deleted.
+ */
+async function purgeExpiredLogs(retentionDays = 7) {
+  const result = await pool.query(
+    `DELETE FROM traffic WHERE timestamp < NOW() - ($1 || ' days')::INTERVAL`,
+    [String(retentionDays)]
+  );
+  return result.rowCount;
+}
+
 module.exports = {
   logTransaction,
   getAllLogs,
   getLogById,
   filterLogs,
   clearLogs,
-  getStats
+  getStats,
+  purgeExpiredLogs
 };

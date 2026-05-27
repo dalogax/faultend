@@ -9,9 +9,7 @@
   <link rel="icon" type="image/png" sizes="32x32" href="/img/favicon-32x32.png">
   <link rel="apple-touch-icon" sizes="180x180" href="/img/apple-touch-icon.png">
   <link rel="manifest" href="/site.webmanifest">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=JetBrains+Mono:wght@400;500&display=swap">
+  <link rel="stylesheet" href="/fonts/fonts.css">
   <style>
     :root {
       --ink-0:#ffffff; --ink-1:#fafafa; --ink-2:#f4f4f3; --ink-3:#ebebe9;
@@ -270,14 +268,8 @@
     }
   </style>
 
-  <!-- PostHog Analytics (EU region) — loads asynchronously, no impact on page start -->
-  <script>
-    !function(t,e){var o,n,p,r;e.__SV||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.people.toString(20)+" (stub)"},o="init capture alias people.set people.set_once set_config register register_once unregister opt_out_capturing has_opted_out_capturing opt_in_capturing reset isFeatureEnabled onFeatureFlags getFeatureFlag getFeatureFlagPayload reloadFeatureFlags group updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures getActiveMatchingSurveys getSurveys onSessionId setPersonPropertiesForFlags".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
-    posthog.init('phc_yxKnUW7WucN8gVbySJRwEWwtSdemj7DfhET59KtDeRUZ', {
-      api_host: 'https://eu.i.posthog.com',
-      defaults: '2026-01-30'
-    });
-  </script>
+  <!-- Analytics — consent-gated (see /js/consent.js) -->
+  <script src="/js/consent.js"></script>
 </head>
 <body>
   <!-- Nav -->
@@ -493,7 +485,7 @@ GET    /notifications  HARD DEP   session screen hangs</div>
             <span>faultend</span>
           </a>
           <p>A proxy for testing how your app behaves when the network — or the backend behind it — misbehaves.</p>
-          <div class="mono" style="font-size:11px;color:var(--fg-faint)">© 2026 faultend</div>
+          <div class="mono" style="font-size:11px;color:var(--fg-faint)">© <span class="copy-year"></span> faultend</div>
         </div>
         <div class="foot-col">
           <div class="h">Product</div>
@@ -504,15 +496,25 @@ GET    /notifications  HARD DEP   session screen hangs</div>
           <div class="h">Resources</div>
           <a href="#how">How it works</a>
         </div>
+        <div class="foot-col">
+          <div class="h">Legal</div>
+          <a href="/privacy">Privacy Policy</a>
+          <a href="/terms">Terms of Service</a>
+          <a href="/dpa">DPA</a>
+          <a href="mailto:dalogax@gmail.com">Contact</a>
+        </div>
       </div>
       <div class="foot-bar">
         <span>Built for developers who care about resilience.</span>
-        <span>faultend.com</span>
+        <span>© <span class="copy-year"></span> faultend.com · <a href="/privacy" style="color:inherit;text-decoration:none">Privacy</a> · <a href="/terms" style="color:inherit;text-decoration:none">Terms</a></span>
       </div>
     </div>
   </footer>
 
   <script>
+    // Dynamic year
+    document.querySelectorAll('.copy-year').forEach(e => e.textContent = new Date().getFullYear());
+
     // App URL from the current host
     const hostParts = window.location.host.split('.');
     const baseDomain = hostParts.length >= 3 ? hostParts.slice(1).join('.') : window.location.host;

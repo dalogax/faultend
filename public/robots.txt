@@ -1,0 +1,13 @@
+User-agent: *
+Disallow: /api/
+Disallow: /api/auth/
+
+# App subdomain (app.faultend.com) is authenticated — nothing to index
+# Fault-server subdomains are proxies — nothing to index
+# Only faultend.com (landing) is public-facing
+Allow: /
+Allow: /privacy
+Allow: /terms
+Allow: /dpa
+
+Sitemap: https://faultend.com/sitemap.xml

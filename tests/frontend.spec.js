@@ -8,6 +8,10 @@ async function login(page) {
   await page.goto(`${APP_URL}/api/auth/dev-login`);
   await page.waitForURL(APP_URL);
   await page.waitForLoadState('networkidle');
+  // Dismiss the consent banner so it never intercepts clicks during tests
+  await page.evaluate(() => localStorage.setItem('faultend.consent', 'rejected'));
+  // Remove the banner if it rendered before the localStorage write took effect
+  await page.evaluate(() => document.getElementById('consent-banner')?.remove());
   // Wait for SPA auth state to settle and main content to appear
   await expect(page.locator('#mainContent')).toBeVisible({ timeout: 5000 });
 }

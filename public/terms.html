@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Terms of Service · Faultend</title>
+  <link rel="icon" type="image/x-icon" href="/img/favicon.ico">
+  <link rel="stylesheet" href="/fonts/fonts.css">
+  <link rel="stylesheet" href="/css/reset.css">
+  <link rel="stylesheet" href="/css/variables.css">
+  <link rel="stylesheet" href="/css/legal.css">
+</head>
+<body>
+
+  <nav class="legal-nav">
+    <a href="/" class="logo">
+      <svg viewBox="0 0 1024 1024" preserveAspectRatio="xMidYMid meet" aria-hidden="true"><g transform="translate(0,1024) scale(0.1,-0.1)" fill="currentColor" stroke="none"><path d="M4803 6933 c-98 -119 -314 -383 -481 -587 -374 -457 -349 -429 -364 -424 -7 3 -79 85 -160 183 -191 231 -222 263 -288 294 -81 38 -155 34 -460 -27 -219 -44 -591 -117 -1230 -241 -820 -159 -805 -156 -841 -197 -47 -54 -52 -81 -52 -265 1 -195 8 -231 54 -275 28 -27 36 -29 102 -28 40 0 160 17 267 38 107 20 290 55 405 76 116 22 296 56 400 75 105 20 298 56 430 81 132 24 310 58 395 75 229 46 268 36 385 -98 143 -162 185 -215 185 -232 0 -9 -412 -532 -915 -1161 -503 -629 -915 -1148 -915 -1152 0 -5 185 -7 412 -6 l412 3 77 95 c41 52 163 205 269 340 312 394 418 528 515 650 50 63 190 239 310 390 119 151 225 281 233 288 40 32 54 19 231 -218 95 -126 190 -244 212 -261 22 -17 62 -40 89 -50 87 -33 84 -33 830 82 179 27 370 57 425 65 55 8 154 24 220 34 66 11 228 35 360 55 132 19 371 55 530 80 160 24 393 60 519 79 238 37 278 36 257 -2 -5 -9 -95 -131 -200 -271 -105 -140 -189 -256 -187 -258 5 -5 142 53 381 162 105 48 237 109 295 135 523 237 1171 543 1211 571 38 27 52 61 38 92 -17 38 3 30 -519 217 -308 111 -837 298 -1205 426 -148 52 -280 99 -293 104 -52 23 -54 10 -7 -42 153 -167 280 -303 350 -376 86 -90 96 -107 68 -116 -23 -6 -209 -34 -688 -101 -214 -30 -640 -90 -945 -135 -1123 -163 -1050 -153 -1103 -141 -27 6 -65 23 -85 38 -69 50 -332 374 -332 408 0 19 278 368 729 915 180 217 661 818 661 824 0 3 -182 6 -404 6 l-405 0 -178 -217z"/></g></svg>
+      <span>faultend</span>
+    </a>
+    <a class="back" href="/">← Back</a>
+  </nav>
+
+  <div class="legal-wrap">
+    <div class="legal-eyebrow">Legal</div>
+    <h1>Terms of Service</h1>
+    <div class="legal-meta">Last updated: May 2026 · Applies to faultend.com and app.faultend.com</div>
+
+    <h2>1. Agreement</h2>
+    <p>
+      By creating an account or using Faultend you agree to these Terms of Service ("Terms").
+      Faultend is operated by <strong>Daniel Lopez Garcia</strong> (dalogax@gmail.com), Spain ("we", "us").
+      If you do not agree, do not use the service.
+    </p>
+
+    <h2>2. The service</h2>
+    <p>Faultend is a developer tool that acts as an HTTP proxy between your application and one or more backend services. It lets you inspect traffic, inject failures, mock responses, and test application resilience. It is provided as a software-as-a-service at <strong>faultend.com</strong>.</p>
+
+    <h2>3. Acceptable use</h2>
+    <p>Faultend is designed for <strong>software development and testing</strong>. You agree to use it only for lawful purposes and in accordance with these Terms.</p>
+    <p>You must <strong>not</strong>:</p>
+    <ul>
+      <li>Route production traffic containing real end-user personal data through Faultend without first signing a <a href="/dpa">Data Processing Agreement</a> and ensuring you have a lawful basis to do so.</li>
+      <li>Route payment card data (subject to PCI DSS) through Faultend.</li>
+      <li>Route protected health information (PHI) or any data that would require a HIPAA Business Associate Agreement without our prior written consent.</li>
+      <li>Use Faultend to intercept, capture, or tamper with HTTP traffic that you are not authorised to access.</li>
+      <li>Attempt to circumvent rate limits, authentication, or access controls.</li>
+      <li>Use Faultend to distribute malware, conduct denial-of-service attacks, or engage in any illegal activity.</li>
+    </ul>
+
+    <h2>4. Traffic logging</h2>
+    <p>When recording is enabled on a fault server (the default), Faultend stores a copy of every HTTP request and response that flows through it, including headers, bodies, and timing data. Sensitive authentication headers (<code>Authorization</code>, <code>Cookie</code>, <code>X-API-Key</code>, <code>Proxy-Authorization</code>, <code>X-Auth-Token</code>) are redacted in the stored log — their values are replaced with <code>[redacted]</code>. Raw traffic is never forwarded to third parties.</p>
+    <p>Logs are retained for <strong>7 days</strong> and then automatically deleted. You can clear them at any time from the server settings, or disable recording entirely.</p>
+    <p>You are responsible for ensuring that any data flowing through your fault servers complies with applicable law and with these Terms.</p>
+
+    <h2>5. Accounts and collaboration</h2>
+    <p>You must be at least <strong>16 years old</strong> to create an account. Account access is via Google or GitHub OAuth. You are responsible for all activity under your account. Invite links grant collaborator access to your fault servers — only share them with people you trust.</p>
+
+    <h2>6. Intellectual property</h2>
+    <p>Faultend and its design are the property of Daniel Lopez Garcia. Your data (rules, server configurations, traffic logs) remains yours. You grant us a limited licence to store and process it solely to provide the service.</p>
+
+    <h2>7. Availability and warranty disclaimer</h2>
+    <p>Faultend is provided <strong>"as is"</strong> without warranties of any kind, express or implied. We do not guarantee uninterrupted availability, accuracy, or fitness for a particular purpose. Use of the service is at your own risk.</p>
+
+    <h2>8. Limitation of liability</h2>
+    <p>To the fullest extent permitted by applicable law, we shall not be liable for any indirect, incidental, special, consequential, or punitive damages arising from your use of, or inability to use, Faultend — including but not limited to data loss, loss of revenue, or damage to your systems.</p>
+
+    <h2>9. Termination</h2>
+    <p>We may suspend or terminate your account if you materially breach these Terms. You may delete your account at any time from your profile settings, which will permanently delete all your data within 30 days.</p>
+
+    <h2>10. Changes to these Terms</h2>
+    <p>We may update these Terms at any time. Material changes will be communicated by updating the "last updated" date above. Continued use after the effective date of a change constitutes acceptance.</p>
+
+    <h2>11. Governing law</h2>
+    <p>These Terms are governed by the laws of <strong>Spain</strong> and the European Union. Disputes shall be resolved in the courts of Spain, without prejudice to your rights as a consumer under the law of your country of residence within the EU.</p>
+
+    <h2>12. Contact</h2>
+    <p>Daniel Lopez Garcia · <a href="mailto:dalogax@gmail.com">dalogax@gmail.com</a></p>
+  </div>
+
+  <footer class="legal-footer">
+    <span>© <span class="year"></span> Faultend · Daniel Lopez Garcia</span>
+    <span>
+      <a href="/privacy">Privacy</a> ·
+      <a href="/terms">Terms</a> ·
+      <a href="/dpa">DPA</a>
+    </span>
+  </footer>
+
+  <script>document.querySelectorAll('.year').forEach(e => e.textContent = new Date().getFullYear());</script>
+</body>
+</html>

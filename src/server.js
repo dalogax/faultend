@@ -97,37 +97,47 @@ app.get('/metrics', async (req, res) => {
 
 const staticMiddleware = express.static(path.join(__dirname, '../public'), { maxAge: 3600000 });
 
+// Legal pages — served from both landing and app subdomains
+const LEGAL_PAGES = { '/privacy': 'privacy.html', '/terms': 'terms.html', '/dpa': 'dpa.html' };
+// Static asset path prefixes shared across all page types
+const STATIC_PREFIXES = ['/css/', '/js/', '/fonts/', '/vendor/', '/img/', '/.well-known/'];
+
 app.use((req, res, next) => {
   const { routeType } = req;
-  
+
+  // Static assets and legal pages are available on every subdomain type
+  if (STATIC_PREFIXES.some(p => req.path.startsWith(p)) || req.path === '/site.webmanifest') {
+    return staticMiddleware(req, res, next);
+  }
+
+  // Legal pages: /privacy, /terms, /dpa (no trailing slash)
+  const legalFile = LEGAL_PAGES[req.path];
+  if (legalFile) {
+    return res.sendFile(path.join(__dirname, '../public', legalFile));
+  }
+
   if (routeType === 'landing') {
-    if (req.path.startsWith('/css/') || req.path.startsWith('/js/') || req.path.startsWith('/fonts/') || req.path.startsWith('/img/') || req.path === '/img/faultend.svg' || req.path === '/site.webmanifest') {
-      return staticMiddleware(req, res, next);
-    }
     if (req.path === '/' || req.path === '/index.html') {
       return res.sendFile(path.join(__dirname, '../public/landing.html'));
     }
     return res.status(404).json({
       error: 'Not Found',
       message: 'Landing page only. Use app.* for UI or [server].* for fault servers.',
-      availableRoutes: ['/health']
+      availableRoutes: ['/health', '/privacy', '/terms', '/dpa']
     });
   }
-  
+
   if (routeType === 'app') {
-    if (req.path.startsWith('/css/') || req.path.startsWith('/js/') || req.path.startsWith('/fonts/') || req.path.startsWith('/img/') || req.path === '/img/faultend.svg' || req.path === '/site.webmanifest') {
-      return staticMiddleware(req, res, next);
-    }
     if (req.path === '/' || req.path === '/index.html' || req.path === '/app.html') {
       return res.sendFile(path.join(__dirname, '../public/app.html'));
     }
     return next();
   }
-  
+
   if (routeType === 'fault-server') {
     return next();
   }
-  
+
   res.status(500).json({ error: 'Unknown route type' });
 });
 

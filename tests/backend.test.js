@@ -201,7 +201,7 @@ async function runTests() {
   await test('Proxy health check is public', async () => {
     const res = await request('GET', '/health', null, {}, 'test-server');
     assertEqual(res.status, 200, 'Health check should work without auth');
-    assertEqual(res.body.routeType, 'fault-server', 'Should detect fault-server route');
+    assertEqual(res.body.status, 'ok', 'Health check should return ok');
   });
 
   console.log('');

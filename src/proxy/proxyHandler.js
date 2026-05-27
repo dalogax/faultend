@@ -2,6 +2,26 @@ const { createProxyMiddleware, responseInterceptor } = require('http-proxy-middl
 const config = require('./config');
 const { logTransaction } = require('../storage/traffic');
 
+// Headers redacted in stored logs (proxy still forwards originals as-is).
+const REDACTED_HEADERS = new Set([
+  'authorization', 'cookie', 'proxy-authorization',
+  'x-api-key', 'x-auth-token', 'x-access-token'
+]);
+
+/**
+ * Returns a shallow copy of the headers object with sensitive values replaced
+ * by '[redacted]'. The original object is never mutated so the proxy
+ * continues to forward the real values to the backend unchanged.
+ */
+function redactHeaders(headers) {
+  if (!headers || typeof headers !== 'object') return headers;
+  const out = { ...headers };
+  for (const key of Object.keys(out)) {
+    if (REDACTED_HEADERS.has(key.toLowerCase())) out[key] = '[redacted]';
+  }
+  return out;
+}
+
 function createFaultendProxy(targetUrl) {
   const target = targetUrl || config.defaultTarget;
   
@@ -67,12 +87,13 @@ function createFaultendProxy(targetUrl) {
         proxyReq.write(bodyData);
       }
       
-      // Store request data for transaction logging
+      // Store request data for transaction logging.
+      // Headers are redacted for storage; the proxy already forwarded originals above.
       req.capturedRequest = {
         method: req.method,
         url: req.url,
         path: req.path,
-        headers: req.headers,
+        headers: redactHeaders(req.headers),
         query: req.query,
         body: req.rawBody || req.body || null,
         bodySize: req.rawBodySize || (req.body ? Buffer.byteLength(JSON.stringify(req.body)) : 0),
@@ -155,7 +176,7 @@ function createFaultendProxy(targetUrl) {
           method: req.method,
           url: req.url,
           path: req.path,
-          headers: req.headers,
+          headers: redactHeaders(req.headers),
           query: req.query,
           body: null,
           bodySize: 0,
@@ -244,7 +265,7 @@ function executeProxyWithTransform(targetUrl, req, res, next, runTransform, tran
 
       req.capturedRequest = {
         method: req.method, url: req.url, path: req.path,
-        headers: req.headers, query: req.query,
+        headers: redactHeaders(req.headers), query: req.query,
         body: req.rawBody || req.body || null,
         bodySize: req.rawBodySize || (req.body ? Buffer.byteLength(JSON.stringify(req.body)) : 0),
         contentType: req.headers['content-type'] || null

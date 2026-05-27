@@ -9,7 +9,10 @@ const ph = () => window.posthog;
  * @param {object} properties  e.g. { email, name, plan }
  */
 export function identify(userId, properties = {}) {
-  ph()?.identify(String(userId), properties);
+  const posthog = ph();
+  if (typeof posthog?.identify === 'function') {
+    posthog.identify(String(userId), properties);
+  }
 }
 
 /**
@@ -18,7 +21,10 @@ export function identify(userId, properties = {}) {
  * @param {object} [properties]
  */
 export function track(event, properties = {}) {
-  ph()?.capture(event, properties);
+  const posthog = ph();
+  if (typeof posthog?.capture === 'function') {
+    posthog.capture(event, properties);
+  }
 }
 
 /**

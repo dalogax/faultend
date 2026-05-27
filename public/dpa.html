@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Data Processing Agreement · Faultend</title>
+  <link rel="icon" type="image/x-icon" href="/img/favicon.ico">
+  <link rel="stylesheet" href="/fonts/fonts.css">
+  <link rel="stylesheet" href="/css/reset.css">
+  <link rel="stylesheet" href="/css/variables.css">
+  <link rel="stylesheet" href="/css/legal.css">
+</head>
+<body>
+
+  <nav class="legal-nav">
+    <a href="/" class="logo">
+      <svg viewBox="0 0 1024 1024" preserveAspectRatio="xMidYMid meet" aria-hidden="true"><g transform="translate(0,1024) scale(0.1,-0.1)" fill="currentColor" stroke="none"><path d="M4803 6933 c-98 -119 -314 -383 -481 -587 -374 -457 -349 -429 -364 -424 -7 3 -79 85 -160 183 -191 231 -222 263 -288 294 -81 38 -155 34 -460 -27 -219 -44 -591 -117 -1230 -241 -820 -159 -805 -156 -841 -197 -47 -54 -52 -81 -52 -265 1 -195 8 -231 54 -275 28 -27 36 -29 102 -28 40 0 160 17 267 38 107 20 290 55 405 76 116 22 296 56 400 75 105 20 298 56 430 81 132 24 310 58 395 75 229 46 268 36 385 -98 143 -162 185 -215 185 -232 0 -9 -412 -532 -915 -1161 -503 -629 -915 -1148 -915 -1152 0 -5 185 -7 412 -6 l412 3 77 95 c41 52 163 205 269 340 312 394 418 528 515 650 50 63 190 239 310 390 119 151 225 281 233 288 40 32 54 19 231 -218 95 -126 190 -244 212 -261 22 -17 62 -40 89 -50 87 -33 84 -33 830 82 179 27 370 57 425 65 55 8 154 24 220 34 66 11 228 35 360 55 132 19 371 55 530 80 160 24 393 60 519 79 238 37 278 36 257 -2 -5 -9 -95 -131 -200 -271 -105 -140 -189 -256 -187 -258 5 -5 142 53 381 162 105 48 237 109 295 135 523 237 1171 543 1211 571 38 27 52 61 38 92 -17 38 3 30 -519 217 -308 111 -837 298 -1205 426 -148 52 -280 99 -293 104 -52 23 -54 10 -7 -42 153 -167 280 -303 350 -376 86 -90 96 -107 68 -116 -23 -6 -209 -34 -688 -101 -214 -30 -640 -90 -945 -135 -1123 -163 -1050 -153 -1103 -141 -27 6 -65 23 -85 38 -69 50 -332 374 -332 408 0 19 278 368 729 915 180 217 661 818 661 824 0 3 -182 6 -404 6 l-405 0 -178 -217z"/></g></svg>
+      <span>faultend</span>
+    </a>
+    <a class="back" href="/">← Back</a>
+  </nav>
+
+  <div class="legal-wrap">
+    <div class="legal-eyebrow">Legal</div>
+    <h1>Data Processing Agreement</h1>
+    <div class="legal-meta">Last updated: May 2026 · Incorporated by reference into the <a href="/terms">Terms of Service</a></div>
+
+    <p>This Data Processing Agreement ("DPA") is between you ("Controller") and Daniel Lopez Garcia operating Faultend ("Processor"). It governs the processing of personal data under GDPR Art. 28 whenever you route traffic that contains personal data of third parties (your end-users) through Faultend fault servers.</p>
+    <p>By using Faultend you accept this DPA. No separate signature is required.</p>
+
+    <h2>1. Roles</h2>
+    <p><strong>You are the data controller.</strong> You determine the purposes and means of processing (what traffic you route, whether recording is enabled, what rules you set).</p>
+    <p><strong>Faultend is the data processor.</strong> We process personal data only on your documented instructions — namely, to proxy and (optionally) log the HTTP traffic you direct through your fault server.</p>
+
+    <h2>2. Subject matter and nature of processing</h2>
+    <p>Faultend receives HTTP requests from your application and forwards them to the backend URL(s) specified in your rules. When recording is enabled, it stores a copy of each request and response in our database for debugging and inspection purposes. Authentication headers are redacted before storage (<code>Authorization</code>, <code>Cookie</code>, <code>Proxy-Authorization</code>, <code>X-API-Key</code>, <code>X-Auth-Token</code>).</p>
+
+    <h2>3. Categories of data and data subjects</h2>
+    <p>The categories of personal data and data subjects depend entirely on the traffic you route. Common examples include:</p>
+    <ul>
+      <li>End-user identifiers (user IDs, email addresses in request paths or bodies)</li>
+      <li>API authentication tokens (partially redacted per §2)</li>
+      <li>Any personal data contained in JSON request or response bodies</li>
+    </ul>
+    <p><strong>You are responsible for ensuring you have a lawful basis to route this data through a third-party processor.</strong> Do not route payment card data (PCI DSS), protected health information (HIPAA), or special-category data (GDPR Art. 9) without our prior written agreement.</p>
+
+    <h2>4. Duration</h2>
+    <p>This DPA applies for the duration of your use of Faultend. Traffic logs are retained for <strong>7 days</strong> and then automatically deleted. On account deletion, all logs and configuration data are permanently erased within 30 days.</p>
+
+    <h2>5. Processor obligations</h2>
+    <p>We commit to:</p>
+    <ul>
+      <li>Process personal data only on your instructions (the rules and recording settings you configure).</li>
+      <li>Ensure that staff with access to personal data are bound by confidentiality obligations.</li>
+      <li>Implement appropriate technical and organisational measures (HTTPS in transit, encrypted database at rest, access controls).</li>
+      <li>Notify you within 72 hours of becoming aware of a personal data breach affecting your data.</li>
+      <li>Delete your data upon account termination or on request.</li>
+      <li>Make available information reasonably necessary to demonstrate compliance with GDPR Art. 28.</li>
+    </ul>
+
+    <h2>6. Sub-processors</h2>
+    <p>We use the following sub-processors that may handle personal data flowing through fault servers:</p>
+    <table class="legal-table">
+      <thead><tr><th>Sub-processor</th><th>Purpose</th><th>Location</th></tr></thead>
+      <tbody>
+        <tr><td>Hosting / infrastructure provider</td><td>Database and application hosting</td><td>EU</td></tr>
+        <tr><td>PostHog (EU region)</td><td>Product analytics (controller-side data only — does not receive proxy traffic)</td><td>EU</td></tr>
+      </tbody>
+    </table>
+    <p>We will notify you of any intended changes to sub-processors. You may object within 14 days; if we cannot accommodate the objection you may terminate your account.</p>
+
+    <h2>7. Your obligations</h2>
+    <p>As controller you are responsible for:</p>
+    <ul>
+      <li>Having a lawful basis under GDPR (or equivalent applicable law) for routing personal data through Faultend.</li>
+      <li>Providing transparent information to your end-users about the use of Faultend as a test proxy where required.</li>
+      <li>Not routing data that requires additional agreements (PHI, PCI, special-category data) without our prior consent.</li>
+      <li>Disabling recording or using Faultend only with non-production / anonymised data when processing real personal data is not necessary for your test.</li>
+    </ul>
+
+    <h2>8. Data subject rights</h2>
+    <p>We will assist you in responding to data subject requests relating to data stored in traffic logs. You can delete all logs for a server instantly from the settings panel. For other requests, contact <a href="mailto:dalogax@gmail.com">dalogax@gmail.com</a>.</p>
+
+    <h2>9. Governing law</h2>
+    <p>This DPA is governed by Spanish law and, where applicable, EU law. Disputes are subject to the courts of Spain.</p>
+
+    <h2>10. Contact</h2>
+    <p>Daniel Lopez Garcia · <a href="mailto:dalogax@gmail.com">dalogax@gmail.com</a></p>
+  </div>
+
+  <footer class="legal-footer">
+    <span>© <span class="year"></span> Faultend · Daniel Lopez Garcia</span>
+    <span>
+      <a href="/privacy">Privacy</a> ·
+      <a href="/terms">Terms</a> ·
+      <a href="/dpa">DPA</a>
+    </span>
+  </footer>
+
+  <script>document.querySelectorAll('.year').forEach(e => e.textContent = new Date().getFullYear());</script>
+</body>
+</html>
