@@ -99,7 +99,8 @@ async function getStatsSummary(userId) {
     `SELECT
         COALESCE((SELECT COUNT(*) FROM traffic WHERE server_id = ANY($1::bigint[]) AND timestamp > NOW() - INTERVAL '24 hours'), 0) AS requests24h,
         COALESCE((SELECT COUNT(*) FROM rules WHERE server_id = ANY($1::bigint[]) AND enabled = true), 0) AS rules,
-        COALESCE((SELECT COUNT(DISTINCT server_id) FROM server_collaborators WHERE server_id = ANY($1::bigint[])), 0) AS shared`,
+        COALESCE((SELECT COUNT(DISTINCT server_id) FROM server_collaborators WHERE server_id = ANY($1::bigint[])), 0) AS shared,
+        COALESCE((SELECT COUNT(DISTINCT user_id) FROM server_collaborators WHERE server_id = ANY($1::bigint[])), 0) AS collaborators`,
     [serverIds]
   );
   const row = aggResult.rows[0];
@@ -107,7 +108,8 @@ async function getStatsSummary(userId) {
     servers: serverIds.length,
     requests24h: parseInt(row.requests24h) || 0,
     rules: parseInt(row.rules) || 0,
-    shared: parseInt(row.shared) || 0
+    shared: parseInt(row.shared) || 0,
+    collaborators: parseInt(row.collaborators) || 0
   };
 }
 

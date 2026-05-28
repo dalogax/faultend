@@ -149,6 +149,10 @@ class App {
           <span class="stat-label">Active rules</span>
           <span class="stat-value" id="statRules">—</span>
         </div>
+        <div class="stat">
+          <span class="stat-label">Collaborators</span>
+          <span class="stat-value" id="statCollaborators">—</span>
+        </div>
       </div>
     `;
 
@@ -215,8 +219,10 @@ class App {
       const summary = await fetchStatsSummary();
       const r = document.getElementById('statRequests24h');
       const u = document.getElementById('statRules');
+      const c = document.getElementById('statCollaborators');
       if (r) r.textContent = (summary.requests24h || 0).toLocaleString();
       if (u) u.textContent = summary.rules || 0;
+      if (c) c.textContent = summary.collaborators || 0;
     } catch (error) {
       console.error('Failed to load stats summary:', error);
     }
