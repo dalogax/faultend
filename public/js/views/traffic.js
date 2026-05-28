@@ -223,8 +223,8 @@ class TrafficTable {
             <th style="width:76px">Method</th>
             <th>Path</th>
             <th style="width:84px">Status</th>
-            <th style="width:130px">Duration</th>
-            <th style="width:84px">Rule</th>
+            <th class="duration-col" style="width:130px">Duration</th>
+            <th class="rule-col" style="width:84px">Rule</th>
           </tr>
         </thead>
         <tbody>
@@ -256,8 +256,8 @@ class TrafficTable {
         <td><span class="badge badge-${methodBadgeClass(method)}">${method}</span></td>
         <td class="path-cell" title="${escapeHtml(log.request.path)}">${escapeHtml(path)}</td>
         <td><span class="badge badge-status-${statusFamily}xx">${statusCode}</span></td>
-        <td>${latBar(log.duration, isError)}</td>
-        <td>${rule}</td>
+        <td class="duration-col">${latBar(log.duration, isError)}</td>
+        <td class="rule-col">${rule}</td>
       </tr>
     `;
   }

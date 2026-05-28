@@ -220,6 +220,12 @@
   .traffic-table-container,
   .rules-table-container { overflow: auto; }
 
+  /* --- Traffic table: hide low-value columns on narrow screens ---
+     Hiding duration (130px) + rule (84px) frees ~214px,
+     giving the path column much more room on a 390px phone. */
+  .traffic-table .duration-col,
+  .traffic-table .rule-col { display: none; }
+
   /* --- Rules table: hide low-value columns on narrow screens ---
      Hiding drag (28px) + priority (46px) + hits (60px) frees ~134px,
      giving the pattern column ~180px on a 390px phone instead of ~44px. */
