@@ -50,7 +50,7 @@ class TrafficTable {
     this.isLoading = false;
     this.autoRefresh = this.readAutoRefresh();
     this._onVis = () => this.applyAutoRefresh();
-    document.addEventListener('visibilitychange', this._onVis);
+    // Listener is added/removed by startPolling/stopPolling, not the constructor.
   }
 
   readAutoRefresh() {
@@ -114,6 +114,9 @@ class TrafficTable {
   }
 
   startPolling() {
+    // Re-attach the visibility listener (idempotent: remove first to avoid dups).
+    document.removeEventListener('visibilitychange', this._onVis);
+    document.addEventListener('visibilitychange', this._onVis);
     this.applyAutoRefresh();
   }
 
@@ -122,6 +125,9 @@ class TrafficTable {
       clearInterval(this.pollInterval);
       this.pollInterval = null;
     }
+    // Remove the listener so tab-focus events can't restart polling
+    // while we're on the server list or any non-traffic view.
+    document.removeEventListener('visibilitychange', this._onVis);
   }
 
   render() {
