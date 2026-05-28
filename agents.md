@@ -16,6 +16,7 @@
 
 | Before you... | Read this | Why |
 |---------------|-----------|-----|
+| **Touch any UI element** (HTML structure, CSS, JS that renders visible UI) | [Design System](./docs/design.md) | Design language, tokens, components, typography, spacing — covers all visual rules including what NOT to do |
 | **Modify code** (backend, frontend, API, routing) | [Architecture](./docs/architecture.md) | Codebase structure, tech stack, routing logic, subdomain system |
 | **Add or change a feature** | [Features](./docs/features.md) | Existing capabilities, what's in/out of scope, user-facing behavior |
 | **Change how traffic is proxied or mocked** | [Workflow](./docs/workflow.md) | End-to-end user flow, how rules are evaluated, traffic lifecycle |

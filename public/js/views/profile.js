@@ -86,14 +86,14 @@ function renderFooter(confirmDelete = false) {
         <p class="profile-delete-warning">This will permanently delete your account, all servers, rules, and traffic logs. This cannot be undone.</p>
         <div class="profile-delete-actions">
           <button class="btn-ghost btn-sm" id="profileDeleteCancelBtn">Cancel</button>
-          <button class="btn btn-danger btn-sm" id="profileDeleteConfirmBtn">Yes, delete everything</button>
+          <button class="btn-danger btn-sm" id="profileDeleteConfirmBtn">Yes, delete everything</button>
         </div>
       </div>
     `;
   }
   return `
     <button class="btn-ghost btn-sm" id="profileSignOutBtn">Sign out</button>
-    <button class="btn-ghost btn-sm btn-danger-ghost" id="profileDeleteBtn">Delete account</button>
+    <button class="btn-danger btn-sm" id="profileDeleteBtn">Delete account</button>
   `;
 }
 

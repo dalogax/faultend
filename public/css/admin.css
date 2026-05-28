@@ -1,5 +1,6 @@
 /* ============================================================
    Faultend · Admin panel styles
+   All values from design tokens — see docs/design.md
    ============================================================ */
 
 .admin-layout {
@@ -27,12 +28,12 @@
   justify-content: space-between;
   margin-bottom: 20px;
   padding-bottom: 16px;
-  border-bottom: 1px solid var(--ft-border);
+  border-bottom: 1px solid var(--ft-border-strong);
 }
 
 .admin-page-header h1 {
   font-size: var(--ft-fs-16);
-  font-weight: 600;
+  font-weight: 500;
   color: var(--ft-fg-strong);
   margin: 0;
 }
@@ -43,13 +44,18 @@
   gap: 10px;
 }
 
+/* Admin badge — uses amber signal tokens (never decorative colour) */
 .admin-badge {
-  font-size: var(--ft-fs-10);
-  font-weight: 600;
-  letter-spacing: 0.08em;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 18px;
+  padding: 0 6px;
+  font-family: var(--ft-mono);
+  font-size: var(--ft-fs-11);
+  font-weight: 400;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
-  padding: 2px 7px;
-  border-radius: 3px;
   background: var(--ft-amber-bg);
   color: var(--ft-amber-ink);
   border: 1px solid var(--ft-amber-line);
@@ -63,42 +69,21 @@
   margin-bottom: 16px;
 }
 
-.admin-search {
+/* Layout overrides for the standard .input class */
+.admin-toolbar .input[type="search"] {
   flex: 1;
   max-width: 320px;
-  padding: 6px 10px;
-  font-size: var(--ft-fs-13);
-  font-family: var(--ft-sans);
-  background: var(--ft-surface);
-  border: 1px solid var(--ft-border);
-  color: var(--ft-fg);
-  outline: none;
-  border-radius: 0;
-}
-
-.admin-search:focus {
-  border-color: var(--ft-fg-muted);
-}
-
-.admin-select {
-  padding: 6px 10px;
-  font-size: var(--ft-fs-13);
-  font-family: var(--ft-sans);
-  background: var(--ft-surface);
-  border: 1px solid var(--ft-border);
-  color: var(--ft-fg);
-  outline: none;
-  cursor: pointer;
-  border-radius: 0;
 }
 
 .admin-stat {
   margin-left: auto;
-  font-size: var(--ft-fs-12);
-  color: var(--ft-fg-muted);
+  font-family: var(--ft-mono);
+  font-size: var(--ft-fs-11);
+  color: var(--ft-fg-faint);
+  letter-spacing: 0.02em;
 }
 
-/* Data table */
+/* Data table — matches the shared table pattern from components.css */
 .admin-table {
   width: 100%;
   border-collapse: collapse;
@@ -107,18 +92,19 @@
 
 .admin-table th {
   text-align: left;
-  padding: 8px 12px;
+  padding: var(--ft-sp-3) var(--ft-sp-4);
   font-size: var(--ft-fs-11);
-  font-weight: 600;
-  letter-spacing: 0.06em;
+  font-weight: 400;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--ft-fg-muted);
+  color: var(--ft-fg-faint);
   border-bottom: 1px solid var(--ft-border);
+  background: var(--ft-surface);
   white-space: nowrap;
 }
 
 .admin-table td {
-  padding: 10px 12px;
+  padding: var(--ft-sp-3) var(--ft-sp-4);
   border-bottom: 1px solid var(--ft-hairline);
   vertical-align: middle;
 }
@@ -128,51 +114,51 @@
   transition: background 0.1s;
 }
 
-.admin-table tbody tr:hover {
-  background: var(--ft-surface-2);
+.admin-table tbody tr:hover td {
+  background: var(--ft-ink-2);
 }
 
-/* Plan badges */
+/* Plan badges — standard badge shape, no radius */
 .plan-badge {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 18px;
+  padding: 0 6px;
+  font-family: var(--ft-mono);
   font-size: var(--ft-fs-11);
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  padding: 2px 7px;
-  border-radius: 3px;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  border: 1px solid transparent;
 }
 
 .plan-free {
   background: var(--ft-surface-2);
   color: var(--ft-fg-muted);
-  border: 1px solid var(--ft-border);
+  border-color: var(--ft-border);
 }
 
 .plan-pro {
   background: var(--ft-amber-bg);
   color: var(--ft-amber-ink);
-  border: 1px solid var(--ft-amber-line);
+  border-color: var(--ft-amber-line);
 }
 
+/* Platform admin indicator — uses amber (the signal colour) */
 .badge-platform-admin {
-  display: inline-block;
-  font-size: var(--ft-fs-10);
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  padding: 1px 5px;
-  border-radius: 3px;
-  background: #e8d5f5;
-  color: #4a1e7a;
-  border: 1px solid #c8a8e8;
-  margin-left: 4px;
-}
-
-[data-theme="dark"] .badge-platform-admin {
-  background: #2d1a40;
-  color: #c8a8e8;
-  border-color: #5a3880;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 18px;
+  padding: 0 6px;
+  font-family: var(--ft-mono);
+  font-size: var(--ft-fs-11);
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  margin-left: var(--ft-sp-2);
+  background: var(--ft-amber-bg);
+  color: var(--ft-amber-ink);
+  border: 1px solid var(--ft-amber-line);
 }
 
 /* Pagination */
@@ -181,8 +167,9 @@
   align-items: center;
   justify-content: space-between;
   padding: 12px 0;
-  font-size: var(--ft-fs-12);
-  color: var(--ft-fg-muted);
+  font-family: var(--ft-mono);
+  font-size: var(--ft-fs-11);
+  color: var(--ft-fg-faint);
 }
 
 .pagination-btns {
@@ -202,15 +189,15 @@
 
 .detail-header h2 {
   font-size: var(--ft-fs-20);
-  font-weight: 600;
+  font-weight: 500;
   margin: 8px 0 4px;
   color: var(--ft-fg-strong);
 }
 
 .detail-email {
-  font-size: var(--ft-fs-13);
-  color: var(--ft-fg-muted);
   font-family: var(--ft-mono);
+  font-size: var(--ft-fs-12);
+  color: var(--ft-fg-muted);
 }
 
 .detail-grid {
@@ -225,13 +212,16 @@
   padding: 16px 20px;
 }
 
+/* Section header pattern from design system */
 .detail-card h3 {
   font-size: var(--ft-fs-11);
-  font-weight: 600;
-  letter-spacing: 0.08em;
+  font-weight: 500;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--ft-fg-muted);
   margin: 0 0 12px;
+  padding-bottom: var(--ft-sp-3);
+  border-bottom: 1px solid var(--ft-border-strong);
 }
 
 .detail-dl {

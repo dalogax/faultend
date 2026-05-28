@@ -168,11 +168,13 @@ code { font-family: var(--ft-mono); }
 }
 .profile-section-label {
   font-size: var(--ft-fs-11);
-  font-weight: 600;
-  letter-spacing: 0.06em;
+  font-weight: 500;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--ft-fg-faint);
+  color: var(--ft-fg-muted);
   margin-bottom: var(--ft-sp-3);
+  padding-bottom: var(--ft-sp-3);
+  border-bottom: 1px solid var(--ft-border-strong);
 }
 .profile-plan-row {
   display: flex;
@@ -180,13 +182,18 @@ code { font-family: var(--ft-mono); }
   gap: var(--ft-sp-3);
 }
 .badge-plan {
-  background: var(--ft-ink-3);
-  color: var(--ft-fg-strong);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 18px;
+  padding: 0 6px;
+  font-family: var(--ft-mono);
   font-size: var(--ft-fs-11);
-  font-weight: 600;
+  font-weight: 400;
   letter-spacing: 0.04em;
-  padding: 2px 8px;
-  border-radius: 3px;
+  background: var(--ft-surface-2);
+  color: var(--ft-fg-strong);
+  border: 1px solid var(--ft-border);
 }
 
 /* ── Quota bars ────────────────────────────────────────────────────────────── */
@@ -201,38 +208,29 @@ code { font-family: var(--ft-mono); }
 }
 .quota-name {
   font-size: var(--ft-fs-12);
-  color: var(--ft-fg-normal);
+  color: var(--ft-fg);
 }
 .quota-value {
   font-family: var(--ft-mono);
   font-size: var(--ft-fs-11);
   color: var(--ft-fg-muted);
 }
-.quota-value.quota-warn { color: var(--ft-yellow, #d97706); }
+.quota-value.quota-warn { color: var(--ft-amber-pure); }
 .quota-value.quota-full { color: var(--ft-red); }
 .quota-track {
   height: 3px;
   background: var(--ft-ink-3);
-  border-radius: 2px;
   overflow: hidden;
 }
 .quota-fill {
   height: 100%;
-  background: var(--ft-ink-8);
-  border-radius: 2px;
+  background: var(--ft-ink-10);
   transition: width 0.3s ease;
 }
-.quota-fill.quota-fill-warn { background: var(--ft-yellow, #d97706); }
+.quota-fill.quota-fill-warn { background: var(--ft-amber-pure); }
 .quota-fill.quota-fill-full { background: var(--ft-red); }
 
 /* ── Profile footer ────────────────────────────────────────────────────────── */
-.btn-danger-ghost {
-  color: var(--ft-red) !important;
-}
-.btn-danger-ghost:hover {
-  background: color-mix(in srgb, var(--ft-red) 10%, transparent) !important;
-  border-color: var(--ft-red) !important;
-}
 .profile-delete-confirm {
   display: flex;
   flex-direction: column;
