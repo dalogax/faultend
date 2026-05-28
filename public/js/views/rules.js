@@ -117,10 +117,10 @@ class RulesList {
         <thead>
           <tr>
             <th class="drag-col"></th>
-            <th style="width:46px">Pri</th>
+            <th class="pri-col" style="width:46px">Pri</th>
             <th>Pattern</th>
             <th style="width:90px">Action</th>
-            <th style="width:60px;text-align:right">Hits</th>
+            <th class="hits-col" style="width:60px;text-align:right">Hits</th>
             <th style="width:50px">On</th>
             <th style="width:72px"></th>
           </tr>
@@ -138,7 +138,7 @@ class RulesList {
     return `
       <tr class="rule-row" draggable="true" data-rule-id="${rule.id}" style="opacity:${rule.enabled ? 1 : 0.55}">
         <td class="drag-cell" title="Drag to reorder">${Icon.drag}</td>
-        <td class="priority-cell">${rule.priority}</td>
+        <td class="priority-cell pri-col">${rule.priority}</td>
         <td>
           <div style="display:flex;align-items:center;gap:8px">
             <span class="badge badge-${methodBadgeClass(method)}">${method}</span>
@@ -146,7 +146,7 @@ class RulesList {
           </div>
         </td>
         <td>${renderLabelStack(ruleLabels(rule))}</td>
-        <td class="num mono" style="text-align:right">${hits.toLocaleString()}</td>
+        <td class="num mono hits-col" style="text-align:right">${hits.toLocaleString()}</td>
         <td>
           <label class="toggle-switch">
             <input type="checkbox" ${rule.enabled ? 'checked' : ''} data-rule-id="${rule.id}">

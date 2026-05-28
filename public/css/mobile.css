@@ -130,6 +130,24 @@
     flex-direction: column;
   }
 
+  /* --- Column scroll fix ---
+     layout.css @(max-width:1024px) sets height:auto / overflow:visible which
+     breaks flex containment. Restore both so the column-header + filter bar
+     stay pinned and only the inner table container scrolls. */
+  body.is-server-view .two-column-layout { height: 100%; }
+  body.is-server-view .two-column-layout .column { overflow: hidden; }
+  /* Restore full overflow:auto so the table can scroll vertically */
+  .traffic-table-container,
+  .rules-table-container { overflow: auto; }
+
+  /* --- Rules table: hide low-value columns on narrow screens ---
+     Hiding drag (28px) + priority (46px) + hits (60px) frees ~134px,
+     giving the pattern column ~180px on a 390px phone instead of ~44px. */
+  .rules-table .drag-col,
+  .rules-table .drag-cell,
+  .rules-table .pri-col,
+  .rules-table .hits-col { display: none; }
+
   /* --- Drawer becomes full-screen sheet --- */
   .drawer {
     width: 100vw; max-width: 100vw;
