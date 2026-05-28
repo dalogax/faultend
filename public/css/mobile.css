@@ -124,6 +124,12 @@
   body[data-mobile-tab="traffic"]  #rulesView,
   body[data-mobile-tab="settings"] #rulesView { display: none; }
 
+  /* Settings column — show as a normal tab on mobile */
+  body[data-mobile-tab="settings"] #settingsView {
+    display: flex;
+    flex-direction: column;
+  }
+
   /* --- Drawer becomes full-screen sheet --- */
   .drawer {
     width: 100vw; max-width: 100vw;
@@ -133,23 +139,6 @@
   .drawer.active { transform: translateX(0); }
   .drawer-header { padding: 12px 12px 12px 14px; }
   .drawer-footer { position: sticky; bottom: 0; }
-
-  /* --- Settings tab appearance: sits between top bar and tab bar,
-         no close X, no overlay scrim — looks like an in-app tab.
-         Skip the slide-in transition so it doesn't feel like a drawer. --- */
-  body[data-mobile-tab="settings"] .drawer-overlay { display: none; }
-  body[data-mobile-tab="settings"] .drawer,
-  body[data-mobile-tab="settings"] .drawer.active {
-    top: 44px;
-    bottom: calc(56px + env(safe-area-inset-bottom, 0px));
-    height: auto;
-    border-left: none;
-    box-shadow: none;
-    transform: none;
-    transition: none;
-  }
-  body[data-mobile-tab="settings"] #drawerClose { display: none; }
-  body[data-mobile-tab="settings"] .drawer-header { padding-right: 14px; }
 
   /* --- Status bar — collapse to essential items only --- */
 }

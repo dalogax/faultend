@@ -34,21 +34,14 @@ class ViewRouter {
     }
 
     // Mobile bottom tab bar — toggles which dashboard column is visible.
-    // The Settings tab opens the existing settings drawer.
+    // Settings shows #settingsView (a real column), not a drawer.
     document.querySelectorAll('.mobile-tab').forEach(btn => {
       btn.addEventListener('click', () => {
         const tab = btn.dataset.mobileTab;
-        if (tab === 'settings') {
-          this.setMobileTab('settings');
-          this.openServerSettings();
-          return;
-        }
-        // Set the new tab *first* so the drawer.onCloseOnce fallback
-        // (which only fires when data-mobile-tab is still 'settings')
-        // won't overwrite our chosen tab.
         this.setMobileTab(tab);
-        const drawer = window.faultendApp.getDrawer();
-        if (drawer.isOpen()) drawer.close();
+        if (tab === 'settings') {
+          this._loadMobileSettings();
+        }
       });
     });
   }
@@ -60,20 +53,10 @@ class ViewRouter {
     });
   }
 
-  async openServerSettings() {
-    const drawer = window.faultendApp.getDrawer();
-    const app = window.faultendApp;
-    const server = app.servers.find(s => s.server_id === this.currentServerId);
-    const isOwner = server ? server.is_owner : false;
-    const isAdmin = server ? server.is_admin : false;
-    const canAdmin = isOwner || isAdmin;
+  // ── Shared settings HTML builders ────────────────────────────────────────
 
-    drawer.setHeader({
-      eyebrow: 'Server',
-      title: `${this.currentServerId} · settings`,
-      sub: !isOwner ? `You are ${isAdmin ? 'an admin' : 'a collaborator'} on this server.` : null
-    });
-    drawer.setContent(`
+  _buildSettingsBodyHTML(canAdmin) {
+    return `
       ${canAdmin ? `
       <div class="settings-section">
         <h3>Behaviour</h3>
@@ -116,21 +99,20 @@ class ViewRouter {
           </div>
         ` : ''}
       </div>
-    `);
-    drawer.setFooter(`
+    `;
+  }
+
+  _buildSettingsFooterHTML(isOwner) {
+    return `
       <button id="exportConfigBtn" class="btn-ghost btn-sm">${Icon.copy} Export</button>
       ${isOwner
         ? '<button id="deleteServerBtn" class="btn-danger btn-sm">Delete server</button>'
         : '<button id="leaveServerBtn" class="btn-danger btn-sm">Leave server</button>'}
-    `);
-    drawer.open();
-    drawer.onCloseOnce(() => {
-      // When the settings sheet closes on mobile, fall back to the Traffic tab.
-      if (document.body.dataset.mobileTab === 'settings') {
-        this.setMobileTab('traffic');
-      }
-    });
+    `;
+  }
 
+  _wireSettingsHandlers(isOwner, canAdmin) {
+    const app = window.faultendApp;
     document.getElementById('exportConfigBtn')?.addEventListener('click', () => this.exportServerConfig());
     DangerConfirm.wire(document.getElementById('deleteServerBtn'), {
       idleText: 'Delete server',
@@ -142,12 +124,64 @@ class ViewRouter {
       armedText: 'Click again to confirm',
       onConfirm: () => this.leaveCurrentServer()
     });
+  }
 
+  // ── Desktop: open settings in the right-side drawer ───────────────────────
+
+  async openServerSettings() {
+    const drawer = window.faultendApp.getDrawer();
+    const app = window.faultendApp;
+    const server = app.servers.find(s => s.server_id === this.currentServerId);
+    const isOwner = server ? server.is_owner : false;
+    const isAdmin = server ? server.is_admin : false;
+    const canAdmin = isOwner || isAdmin;
+
+    drawer.setHeader({
+      eyebrow: 'Server',
+      title: `${this.currentServerId} · settings`,
+      sub: !isOwner ? `You are ${isAdmin ? 'an admin' : 'a collaborator'} on this server.` : null
+    });
+    drawer.setContent(this._buildSettingsBodyHTML(canAdmin));
+    drawer.setFooter(this._buildSettingsFooterHTML(isOwner));
+    drawer.open();
+
+    this._wireSettingsHandlers(isOwner, canAdmin);
     if (canAdmin) {
       this.initBehaviourSection();
       this.initShareByLink();
     }
+    this.loadCollaborators(isOwner);
+  }
 
+  // ── Mobile: render settings into the #settingsView column ─────────────────
+
+  async _loadMobileSettings() {
+    const container = document.getElementById('settingsView');
+    if (!container) return;
+
+    const app = window.faultendApp;
+    const server = app.servers.find(s => s.server_id === this.currentServerId);
+    const isOwner = server ? server.is_owner : false;
+    const isAdmin = server ? server.is_admin : false;
+    const canAdmin = isOwner || isAdmin;
+
+    container.innerHTML = `
+      <div class="column-header">
+        <div class="column-title"><h2>Settings</h2></div>
+      </div>
+      <div class="settings-body">
+        ${this._buildSettingsBodyHTML(canAdmin)}
+      </div>
+      <div class="settings-footer">
+        ${this._buildSettingsFooterHTML(isOwner)}
+      </div>
+    `;
+
+    this._wireSettingsHandlers(isOwner, canAdmin);
+    if (canAdmin) {
+      this.initBehaviourSection();
+      this.initShareByLink();
+    }
     this.loadCollaborators(isOwner);
   }
 

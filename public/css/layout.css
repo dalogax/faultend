@@ -236,6 +236,24 @@ body {
 }
 .column-header .column-actions { display: flex; gap: var(--ft-sp-2); }
 
+/* Settings column — hidden on desktop (accessed via drawer button there);
+   shown on mobile when data-mobile-tab="settings" via mobile.css */
+#settingsView { display: none; }
+.settings-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+}
+.settings-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--ft-sp-3);
+  padding: 14px 20px;
+  border-top: 1px solid var(--ft-border);
+  background: var(--ft-surface-2);
+  flex-shrink: 0;
+}
+
 /* The traffic / rules inner shells fill the column */
 .traffic-container,
 .rules-container {
