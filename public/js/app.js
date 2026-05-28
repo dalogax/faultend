@@ -7,6 +7,7 @@ import ViewRouter from './router.js';
 import DrawerController from './drawer.js';
 import { initTrafficView, loadTrafficData, stopTrafficPolling } from './views/traffic.js';
 import { initRulesView, loadRulesData } from './views/rules.js';
+import { openProfilePanel } from './views/profile.js';
 import { authManager } from './auth.js';
 import { Icon } from './icons.js';
 import { initTheme, applyTheme, getEffectiveTheme } from './theme.js';
@@ -40,10 +41,11 @@ class App {
     // can trigger a fresh auto-login attempt.
     sessionStorage.removeItem('autoAuthRedirect');
     this.hideLoginOverlay();
-    this.wireUserControls();
 
     this.router = new ViewRouter();
     this.drawer = new DrawerController();
+
+    this.wireUserControls();
 
     initTrafficView();
     initRulesView();
@@ -72,10 +74,14 @@ class App {
   }
 
   wireUserControls() {
-    const logoutBtn = document.getElementById('logoutBtn');
-    if (logoutBtn) {
-      logoutBtn.style.display = 'inline-flex';
-      logoutBtn.addEventListener('click', () => authManager.signOut());
+    const user = authManager.getUser();
+    const profileBtn = document.getElementById('profileBtn');
+    if (profileBtn) {
+      // Fill the avatar with the user's initials
+      const initials = user ? (user.name || user.email || '??').slice(0, 2).toUpperCase() : '??';
+      profileBtn.textContent = initials;
+      profileBtn.style.display = 'inline-flex';
+      profileBtn.addEventListener('click', () => openProfilePanel(this.drawer));
     }
     initTheme();
   }

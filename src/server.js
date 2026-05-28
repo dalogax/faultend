@@ -12,6 +12,7 @@ const serversRouter = require('./api/servers');
 const authRouter = require('./auth/routes');
 const collaboratorsRouter = require('./api/collaborators');
 const inviteRouter = require('./api/invite');
+const meRouter = require('./api/me');
 const passport = require('./auth/passport');
 const { authRequired, requireServerAccess, requireOwner } = require('./auth/middleware');
 const metrics = require('./observability/metrics');
@@ -187,6 +188,13 @@ app.use('/api/invite', (req, res, next) => {
     return next();
   }
   inviteRouter(req, res, next);
+});
+
+app.use('/api/me', (req, res, next) => {
+  if (req.routeType !== 'app') {
+    return next();
+  }
+  meRouter(req, res, next);
 });
 
 app.use((req, res, next) => {

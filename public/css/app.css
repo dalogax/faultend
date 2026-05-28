@@ -106,3 +106,147 @@ code { font-family: var(--ft-mono); }
 [data-theme="dark"] .mock-body-editor .cm-keyword  { color: #e08050; }
 [data-theme="dark"] .mock-body-editor .CodeMirror  { background: var(--ft-surface-2); }
 [data-theme="dark"] .mock-body-editor .CodeMirror-focused { border-color: var(--ft-ink-5); }
+
+/* ── Profile button (top-bar avatar) ──────────────────────────────────────── */
+.profile-btn {
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+  background: var(--ft-ink-12);
+  color: var(--ft-ink-0);
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--ft-mono);
+  font-size: var(--ft-fs-11);
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  transition: opacity 0.15s;
+}
+.profile-btn:hover { opacity: 0.8; }
+
+/* ── Profile panel ─────────────────────────────────────────────────────────── */
+.profile-account {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: var(--ft-sp-5);
+  border-bottom: 1px solid var(--ft-hairline);
+  margin-bottom: var(--ft-sp-4);
+}
+.profile-avatar {
+  width: 36px;
+  height: 36px;
+  font-size: var(--ft-fs-13);
+  flex-shrink: 0;
+}
+.profile-identity {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.profile-name {
+  font-size: var(--ft-fs-14);
+  font-weight: 500;
+  color: var(--ft-fg-strong);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.profile-email {
+  font-size: var(--ft-fs-12);
+  color: var(--ft-fg-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.profile-section {
+  margin-bottom: var(--ft-sp-5);
+}
+.profile-section-label {
+  font-size: var(--ft-fs-11);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ft-fg-faint);
+  margin-bottom: var(--ft-sp-3);
+}
+.profile-plan-row {
+  display: flex;
+  align-items: center;
+  gap: var(--ft-sp-3);
+}
+.badge-plan {
+  background: var(--ft-ink-3);
+  color: var(--ft-fg-strong);
+  font-size: var(--ft-fs-11);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  padding: 2px 8px;
+  border-radius: 3px;
+}
+
+/* ── Quota bars ────────────────────────────────────────────────────────────── */
+.quota-row {
+  margin-bottom: var(--ft-sp-3);
+}
+.quota-label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 4px;
+}
+.quota-name {
+  font-size: var(--ft-fs-12);
+  color: var(--ft-fg-normal);
+}
+.quota-value {
+  font-family: var(--ft-mono);
+  font-size: var(--ft-fs-11);
+  color: var(--ft-fg-muted);
+}
+.quota-value.quota-warn { color: var(--ft-yellow, #d97706); }
+.quota-value.quota-full { color: var(--ft-red); }
+.quota-track {
+  height: 3px;
+  background: var(--ft-ink-3);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.quota-fill {
+  height: 100%;
+  background: var(--ft-ink-8);
+  border-radius: 2px;
+  transition: width 0.3s ease;
+}
+.quota-fill.quota-fill-warn { background: var(--ft-yellow, #d97706); }
+.quota-fill.quota-fill-full { background: var(--ft-red); }
+
+/* ── Profile footer ────────────────────────────────────────────────────────── */
+.btn-danger-ghost {
+  color: var(--ft-red) !important;
+}
+.btn-danger-ghost:hover {
+  background: color-mix(in srgb, var(--ft-red) 10%, transparent) !important;
+  border-color: var(--ft-red) !important;
+}
+.profile-delete-confirm {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ft-sp-3);
+  width: 100%;
+}
+.profile-delete-warning {
+  font-size: var(--ft-fs-12);
+  color: var(--ft-red);
+  line-height: 1.4;
+  margin: 0;
+}
+.profile-delete-actions {
+  display: flex;
+  gap: var(--ft-sp-2);
+  justify-content: flex-end;
+}

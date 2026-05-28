@@ -84,8 +84,8 @@ test.describe('Faultend E2E', () => {
 
     await expect(page.locator('#loginOverlay')).not.toBeVisible();
     await expect(page.locator('#mainContent')).toBeVisible();
-    // The logout button appears once the user is authenticated
-    await expect(page.locator('#logoutBtn')).toBeVisible();
+    // The profile button appears once the user is authenticated
+    await expect(page.locator('#profileBtn')).toBeVisible();
   });
 
   // ── Server management ─────────────────────────────────────────────────────

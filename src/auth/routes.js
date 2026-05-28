@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const passport = require('./passport');
-const { findUserById } = require('../storage/users');
+const { findUserById, deleteUser } = require('../storage/users');
 
 /**
  * Prevent open-redirect abuse of the post-OAuth redirectTo parameter.
@@ -113,6 +113,7 @@ router.get('/me', async (req, res) => {
       email: user.email,
       name: user.name,
       avatarUrl: user.avatar_url,
+      plan: user.plan || 'free',
       signedIn  // 'google' | 'github' | null — present only once after OAuth
     });
   } catch (error) {
@@ -130,6 +131,33 @@ router.post('/logout', (req, res) => {
     res.clearCookie('faultend.sid');
     res.json({ success: true });
   });
+});
+
+router.delete('/me', async (req, res) => {
+  if (!req.session || !req.session.userId) {
+    return res.status(401).json({ error: 'Unauthorized', message: 'Not logged in' });
+  }
+
+  const userId = req.session.userId;
+
+  try {
+    // Destroy the session first so the user is logged out immediately
+    await new Promise((resolve, reject) => {
+      req.session.destroy((err) => {
+        if (err) reject(err);
+        else resolve();
+      });
+    });
+    res.clearCookie('faultend.sid');
+
+    // Delete the user — cascades to servers, rules, traffic, collaborators, sessions
+    await deleteUser(userId);
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('[AUTH] Account deletion error:', error);
+    res.status(500).json({ error: 'Internal Server Error', message: error.message });
+  }
 });
 
 module.exports = router;

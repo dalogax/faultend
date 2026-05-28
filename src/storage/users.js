@@ -349,6 +349,59 @@ async function transferOwnership(serverId, newOwnerUserId) {
   }
 }
 
+async function deleteUser(userId) {
+  await pool.query('DELETE FROM users WHERE id = $1', [userId]);
+}
+
+const FREE_TIER_LIMITS = {
+  servers: 5,
+  rules: 100,
+  requests_day: 1_000,
+  requests_week: 100_000,
+  requests_month: 1_000_000,
+};
+
+async function getUserQuota(userId) {
+  // Get IDs of servers owned by this user
+  const ownedResult = await pool.query(
+    'SELECT id FROM servers WHERE owner_id = $1',
+    [userId]
+  );
+  const ownedServerIds = ownedResult.rows.map(r => r.id);
+
+  let rules = 0;
+  let requests_day = 0;
+  let requests_week = 0;
+  let requests_month = 0;
+
+  if (ownedServerIds.length > 0) {
+    const agg = await pool.query(
+      `SELECT
+        (SELECT COUNT(*) FROM rules WHERE server_id = ANY($1::bigint[])) AS rules,
+        (SELECT COUNT(*) FROM traffic WHERE server_id = ANY($1::bigint[]) AND timestamp > NOW() - INTERVAL '1 day') AS requests_day,
+        (SELECT COUNT(*) FROM traffic WHERE server_id = ANY($1::bigint[]) AND timestamp > NOW() - INTERVAL '7 days') AS requests_week,
+        (SELECT COUNT(*) FROM traffic WHERE server_id = ANY($1::bigint[]) AND timestamp > NOW() - INTERVAL '30 days') AS requests_month`,
+      [ownedServerIds]
+    );
+    const row = agg.rows[0];
+    rules = parseInt(row.rules) || 0;
+    requests_day = parseInt(row.requests_day) || 0;
+    requests_week = parseInt(row.requests_week) || 0;
+    requests_month = parseInt(row.requests_month) || 0;
+  }
+
+  return {
+    usage: {
+      servers: ownedServerIds.length,
+      rules,
+      requests_day,
+      requests_week,
+      requests_month,
+    },
+    limits: FREE_TIER_LIMITS,
+  };
+}
+
 module.exports = {
   createUser,
   findUserByGoogleId,
@@ -379,5 +432,7 @@ module.exports = {
   canAdminServer,
   makeAdmin,
   removeAdmin,
-  transferOwnership
+  transferOwnership,
+  deleteUser,
+  getUserQuota,
 };

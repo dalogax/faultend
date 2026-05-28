@@ -204,3 +204,13 @@ export async function acceptInvite(token) {
     method: 'POST'
   });
 }
+
+export async function fetchQuota() {
+  return request(`${API_BASE.app}/api/me/quota`);
+}
+
+export async function deleteAccount() {
+  return request(`${API_BASE.app}/api/auth/me`, {
+    method: 'DELETE'
+  });
+}

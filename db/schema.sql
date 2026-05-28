@@ -222,6 +222,19 @@ CREATE TABLE IF NOT EXISTS user_oauth_providers (
   UNIQUE(provider, provider_id)
 );
 
+-- Migration: Add plan column to users table
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'users' AND column_name = 'plan'
+  ) THEN
+    ALTER TABLE users ADD COLUMN plan VARCHAR(20) NOT NULL DEFAULT 'free';
+  END IF;
+END $$;
+
+-- Migration: Add user_oauth_providers table if it doesn't exist (handled above via CREATE TABLE IF NOT EXISTS)
+
 -- Indexes
 CREATE INDEX IF NOT EXISTS idx_traffic_server_id ON traffic(server_id);
 CREATE INDEX IF NOT EXISTS idx_traffic_timestamp ON traffic(timestamp DESC);

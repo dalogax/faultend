@@ -262,6 +262,65 @@ async function runTests() {
   });
 
   console.log('');
+  console.log('Section 6: Profile & Quota');
+  console.log('-'.repeat(70));
+
+  await test('GET /api/me/quota requires auth', async () => {
+    sessionCookie = null;
+    const res = await request('GET', '/api/me/quota', null, {}, 'app');
+    assertEqual(res.status, 401, 'Should require auth');
+  });
+
+  await test('GET /api/me/quota returns usage and limits', async () => {
+    await login();
+    const res = await request('GET', '/api/me/quota', null, {}, 'app');
+    assertEqual(res.status, 200, 'Should return quota');
+    assertTrue(res.body.usage !== undefined, 'Should have usage');
+    assertTrue(res.body.limits !== undefined, 'Should have limits');
+    assertTrue(typeof res.body.usage.servers === 'number', 'usage.servers should be number');
+    assertTrue(typeof res.body.usage.rules === 'number', 'usage.rules should be number');
+    assertTrue(typeof res.body.usage.requests_day === 'number', 'usage.requests_day should be number');
+    assertTrue(typeof res.body.usage.requests_week === 'number', 'usage.requests_week should be number');
+    assertTrue(typeof res.body.usage.requests_month === 'number', 'usage.requests_month should be number');
+    assertEqual(res.body.limits.servers, 5, 'Free tier server limit should be 5');
+    assertEqual(res.body.limits.rules, 100, 'Free tier rules limit should be 100');
+    assertEqual(res.body.limits.requests_day, 1000, 'Free tier daily limit should be 1000');
+  });
+
+  await test('GET /api/auth/me includes plan field', async () => {
+    const res = await request('GET', '/api/auth/me', null, {}, 'app');
+    assertEqual(res.status, 200, 'Should return user');
+    assertTrue(res.body.plan !== undefined, 'Should have plan field');
+    assertEqual(res.body.plan, 'free', 'Default plan should be free');
+  });
+
+  await test('DELETE /api/auth/me requires auth', async () => {
+    sessionCookie = null;
+    const res = await request('DELETE', '/api/auth/me', null, {}, 'app');
+    assertEqual(res.status, 401, 'Should require auth');
+  });
+
+  await test('DELETE /api/auth/me deletes account and clears session', async () => {
+    // Create a fresh session to delete (separate from the main test session)
+    const savedCookie = sessionCookie;
+    sessionCookie = null;
+
+    // Log in as a fresh dev user
+    await login();
+    const deleteRes = await request('DELETE', '/api/auth/me', null, {}, 'app');
+    assertEqual(deleteRes.status, 200, 'Should delete account');
+    assertTrue(deleteRes.body.success, 'Should return success');
+
+    // The session should no longer work
+    const meRes = await request('GET', '/api/auth/me', null, {}, 'app');
+    assertEqual(meRes.status, 401, 'Session should be invalidated after deletion');
+
+    // Restore the main test session and user for any subsequent tests
+    sessionCookie = null;
+    await login();
+  });
+
+  console.log('');
 
   testServer.close();
   await pool.end();
