@@ -42,6 +42,9 @@
   box-sizing: border-box;
 }
 
+/* Mobile server cards — hidden on desktop, shown on mobile */
+.server-cards { display: none; }
+
 /* Mobile bottom tab bar — 56px + iOS home-indicator safe area */
 .mobile-tab-bar {
   display: none;
@@ -89,32 +92,109 @@
   .url-chip code { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
   .top-bar-right .btn-ghost.btn-sm { display: none !important; } /* Settings/Logout hide; tab bar handles Settings */
 
-  /* --- Server list — collapse table into card rows --- */
+  /* --- Server list — hide desktop table, show mobile cards --- */
   #serverListView { padding: var(--ft-sp-4) var(--ft-sp-4); }
   .stat-strip { grid-template-columns: 1fr 1fr; }
   .stat:nth-child(2n) { border-right: none; }
   .stat:nth-child(n+3) { border-top: 1px solid var(--ft-hairline); }
-  .server-table thead { display: none; }
-  .server-table, .server-table tbody, .server-table tr, .server-table td { display: block; width: 100%; }
-  .server-table tr {
-    border-bottom: 1px solid var(--ft-hairline);
-    padding: 10px 12px;
+  .server-table-container { display: none; }
+  .server-cards {
+    display: block;
+    border: 1px solid var(--ft-border-strong);
     background: var(--ft-surface);
-    position: relative;
   }
-  .server-table td { padding: 0; border: none; }
-  .server-table td.status-cell {
-    position: absolute; left: 12px; top: 14px; width: auto; padding: 0;
+  .server-card {
+    display: flex;
+    align-items: stretch;
+    padding: 12px;
+    border-bottom: 1px solid var(--ft-hairline);
+    gap: 10px;
+    cursor: pointer;
   }
-  .server-table td.text-strong { padding-left: 18px; font-size: var(--ft-fs-14); }
-  .server-table td .server-url {
-    display: block; padding-left: 18px;
-    font-family: var(--ft-mono); font-size: var(--ft-fs-11); color: var(--ft-fg-muted);
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  .server-card:last-child { border-bottom: none; }
+  .server-card:active { background: var(--ft-ink-2); }
+  .server-card-dot {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: 5px;
+    flex-shrink: 0;
+    width: 12px;
   }
-  .server-table td.muted { display: none; } /* Created column hidden on mobile */
-  .server-table td:nth-last-child(-n+3) { display: inline-block; padding-left: 18px; margin-right: 12px; font-size: var(--ft-fs-11); color: var(--ft-fg-muted); }
-  .server-table td:last-child { display: none; } /* chevron hidden */
+  .server-card-body {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+  .server-card-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .server-card-name {
+    font-size: var(--ft-fs-14);
+    font-weight: 500;
+    color: var(--ft-fg-strong);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .server-card-time {
+    font-family: var(--ft-mono);
+    font-size: var(--ft-fs-11);
+    color: var(--ft-fg-faint);
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .server-card-url {
+    font-family: var(--ft-mono);
+    font-size: var(--ft-fs-11);
+    color: var(--ft-fg-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .server-card-meta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 4px;
+    flex-wrap: wrap;
+  }
+  .server-card-meta .role-badge {
+    font-size: 10px;
+    padding: 0 5px;
+    height: 15px;
+  }
+  .server-card-sep {
+    width: 1px;
+    height: 10px;
+    background: var(--ft-border);
+    flex-shrink: 0;
+  }
+  .server-card-stat {
+    font-family: var(--ft-mono);
+    font-size: var(--ft-fs-11);
+    color: var(--ft-fg-muted);
+  }
+  .server-card-stat b {
+    color: var(--ft-fg-strong);
+    font-weight: 400;
+  }
+  .server-card-sharing {
+    font-family: var(--ft-mono);
+    font-size: var(--ft-fs-11);
+    color: var(--ft-fg-faint);
+  }
+  .server-card-chevron {
+    display: flex;
+    align-items: center;
+    color: var(--ft-fg-faint);
+    flex-shrink: 0;
+  }
 
   /* --- Two-column dashboard → one column driven by data-mobile-tab --- */
   .two-column-layout { grid-template-columns: 1fr; }

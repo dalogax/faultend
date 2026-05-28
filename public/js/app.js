@@ -176,6 +176,8 @@ class App {
       `;
     }).join('');
 
+    const mobileCards = this.renderMobileCards();
+
     content.innerHTML = `
       ${strip}
       <div class="server-table-container">
@@ -197,6 +199,7 @@ class App {
           <tbody>${rows}</tbody>
         </table>
       </div>
+      <div class="server-cards">${mobileCards}</div>
     `;
     this.hydrateStatsSummary();
   }
@@ -239,6 +242,48 @@ class App {
       return `<span class="share-cell">${Icon.people}<span class="share-label">Shared</span><span class="share-meta">· ${collaborators}</span></span>`;
     }
     return `<span class="share-cell">${Icon.person}<span>Private</span></span>`;
+  }
+
+  renderMobileCards() {
+    return this.servers.map(server => {
+      const serverUrl = buildSubdomainUrl(server.server_id);
+      const collaborators = parseInt(server.collaborators_count) || 0;
+      const status = server.status || 'idle';
+      const role = server.role || 'collaborator';
+      const lastSeen = this.formatRelativeTime(server.last_traffic_at);
+      const trafficCount = (parseInt(server.traffic_count) || 0).toLocaleString();
+      const rulesCount = parseInt(server.rules_count) || 0;
+      const sharingText = this.renderCardSharingText(server, collaborators);
+      return `
+        <div class="server-card server-row" data-server-id="${server.server_id}">
+          <div class="server-card-dot">
+            <span class="server-status-dot ${status}"></span>
+          </div>
+          <div class="server-card-body">
+            <div class="server-card-head">
+              <span class="server-card-name">${server.server_id}</span>
+              ${lastSeen !== '—' ? `<span class="server-card-time">${lastSeen}</span>` : ''}
+            </div>
+            <div class="server-card-url">${serverUrl}</div>
+            <div class="server-card-meta">
+              <span class="role-badge role-${role}">${role}</span>
+              <span class="server-card-sep"></span>
+              <span class="server-card-stat"><b>${trafficCount}</b> req</span>
+              <span class="server-card-sep"></span>
+              <span class="server-card-stat"><b>${rulesCount}</b> rules</span>
+              <span class="server-card-sep"></span>
+              <span class="server-card-sharing">${sharingText}</span>
+            </div>
+          </div>
+          <div class="server-card-chevron">${Icon.chevronRight}</div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  renderCardSharingText(server, collaborators) {
+    if (collaborators > 0) return `shared · ${collaborators}`;
+    return server.is_owner ? 'private' : 'shared';
   }
 
   formatDate(timestamp) {
