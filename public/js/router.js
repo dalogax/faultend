@@ -35,10 +35,12 @@ class ViewRouter {
 
     // Mobile bottom tab bar — toggles which dashboard column is visible.
     // Settings shows #settingsView (a real column), not a drawer.
+    // Any open drawer (profile, rule editor, etc.) is dismissed instantly on tab switch.
     document.querySelectorAll('.mobile-tab').forEach(btn => {
       btn.addEventListener('click', () => {
         const tab = btn.dataset.mobileTab;
         this.setMobileTab(tab);
+        window.faultendApp.getDrawer().closeInstant();
         if (tab === 'settings') {
           this._loadMobileSettings();
         }

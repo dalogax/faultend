@@ -41,6 +41,19 @@ class DrawerController {
     }
   }
 
+  // Close without slide animation — used when switching mobile tabs so
+  // any incidentally-open drawer (profile, rule editor, etc.) vanishes instantly.
+  closeInstant() {
+    if (!this.isOpen()) return;
+    this.drawer.style.transition = 'none';
+    this.overlay.style.transition = 'none';
+    this.close();
+    requestAnimationFrame(() => {
+      this.drawer.style.transition = '';
+      this.overlay.style.transition = '';
+    });
+  }
+
   onCloseOnce(fn) {
     this._onCloseOnce = fn;
   }
