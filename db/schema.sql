@@ -235,6 +235,17 @@ END $$;
 
 -- Migration: Add user_oauth_providers table if it doesn't exist (handled above via CREATE TABLE IF NOT EXISTS)
 
+-- Migration: Add is_admin column to users table (platform admin flag, separate from server-level roles)
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_name = 'users' AND column_name = 'is_admin'
+  ) THEN
+    ALTER TABLE users ADD COLUMN is_admin BOOLEAN NOT NULL DEFAULT false;
+  END IF;
+END $$;
+
 -- Indexes
 CREATE INDEX IF NOT EXISTS idx_traffic_server_id ON traffic(server_id);
 CREATE INDEX IF NOT EXISTS idx_traffic_timestamp ON traffic(timestamp DESC);

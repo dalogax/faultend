@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin · Faultend</title>
+  <link rel="icon" type="image/x-icon" href="/img/favicon.ico">
+
+  <!-- Fonts (self-hosted) -->
+  <link rel="stylesheet" href="/fonts/fonts.css">
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="/css/reset.css">
+  <link rel="stylesheet" href="/css/variables.css">
+  <link rel="stylesheet" href="/css/components.css">
+  <link rel="stylesheet" href="/css/layout.css">
+  <link rel="stylesheet" href="/css/app.css">
+  <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body>
+
+  <!-- Top Bar -->
+  <header class="top-bar">
+    <a href="/" class="logo-link">
+      <img src="/img/faultend.svg" alt="faultend" class="logo">
+      <span class="brand">faultend</span>
+    </a>
+    <div class="top-bar-spacer"></div>
+    <div class="top-bar-right">
+      <button id="themeToggleBtn" class="btn-icon" title="Toggle dark mode" aria-label="Toggle dark mode"></button>
+      <a href="/" class="btn-ghost btn-sm" title="Back to app">← App</a>
+      <button id="profileBtn" class="profile-btn" title="Profile" aria-label="Profile" style="display: none;"></button>
+    </div>
+  </header>
+
+  <!-- Toast container -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <div class="admin-layout">
+    <div class="admin-container">
+
+      <!-- Page header -->
+      <div class="admin-page-header">
+        <div class="admin-page-title">
+          <h1>Users</h1>
+          <span class="admin-badge">Admin</span>
+        </div>
+        <span id="adminStatLabel" class="admin-stat"></span>
+      </div>
+
+      <!-- User list view -->
+      <div id="userListView">
+        <div class="admin-toolbar">
+          <input
+            id="searchInput"
+            type="search"
+            class="admin-search"
+            placeholder="Search by email or name…"
+            autocomplete="off"
+          >
+          <select id="planFilter" class="admin-select">
+            <option value="">All plans</option>
+            <option value="free">Free</option>
+            <option value="pro">Pro</option>
+          </select>
+        </div>
+
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Plan</th>
+              <th>Servers</th>
+              <th>Joined</th>
+            </tr>
+          </thead>
+          <tbody id="userTableBody">
+            <tr><td colspan="5" class="admin-empty">Loading…</td></tr>
+          </tbody>
+        </table>
+
+        <div id="paginationRow" class="admin-pagination"></div>
+      </div>
+
+      <!-- User detail view (hidden by default) -->
+      <div id="userDetailView" style="display: none;">
+        <div class="detail-back">
+          <button id="backBtn" class="btn-ghost btn-sm">← Back to users</button>
+        </div>
+        <div class="detail-header">
+          <h2 id="detailName"></h2>
+          <div id="detailEmail" class="detail-email"></div>
+        </div>
+        <div id="detailContent" class="detail-grid"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <script type="module" src="/js/admin.js"></script>
+</body>
+</html>

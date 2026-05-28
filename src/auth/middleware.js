@@ -81,8 +81,24 @@ async function requireOwner(req, res, next) {
   next();
 }
 
+/**
+ * Requires the logged-in user to be a platform admin (users.is_admin = true).
+ * Must run after authRequired (which populates req.user).
+ * NOTE: This is unrelated to server-level admin roles (server_collaborators.role).
+ */
+async function requirePlatformAdmin(req, res, next) {
+  if (!req.user || !req.user.is_admin) {
+    return res.status(403).json({
+      error: 'Forbidden',
+      message: 'Platform admin access required'
+    });
+  }
+  next();
+}
+
 module.exports = {
   authRequired,
   requireServerAccess,
-  requireOwner
+  requireOwner,
+  requirePlatformAdmin
 };

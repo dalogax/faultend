@@ -404,6 +404,100 @@ async function getUserQuota(userId) {
   };
 }
 
+// ─── Platform admin functions ─────────────────────────────────────────────────
+// NOTE: "platform admin" (users.is_admin) is completely separate from
+// "server admin" (server_collaborators.role). Don't conflate the two.
+
+async function getAdminUserList({ page = 1, limit = 50, search = '', plan = '' } = {}) {
+  const filterParams = [];
+  const conditions = [];
+
+  if (search) {
+    filterParams.push(`%${search}%`);
+    conditions.push(`(u.email ILIKE $${filterParams.length} OR u.name ILIKE $${filterParams.length})`);
+  }
+  if (plan) {
+    filterParams.push(plan);
+    conditions.push(`u.plan = $${filterParams.length}`);
+  }
+
+  const where = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+  const offset = (page - 1) * limit;
+  const limitIdx = filterParams.length + 1;
+  const offsetIdx = filterParams.length + 2;
+
+  const [listResult, countResult] = await Promise.all([
+    pool.query(
+      `SELECT u.id, u.email, u.name, u.plan, u.is_admin, u.created_at,
+              (SELECT COUNT(*) FROM servers WHERE owner_id = u.id) AS server_count
+       FROM users u
+       ${where}
+       ORDER BY u.created_at DESC
+       LIMIT $${limitIdx} OFFSET $${offsetIdx}`,
+      [...filterParams, limit, offset]
+    ),
+    pool.query(
+      `SELECT COUNT(*) FROM users u ${where}`,
+      filterParams
+    )
+  ]);
+
+  return {
+    users: listResult.rows,
+    total: parseInt(countResult.rows[0].count),
+    page,
+    limit
+  };
+}
+
+async function getAdminUserDetail(userId) {
+  const userResult = await pool.query(
+    `SELECT u.*,
+            COALESCE(
+              array_agg(DISTINCT uop.provider) FILTER (WHERE uop.provider IS NOT NULL),
+              '{}'
+            ) AS providers
+     FROM users u
+     LEFT JOIN user_oauth_providers uop ON uop.user_id = u.id
+     WHERE u.id = $1
+     GROUP BY u.id`,
+    [userId]
+  );
+  if (!userResult.rows[0]) return null;
+
+  const user = userResult.rows[0];
+  const quota = await getUserQuota(userId);
+  return { ...user, quota };
+}
+
+async function setUserPlan(userId, plan) {
+  const result = await pool.query(
+    'UPDATE users SET plan = $1 WHERE id = $2 RETURNING *',
+    [plan, userId]
+  );
+  return result.rows[0] || null;
+}
+
+/**
+ * Grants is_admin = true to the user matching INITIAL_ADMIN_EMAIL env var.
+ * Runs at startup (idempotent). If the user hasn't logged in yet, logs a
+ * warning — re-running after their first login will succeed.
+ */
+async function ensureInitialAdmin() {
+  const email = process.env.INITIAL_ADMIN_EMAIL;
+  if (!email) return;
+
+  const result = await pool.query(
+    'UPDATE users SET is_admin = true WHERE email = $1 RETURNING email',
+    [email.trim().toLowerCase()]
+  );
+  if (result.rowCount > 0) {
+    console.log(`[INIT] Platform admin granted to: ${email}`);
+  } else {
+    console.log(`[INIT] INITIAL_ADMIN_EMAIL=${email} — user not in DB yet; restart after their first login`);
+  }
+}
+
 module.exports = {
   createUser,
   findUserByGoogleId,
@@ -437,4 +531,8 @@ module.exports = {
   transferOwnership,
   deleteUser,
   getUserQuota,
+  getAdminUserList,
+  getAdminUserDetail,
+  setUserPlan,
+  ensureInitialAdmin,
 };

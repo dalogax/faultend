@@ -321,6 +321,82 @@ async function runTests() {
   });
 
   console.log('');
+  console.log('Section 7: Platform Admin');
+  console.log('-'.repeat(70));
+
+  await test('GET /api/admin/users returns 403 for non-admin users', async () => {
+    // Ensure we are logged in as a regular (non-admin) user
+    const meRes = await request('GET', '/api/auth/me', null, {}, 'app');
+    assertEqual(meRes.status, 200, 'Should be logged in');
+    assertTrue(!meRes.body.isAdmin, 'Should not be admin yet');
+
+    const res = await request('GET', '/api/admin/users', null, {}, 'app');
+    assertEqual(res.status, 403, 'Non-admin should get 403');
+  });
+
+  await test('/api/auth/me includes isAdmin field', async () => {
+    const res = await request('GET', '/api/auth/me', null, {}, 'app');
+    assertEqual(res.status, 200, 'Should return user');
+    assertTrue(res.body.isAdmin !== undefined, 'Should have isAdmin field');
+    assertEqual(res.body.isAdmin, false, 'Default user should not be admin');
+  });
+
+  await test('Platform admin can list users', async () => {
+    // Grant admin directly in the DB (simulates INITIAL_ADMIN_EMAIL on startup)
+    const meRes = await request('GET', '/api/auth/me', null, {}, 'app');
+    const userId = meRes.body.id;
+    await pool.query('UPDATE users SET is_admin = true WHERE id = $1', [userId]);
+
+    const res = await request('GET', '/api/admin/users', null, {}, 'app');
+    assertEqual(res.status, 200, 'Admin should be able to list users');
+    assertTrue(Array.isArray(res.body.users), 'Should return users array');
+    assertTrue(typeof res.body.total === 'number', 'Should return total count');
+    assertTrue(res.body.users.length > 0, 'Should have at least one user');
+
+    // Cleanup: revoke admin
+    await pool.query('UPDATE users SET is_admin = false WHERE id = $1', [userId]);
+  });
+
+  await test('Platform admin can get user detail', async () => {
+    const meRes = await request('GET', '/api/auth/me', null, {}, 'app');
+    const userId = meRes.body.id;
+    await pool.query('UPDATE users SET is_admin = true WHERE id = $1', [userId]);
+
+    const res = await request('GET', `/api/admin/users/${userId}`, null, {}, 'app');
+    assertEqual(res.status, 200, 'Admin should get user detail');
+    assertTrue(res.body.email !== undefined, 'Should have email');
+    assertTrue(res.body.quota !== undefined, 'Should have quota');
+
+    await pool.query('UPDATE users SET is_admin = false WHERE id = $1', [userId]);
+  });
+
+  await test('Platform admin can set user plan', async () => {
+    const meRes = await request('GET', '/api/auth/me', null, {}, 'app');
+    const userId = meRes.body.id;
+    await pool.query('UPDATE users SET is_admin = true WHERE id = $1', [userId]);
+
+    const res = await request('POST', `/api/admin/users/${userId}/set-plan`, { plan: 'pro' }, {}, 'app');
+    assertEqual(res.status, 200, 'Admin should be able to set plan');
+    assertTrue(res.body.success, 'Should return success');
+    assertEqual(res.body.user.plan, 'pro', 'Plan should be updated to pro');
+
+    // Restore to free
+    await request('POST', `/api/admin/users/${userId}/set-plan`, { plan: 'free' }, {}, 'app');
+    await pool.query('UPDATE users SET is_admin = false WHERE id = $1', [userId]);
+  });
+
+  await test('set-plan rejects invalid plan values', async () => {
+    const meRes = await request('GET', '/api/auth/me', null, {}, 'app');
+    const userId = meRes.body.id;
+    await pool.query('UPDATE users SET is_admin = true WHERE id = $1', [userId]);
+
+    const res = await request('POST', `/api/admin/users/${userId}/set-plan`, { plan: 'enterprise' }, {}, 'app');
+    assertEqual(res.status, 400, 'Should reject invalid plan');
+
+    await pool.query('UPDATE users SET is_admin = false WHERE id = $1', [userId]);
+  });
+
+  console.log('');
 
   testServer.close();
   await pool.end();

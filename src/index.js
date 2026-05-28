@@ -4,7 +4,7 @@ const os = require('os');
 const server = require('./server');
 const { migrateWithRetry } = require('./db/migrate');
 const { testConnection } = require('./db/pool');
-const { createUser, findUserByGoogleId, createServer, serverExists } = require('./storage/users');
+const { createUser, findUserByGoogleId, createServer, serverExists, ensureInitialAdmin } = require('./storage/users');
 const { addRule } = require('./rules/rulesEngine');
 const { purgeExpiredLogs } = require('./storage/traffic');
 const metrics = require('./observability/metrics');
@@ -227,6 +227,8 @@ async function runPrimary() {
 
     await migrateWithRetry();
     console.log('[INIT] Database migrated successfully');
+
+    await ensureInitialAdmin();
   } catch (error) {
     console.error('[INIT] Database setup failed:', error.message);
     console.log('[INIT] Continuing without database - auth and persistence features disabled');

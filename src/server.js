@@ -13,8 +13,9 @@ const authRouter = require('./auth/routes');
 const collaboratorsRouter = require('./api/collaborators');
 const inviteRouter = require('./api/invite');
 const meRouter = require('./api/me');
+const adminRouter = require('./api/admin');
 const passport = require('./auth/passport');
-const { authRequired, requireServerAccess, requireOwner } = require('./auth/middleware');
+const { authRequired, requireServerAccess, requireOwner, requirePlatformAdmin } = require('./auth/middleware');
 const metrics = require('./observability/metrics');
 const { version } = require('../package.json');
 
@@ -132,6 +133,9 @@ app.use((req, res, next) => {
     if (req.path === '/' || req.path === '/index.html' || req.path === '/app.html') {
       return res.sendFile(path.join(__dirname, '../public/app.html'));
     }
+    if (req.path === '/admin' || req.path === '/admin.html') {
+      return res.sendFile(path.join(__dirname, '../public/admin.html'));
+    }
     return next();
   }
 
@@ -195,6 +199,16 @@ app.use('/api/me', (req, res, next) => {
     return next();
   }
   meRouter(req, res, next);
+});
+
+app.use('/api/admin', (req, res, next) => {
+  if (req.routeType !== 'app') {
+    return next();
+  }
+  requirePlatformAdmin(req, res, (err) => {
+    if (err) return next(err);
+    adminRouter(req, res, next);
+  });
 });
 
 app.use((req, res, next) => {

@@ -83,6 +83,11 @@ class App {
       profileBtn.style.display = 'inline-flex';
       profileBtn.addEventListener('click', () => openProfilePanel(this.drawer));
     }
+    // Show admin panel link for platform admins only
+    const adminBtn = document.getElementById('adminBtn');
+    if (adminBtn && user && user.isAdmin) {
+      adminBtn.style.display = 'inline-flex';
+    }
     initTheme();
   }
 

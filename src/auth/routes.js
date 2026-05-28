@@ -114,6 +114,7 @@ router.get('/me', async (req, res) => {
       name: user.name,
       avatarUrl: user.avatar_url,
       plan: user.plan || 'free',
+      isAdmin: user.is_admin || false,
       signedIn  // 'google' | 'github' | null — present only once after OAuth
     });
   } catch (error) {
