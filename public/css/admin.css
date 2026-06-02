@@ -99,26 +99,6 @@
   color: var(--ft-fg-faint);
 }
 
-/* Plan badges — colour-only modifiers; must be combined with .badge from components.css */
-.badge-plan-free {
-  background: var(--ft-surface-2);
-  color: var(--ft-fg-muted);
-  border-color: var(--ft-border);
-}
-
-.badge-plan-pro {
-  background: var(--ft-surface-2);
-  color: var(--ft-fg-strong);
-  border-color: var(--ft-fg-strong);
-}
-
-/* Platform admin indicator — level 3 (highest); solid fill, matches role-owner */
-.badge-platform-admin {
-  background: var(--ft-ink-12);
-  color: var(--ft-ink-0);
-  border-color: var(--ft-ink-12);
-  margin-left: var(--ft-sp-2);
-}
 
 /* Pagination */
 .admin-pagination {

@@ -200,6 +200,11 @@
 .role-badge.role-owner { background: var(--ft-ink-12); color: var(--ft-ink-0); border-color: var(--ft-ink-12); }
 .role-badge.role-admin { color: var(--ft-fg-strong); border-color: var(--ft-fg-strong); }
 
+/* Plan / tier badges — 3-level ink hierarchy; colour-only modifiers on top of .badge */
+.badge-plan-free     { background: var(--ft-surface-2); color: var(--ft-fg-muted);   border-color: var(--ft-border);      }
+.badge-plan-pro      { background: var(--ft-surface-2); color: var(--ft-fg-strong);  border-color: var(--ft-fg-strong);   }
+.badge-platform-admin{ background: var(--ft-ink-12);    color: var(--ft-ink-0);      border-color: var(--ft-ink-12); margin-left: var(--ft-sp-2); }
+
 /* Auto-refresh toggle (lives in Traffic column-actions) */
 .auto-refresh-toggle {
   display: inline-flex;
