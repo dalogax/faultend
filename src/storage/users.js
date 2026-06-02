@@ -363,12 +363,26 @@ const FREE_TIER_LIMITS = {
   requests_month: 1_000_000,
 };
 
+const PRO_TIER_LIMITS = {
+  servers: 50,
+  rules: 1_000,
+  requests_day: 10_000,
+  requests_week: 1_000_000,
+  requests_month: 10_000_000,
+};
+
+function getPlanLimits(plan) {
+  if (plan === 'pro') return PRO_TIER_LIMITS;
+  return FREE_TIER_LIMITS;
+}
+
 async function getUserQuota(userId) {
-  // Get IDs of servers owned by this user
-  const ownedResult = await pool.query(
-    'SELECT id FROM servers WHERE owner_id = $1',
-    [userId]
-  );
+  // Get user plan and owned server IDs in parallel
+  const [userResult, ownedResult] = await Promise.all([
+    pool.query('SELECT plan FROM users WHERE id = $1', [userId]),
+    pool.query('SELECT id FROM servers WHERE owner_id = $1', [userId]),
+  ]);
+  const plan = userResult.rows[0]?.plan || 'free';
   const ownedServerIds = ownedResult.rows.map(r => r.id);
 
   let rules = 0;
@@ -400,7 +414,7 @@ async function getUserQuota(userId) {
       requests_week,
       requests_month,
     },
-    limits: FREE_TIER_LIMITS,
+    limits: getPlanLimits(plan),
   };
 }
 
