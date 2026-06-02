@@ -47,7 +47,7 @@ function renderBody(user, quota) {
     <div class="profile-section">
       <div class="profile-section-label">Plan</div>
       <div class="profile-plan-row">
-        <span class="badge badge-plan">${escapeHtml(planLabel)}</span>
+        <span class="badge badge-plan-${escapeHtml(user.plan || 'free')}">${escapeHtml(planLabel)}</span>${user.isAdmin ? ' <span class="badge badge-platform-admin">admin</span>' : ''}
       </div>
     </div>
 

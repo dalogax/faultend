@@ -255,10 +255,6 @@
   color: var(--ft-fg-muted);
 }
 
-/* Role badges */
-.badge-owner  { background: var(--ft-ink-12); color: var(--ft-ink-0);   }
-.badge-admin  { background: var(--ft-ink-10); color: var(--ft-ink-0);   }
-.badge-shared { background: var(--ft-ink-3);  color: var(--ft-ink-10);  }
 
 /* ============================================================
    LATENCY BAR — inline density signal for the traffic table.

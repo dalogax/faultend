@@ -169,16 +169,24 @@ CSS classes in `components.css`:
 /* Method  */    .badge-get  .badge-post  .badge-put  .badge-patch  .badge-delete  .badge-options  .badge-head  .badge-any
 /* Status  */    .badge-status-2xx  .badge-status-3xx  .badge-status-4xx  .badge-status-5xx
 /* Action  */    .badge-action-mock  .badge-action-proxy  .badge-action-delay  .badge-action-transform
-/* Role    */    .badge-outline  .badge-owner  .badge-admin  .badge-shared
-/* Server  */    .role-badge  .role-badge.role-owner  .role-badge.role-admin
+/* Server role */  .role-badge  .role-badge.role-admin  .role-badge.role-owner
+/* Plan / tier */  .badge-plan-free  .badge-plan-pro  .badge-platform-admin
 ```
+
+**3-level ink-scale hierarchy** (used for both server roles and account tiers):
+
+| Level | Server role | Account tier | Style |
+|-------|-------------|--------------|-------|
+| 1 – low  | collaborator | free  | ghost: `surface-2` bg, `border` border, `fg-muted` text |
+| 2 – mid  | admin        | pro   | strong outline: `surface-2` bg, `fg-strong` border + text |
+| 3 – high | owner        | admin | solid fill: `ink-12` bg + border, `ink-0` text |
 
 **Rules:**
 - Never add `border-radius` to badges.
 - Never use `font-weight: 600` on badges.
 - Use `.badge-outline` for neutral meta labels (json, regex, local, etc.).
 - Custom badge colours must use existing `--ft-a-*` or `--ft-s-*` token pairs. No new hardcoded hex colours.
-- To signal "admin" / "elevated", use the amber family (`--ft-amber-bg`, `--ft-amber-line`, `--ft-amber-ink`) — that is what it is for.
+- Use the 3-level ink hierarchy above for any role or tier badge. Amber is **not** used for roles or plans — it is reserved for fault/warning indicators (quota ≥ 80%, warning states).
 
 ---
 
