@@ -283,7 +283,7 @@ class ViewRouter {
       container.innerHTML = result.collaborators.map(c => {
         const isSelf = c.id === currentUserId;
         const isCollabOwner = c.role === 'owner';
-        const roleClass = isCollabOwner ? 'owner' : c.role === 'admin' ? 'admin' : 'shared';
+        const roleBadgeClass = isCollabOwner ? 'role-owner' : c.role === 'admin' ? 'role-admin' : '';
         const roleLabel = isCollabOwner ? 'owner' : c.role === 'admin' ? 'admin' : 'collaborator';
         const name = c.name || c.email;
         const actions = [];
@@ -301,7 +301,7 @@ class ViewRouter {
             <div class="collab-id">
               <span class="collab-avatar">${escapeHtml(name.slice(0, 2).toUpperCase())}</span>
               <span class="collab-name">${escapeHtml(name)}</span>
-              <span class="badge badge-${escapeHtml(roleClass)}">${escapeHtml(roleLabel)}</span>
+              <span class="role-badge ${escapeHtml(roleBadgeClass)}">${escapeHtml(roleLabel)}</span>
             </div>
             <div class="collab-actions">${actions.join('')}</div>
           </div>
