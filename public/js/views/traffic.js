@@ -2,6 +2,7 @@ import { fetchTraffic, clearTraffic } from '../api.js';
 import { Toast, DangerConfirm, highlightJSON, escapeHtml } from '../components.js';
 import { Icon, methodBadgeClass } from '../icons.js';
 import { getRuleById, ruleLabels, renderLabelStack } from './rules.js';
+import { buildSubdomainUrl } from '../config.js';
 
 let trafficTable = null;
 
@@ -441,6 +442,7 @@ class TrafficDetail {
     `);
     drawer.setFooter(`
       <button class="btn-ghost btn-sm" id="trafficDetailClose">Close</button>
+      <button class="btn-ghost btn-sm" id="copyCurlBtn">${Icon.copy} Copy as cURL</button>
       <button class="btn btn-sm" id="createRuleFromTrafficBtn">Create rule from this</button>
     `);
     drawer.open();
@@ -536,9 +538,55 @@ class TrafficDetail {
     `;
   }
 
+  buildCurlCommand() {
+    const { method, path, query, headers, body } = this.log.request;
+
+    // Reconstruct the full proxy URL, including any query-string parameters.
+    const baseUrl = buildSubdomainUrl(this.serverId);
+    let url = `${baseUrl}${path}`;
+    const queryEntries = Object.entries(query || {});
+    if (queryEntries.length > 0) {
+      const qs = queryEntries
+        .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
+        .join('&');
+      url += `?${qs}`;
+    }
+
+    // Shell-safe single-quote escaping: replace ' with '\''
+    const sq = (s) => `'${String(s).replace(/'/g, "'\\''")}'`;
+
+    const parts = [`curl -X ${method} ${sq(url)}`];
+
+    // Headers — drop hop-by-hop and auto-generated fields that curl sets itself.
+    const skipHeaders = new Set(['host', 'content-length', 'transfer-encoding', 'connection']);
+    for (const [name, value] of Object.entries(headers || {})) {
+      if (!skipHeaders.has(name.toLowerCase())) {
+        parts.push(`  -H ${sq(`${name}: ${value}`)}`);
+      }
+    }
+
+    // Body — stringify if it was parsed to an object, otherwise use raw string.
+    if (body !== undefined && body !== null && body !== '') {
+      const bodyStr = typeof body === 'object' ? JSON.stringify(body, null, 2) : String(body);
+      parts.push(`  --data-binary ${sq(bodyStr)}`);
+    }
+
+    return parts.join(' \\\n');
+  }
+
   bindActionsEvents() {
     const drawer = window.faultendApp.getDrawer();
     document.getElementById('trafficDetailClose')?.addEventListener('click', () => drawer.close());
+
+    document.getElementById('copyCurlBtn')?.addEventListener('click', async () => {
+      const curl = this.buildCurlCommand();
+      try {
+        await navigator.clipboard.writeText(curl);
+        Toast.success('cURL command copied to clipboard');
+      } catch {
+        Toast.error('Could not copy — try selecting the text manually');
+      }
+    });
 
     document.getElementById('createRuleFromTrafficBtn')?.addEventListener('click', async () => {
       const { openRuleForm } = await import('./rules.js');
