@@ -265,8 +265,8 @@ body {
 /* Needed to anchor the scroll-to-top button */
 .traffic-container { position: relative; }
 
-/* Back-to-top button — floats over the traffic table when scrolled down */
-.scroll-to-top-btn {
+/* Back-to-bottom button — floats over the traffic table when the user scrolls up */
+.traffic-scroll-btn {
   position: absolute;
   bottom: 16px;
   right: 16px;
@@ -283,8 +283,8 @@ body {
   box-shadow: 0 1px 6px rgba(0, 0, 0, 0.12);
   transition: background 0.1s, color 0.1s;
 }
-.scroll-to-top-btn.visible { display: flex; }
-.scroll-to-top-btn:hover {
+.traffic-scroll-btn.visible { display: flex; }
+.traffic-scroll-btn:hover {
   background: var(--ft-ink-3);
   color: var(--ft-fg-strong);
 }

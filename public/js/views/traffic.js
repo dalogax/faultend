@@ -19,7 +19,7 @@ export function loadTrafficData(serverId) {
       // Reset scroll anchor state when switching to a different server.
       trafficTable.scrollMode = 'following';
       trafficTable._savedScrollTop = 0;
-      trafficTable._setScrollToTopVisible(false);
+      trafficTable._setScrollBtnVisible(false);
     }
     trafficTable.serverId = serverId;
   }
@@ -56,7 +56,8 @@ class TrafficTable {
     this.isLoading = false;
     this.autoRefresh = this.readAutoRefresh();
     this._onVis = () => this.applyAutoRefresh();
-    // Scroll-anchor state — 'following' keeps you at top; 'anchored' preserves position.
+    // Scroll-anchor state — 'following' keeps you at bottom (newest); 'anchored' preserves
+    // position so you can read older entries while live traffic continues arriving.
     this.scrollMode = 'following';
     this._savedScrollTop = 0;
     // Listener is added/removed by startPolling/stopPolling, not the constructor.
@@ -161,8 +162,8 @@ class TrafficTable {
         <div class="traffic-container">
           ${this.renderFilters()}
           <div id="trafficRowsRegion"></div>
-          <button class="scroll-to-top-btn" id="scrollToTopBtn" title="Back to top" aria-label="Back to top">
-            ${Icon.arrowUp}
+          <button class="traffic-scroll-btn" id="scrollToBottomBtn" title="Back to bottom" aria-label="Back to bottom">
+            ${Icon.arrowDown}
           </button>
         </div>
       `;
@@ -195,8 +196,12 @@ class TrafficTable {
     // Restore scroll position and re-attach the scroll listener on the new container.
     const newContainer = region.querySelector('.traffic-table-container');
     if (newContainer) {
-      if (this.scrollMode === 'anchored' && this._savedScrollTop > 0) {
+      if (this.scrollMode === 'anchored') {
+        // User is reading older entries — restore where they were.
         newContainer.scrollTop = this._savedScrollTop;
+      } else {
+        // Following mode — jump to bottom so the newest entry is visible.
+        newContainer.scrollTop = newContainer.scrollHeight;
       }
       this._bindScrollListener(newContainer);
     }
@@ -207,20 +212,26 @@ class TrafficTable {
   /** Attach a scroll listener to the (freshly created) table container. */
   _bindScrollListener(container) {
     container.addEventListener('scroll', () => {
-      const atTop = container.scrollTop <= 5;
-      if (atTop && this.scrollMode === 'anchored') {
+      const atBottom = container.scrollHeight - container.scrollTop - container.clientHeight <= 5;
+      if (atBottom && this.scrollMode === 'anchored') {
+        // User scrolled back to the bottom — resume live following.
         this.scrollMode = 'following';
         this._savedScrollTop = 0;
-        this._setScrollToTopVisible(false);
-      } else if (!atTop && this.scrollMode === 'following') {
+        this._setScrollBtnVisible(false);
+      } else if (!atBottom && this.scrollMode === 'following') {
+        // User scrolled up to read older entries — anchor position.
         this.scrollMode = 'anchored';
-        this._setScrollToTopVisible(true);
+        this._savedScrollTop = container.scrollTop;
+        this._setScrollBtnVisible(true);
+      } else if (this.scrollMode === 'anchored') {
+        // Keep _savedScrollTop updated while the user keeps scrolling.
+        this._savedScrollTop = container.scrollTop;
       }
     }, { passive: true });
   }
 
-  _setScrollToTopVisible(visible) {
-    const btn = document.getElementById('scrollToTopBtn');
+  _setScrollBtnVisible(visible) {
+    const btn = document.getElementById('scrollToBottomBtn');
     if (btn) btn.classList.toggle('visible', visible);
   }
 
@@ -264,6 +275,8 @@ class TrafficTable {
   }
 
   renderTable(logs) {
+    // Render oldest-first so the newest entry is at the bottom (tail-follow pattern).
+    const ordered = [...logs].reverse();
     return `
       <table class="traffic-table">
         <thead>
@@ -277,7 +290,7 @@ class TrafficTable {
           </tr>
         </thead>
         <tbody>
-          ${logs.map(log => this.renderTableRow(log)).join('')}
+          ${ordered.map(log => this.renderTableRow(log)).join('')}
         </tbody>
       </table>
     `;
@@ -336,13 +349,13 @@ class TrafficTable {
       this.setAutoRefresh(e.target.checked);
     });
 
-    document.getElementById('scrollToTopBtn')?.addEventListener('click', () => {
+    document.getElementById('scrollToBottomBtn')?.addEventListener('click', () => {
       const container = document.querySelector('.traffic-table-container');
-      if (container) container.scrollTo({ top: 0, behavior: 'smooth' });
+      if (container) container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
       // Switch mode immediately so the next poll doesn't restore the old position.
       this.scrollMode = 'following';
       this._savedScrollTop = 0;
-      this._setScrollToTopVisible(false);
+      this._setScrollBtnVisible(false);
     });
     DangerConfirm.wire(document.getElementById('clearTrafficBtn'), {
       idleText: `${Icon.trash} Clear`,

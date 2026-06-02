@@ -15,7 +15,8 @@ export const Icon = {
   drag:    '<svg viewBox="0 0 16 16" width="12" height="12" fill="currentColor" aria-hidden="true"><circle cx="6" cy="3.5" r="1"/><circle cx="10" cy="3.5" r="1"/><circle cx="6" cy="8" r="1"/><circle cx="10" cy="8" r="1"/><circle cx="6" cy="12.5" r="1"/><circle cx="10" cy="12.5" r="1"/></svg>',
   sun:     '<svg viewBox="0 0 16 16" width="14" height="14" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="3" stroke="currentColor" stroke-width="1.2"/><path d="M8 1 L8 3 M8 13 L8 15 M1 8 L3 8 M13 8 L15 8 M3.5 3.5 L5 5 M11 11 L12.5 12.5 M3.5 12.5 L5 11 M11 5 L12.5 3.5" stroke="currentColor" stroke-width="1.2"/></svg>',
   moon:    '<svg viewBox="0 0 16 16" width="14" height="14" fill="none" aria-hidden="true"><path d="M13.5 9.5 A6 6 0 0 1 6.5 2.5 A6 6 0 1 0 13.5 9.5 Z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg>',
-  arrowUp: '<svg viewBox="0 0 16 16" width="12" height="12" fill="none" aria-hidden="true"><path d="M8 13 L8 3 M3 7 L8 3 L13 7" stroke="currentColor" stroke-width="1.4" stroke-linejoin="miter"/></svg>',
+  arrowUp:   '<svg viewBox="0 0 16 16" width="12" height="12" fill="none" aria-hidden="true"><path d="M8 13 L8 3 M3 7 L8 3 L13 7" stroke="currentColor" stroke-width="1.4" stroke-linejoin="miter"/></svg>',
+  arrowDown: '<svg viewBox="0 0 16 16" width="12" height="12" fill="none" aria-hidden="true"><path d="M8 3 L8 13 M3 9 L8 13 L13 9" stroke="currentColor" stroke-width="1.4" stroke-linejoin="miter"/></svg>',
 };
 
 /** Lowercased badge-class suffix for an HTTP method. `*` maps to `any`. */
