@@ -7,12 +7,9 @@ import { buildSubdomainUrl } from '../config.js';
 let trafficTable = null;
 
 export function initTrafficView() {
-  console.log('Traffic view initialized');
 }
 
 export function loadTrafficData(serverId) {
-  console.log('Loading traffic data for server:', serverId);
-
   if (!trafficTable) {
     trafficTable = new TrafficTable('trafficView', serverId);
   } else {

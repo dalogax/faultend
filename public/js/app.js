@@ -21,8 +21,6 @@ class App {
   }
 
   async init() {
-    console.log('Initializing faultend application...');
-
     // Apply theme as early as possible to avoid a flash of light theme
     applyTheme(getEffectiveTheme());
 
@@ -55,8 +53,6 @@ class App {
     this.bindViewLoad();
 
     this.router.route();
-
-    console.log('Application initialized');
   }
 
   showLoginOverlay() {
@@ -94,7 +90,6 @@ class App {
   async loadServers() {
     try {
       this.servers = await fetchServers();
-      console.log('Loaded servers:', this.servers);
     } catch (error) {
       if (!error.message || !error.message.includes('502')) {
         Toast.error('Failed to load servers');
@@ -133,7 +128,6 @@ class App {
 
   renderServerList() {
     const content = document.getElementById('serverListContent');
-    console.log('Rendering server list, servers count:', this.servers.length);
 
     if (this.servers.length === 0) {
       content.innerHTML = '<div class="empty-state">No servers yet. Create your first fault server to get started.</div>';
@@ -299,12 +293,7 @@ class App {
 
   loadViewData(view) {
     const serverId = this.router.currentServerId;
-    if (!serverId) {
-      console.log('No server selected');
-      return;
-    }
-
-    console.log(`Loading data for view: ${view}, server: ${serverId}`);
+    if (!serverId) return;
 
     switch (view) {
       case 'traffic':

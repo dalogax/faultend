@@ -5,7 +5,6 @@ import { Toast } from '../components.js';
 import { track } from '../analytics.js';
 
 export function initConfigView() {
-  console.log('Config view initialized');
 }
 
 export async function loadConfigData(serverId) {

@@ -6,7 +6,6 @@ import { track } from '../analytics.js';
 let rulesList = null;
 
 export function initRulesView() {
-  console.log('Rules view initialized');
 }
 
 export function getRuleById(id) {
@@ -31,8 +30,6 @@ export function renderLabelStack(labels) {
 }
 
 export function loadRulesData(serverId) {
-  console.log('Loading rules data for server:', serverId);
-
   if (!rulesList) {
     rulesList = new RulesList('rules-content', serverId);
   } else {
