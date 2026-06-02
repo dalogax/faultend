@@ -184,26 +184,14 @@
   align-items: center;
 }
 
-/* Role pill in server list */
-.role-badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 1px 8px;
-  font-family: var(--ft-mono);
-  font-size: var(--ft-fs-11);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  border: 1px solid var(--ft-border);
-  color: var(--ft-fg-muted);
-  background: var(--ft-surface-2);
-}
-.role-badge.role-owner { background: var(--ft-ink-12); color: var(--ft-ink-0); border-color: var(--ft-ink-12); }
-.role-badge.role-admin { color: var(--ft-fg-strong); border-color: var(--ft-fg-strong); }
-
-/* Plan / tier badges — 3-level ink hierarchy; colour-only modifiers on top of .badge */
-.badge-plan-free     { background: var(--ft-surface-2); color: var(--ft-fg-muted);   border-color: var(--ft-border);      }
-.badge-plan-pro      { background: var(--ft-surface-2); color: var(--ft-fg-strong);  border-color: var(--ft-fg-strong);   }
-.badge-platform-admin{ background: var(--ft-ink-12);    color: var(--ft-ink-0);      border-color: var(--ft-ink-12); margin-left: var(--ft-sp-2); }
+/* Role + Plan badges — unified 3-level ink hierarchy; colour-only modifiers on top of .badge
+   Level 1 (collaborator / free)   : ghost — subtle bg, soft border, muted text
+   Level 2 (server-admin / pro)    : strong outline — dark border + text, no fill
+   Level 3 (owner / platform-admin): solid fill — ink-12 bg, white text              */
+.badge-role-collaborator, .badge-plan-free     { background: var(--ft-surface-2); color: var(--ft-fg-muted);   border-color: var(--ft-border);    }
+.badge-role-admin,        .badge-plan-pro      { background: var(--ft-surface-2); color: var(--ft-fg-strong);  border-color: var(--ft-fg-strong); }
+.badge-role-owner,        .badge-platform-admin{ background: var(--ft-ink-12);    color: var(--ft-ink-0);      border-color: var(--ft-ink-12);    }
+.badge-platform-admin { margin-left: var(--ft-sp-2); }
 
 /* Auto-refresh toggle (lives in Traffic column-actions) */
 .auto-refresh-toggle {

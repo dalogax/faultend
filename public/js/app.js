@@ -170,7 +170,7 @@ class App {
           <td class="status-cell" title="${status}"><span class="server-status-dot ${status}"></span></td>
           <td class="text-strong">${server.server_id}</td>
           <td><span class="server-url">${serverUrl}</span></td>
-          <td><span class="role-badge role-${server.role || 'collaborator'}">${(server.role || 'collaborator')}</span></td>
+          <td><span class="badge badge-role-${server.role || 'collaborator'}">${(server.role || 'collaborator')}</span></td>
           <td>${this.renderSharingCell(server, collaborators)}</td>
           <td class="muted">${this.formatRelativeTime(server.config_updated_at)}</td>
           <td class="muted">${this.formatRelativeTime(server.last_traffic_at)}</td>
@@ -271,7 +271,7 @@ class App {
             </div>
             <div class="server-card-url">${serverUrl}</div>
             <div class="server-card-meta">
-              <span class="role-badge role-${role}">${role}</span>
+              <span class="badge badge-role-${role}">${role}</span>
               <span class="server-card-sep"></span>
               <span class="server-card-stat"><b>${trafficCount}</b> req</span>
               <span class="server-card-sep"></span>
