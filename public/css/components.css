@@ -150,7 +150,7 @@
   line-height: 1;
   border: 1px solid transparent;
   border-radius: 0;
-  text-transform: none;
+  text-transform: uppercase;
 }
 .badge-lg { height: 22px; padding: 0 8px; font-size: var(--ft-fs-12); }
 
