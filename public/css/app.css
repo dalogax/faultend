@@ -248,3 +248,215 @@ code { font-family: var(--ft-mono); }
   gap: var(--ft-sp-2);
   justify-content: flex-end;
 }
+
+/* ============================================================
+   Admin panel
+   ============================================================ */
+
+.admin-layout {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - var(--ft-top-bar-h, 44px));
+  overflow: hidden;
+  background: var(--ft-bg);
+}
+
+.admin-container {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px 32px;
+  max-width: 1100px;
+  width: 100%;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+/* Filters toolbar */
+.admin-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+/* Search input fills the toolbar */
+.admin-toolbar .input {
+  flex: 1;
+}
+
+.admin-stat {
+  margin-left: auto;
+  font-family: var(--ft-mono);
+  font-size: var(--ft-fs-11);
+  color: var(--ft-fg-faint);
+  letter-spacing: 0.02em;
+}
+
+/* Table container — matches the shared -container pattern from components.css */
+.admin-table-container {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--ft-border-strong);
+  background: var(--ft-surface);
+  margin-bottom: var(--ft-sp-4);
+}
+
+/* Data table — matches the shared table pattern from components.css */
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--ft-fs-13);
+}
+
+.admin-table th {
+  text-align: left;
+  padding: var(--ft-sp-3) var(--ft-sp-4);
+  font-size: var(--ft-fs-11);
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ft-fg-faint);
+  border-bottom: 1px solid var(--ft-border);
+  background: var(--ft-surface);
+  white-space: nowrap;
+}
+
+.admin-table td {
+  padding: var(--ft-sp-3) var(--ft-sp-4);
+  border-bottom: 1px solid var(--ft-hairline);
+  vertical-align: middle;
+}
+
+.admin-table tbody tr {
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.admin-table tbody tr:hover td {
+  background: var(--ft-ink-2);
+}
+
+/* Cell utility classes — mirror .num / .muted from components.css tables */
+.admin-table .num {
+  font-family: var(--ft-mono);
+  font-size: var(--ft-fs-12);
+  color: var(--ft-fg-strong);
+}
+
+.admin-table .muted {
+  font-family: var(--ft-mono);
+  font-size: var(--ft-fs-12);
+  color: var(--ft-fg-faint);
+}
+
+/* Pagination */
+.admin-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 0;
+  font-family: var(--ft-mono);
+  font-size: var(--ft-fs-11);
+  color: var(--ft-fg-faint);
+}
+
+.pagination-btns {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Detail view */
+.detail-back {
+  margin-bottom: 20px;
+}
+
+.detail-header {
+  margin-bottom: 24px;
+}
+
+.detail-header h2 {
+  font-size: var(--ft-fs-20);
+  font-weight: 500;
+  margin: 8px 0 4px;
+  color: var(--ft-fg-strong);
+}
+
+.detail-email {
+  font-family: var(--ft-mono);
+  font-size: var(--ft-fs-12);
+  color: var(--ft-fg-muted);
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.detail-card {
+  background: var(--ft-surface);
+  border: 1px solid var(--ft-border);
+  padding: 16px 20px;
+}
+
+/* Section header pattern from design system */
+.detail-card h3 {
+  font-size: var(--ft-fs-11);
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ft-fg-muted);
+  margin: 0 0 12px;
+  padding-bottom: var(--ft-sp-3);
+  border-bottom: 1px solid var(--ft-border-strong);
+}
+
+.detail-dl {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 6px 16px;
+  font-size: var(--ft-fs-13);
+}
+
+.detail-dl dt {
+  color: var(--ft-fg-muted);
+  white-space: nowrap;
+}
+
+.detail-dl dd {
+  color: var(--ft-fg);
+  word-break: break-all;
+}
+
+/* Plan actions */
+.plan-current {
+  margin-bottom: 12px;
+}
+
+.plan-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* Monospace value inside a detail-dl */
+.detail-dl .dd-mono {
+  font-family: var(--ft-mono);
+  font-size: var(--ft-fs-12);
+}
+
+/* Footnote / disclaimer inside a detail card */
+.detail-note {
+  margin-top: var(--ft-sp-3);
+  font-size: var(--ft-fs-12);
+  color: var(--ft-fg-faint);
+}
+
+/* Empty / loading states */
+.admin-empty {
+  padding: 24px 12px;
+  color: var(--ft-fg-muted);
+  font-size: var(--ft-fs-13);
+  text-align: center;
+}
