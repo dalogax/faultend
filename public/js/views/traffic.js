@@ -441,7 +441,6 @@ class TrafficDetail {
       </div>
     `);
     drawer.setFooter(`
-      <button class="btn-ghost btn-sm" id="trafficDetailClose">Close</button>
       <button class="btn-ghost btn-sm" id="copyCurlBtn">${Icon.copy} Copy as cURL</button>
       <button class="btn btn-sm" id="createRuleFromTrafficBtn">Create rule from this</button>
     `);
@@ -575,9 +574,6 @@ class TrafficDetail {
   }
 
   bindActionsEvents() {
-    const drawer = window.faultendApp.getDrawer();
-    document.getElementById('trafficDetailClose')?.addEventListener('click', () => drawer.close());
-
     document.getElementById('copyCurlBtn')?.addEventListener('click', async () => {
       const curl = this.buildCurlCommand();
       try {
