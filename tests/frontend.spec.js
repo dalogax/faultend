@@ -211,3 +211,111 @@ test.describe('Faultend E2E', () => {
   });
 
 });
+
+// ─── Admin panel ──────────────────────────────────────────────────────────────
+
+/**
+ * Log in as the permanent non-admin test user (dev-nonadmin@faultend.local).
+ * This user is never promoted to admin, making it safe for redirect/guard tests.
+ */
+async function loginNonadmin(page) {
+  await page.goto(`${APP_URL}/api/auth/dev-login-nonadmin`);
+  await page.waitForURL(APP_URL, { timeout: 5000 }).catch(() => {});
+  await page.waitForLoadState('networkidle');
+  await page.evaluate(() => localStorage.setItem('faultend.consent', 'rejected'));
+  await page.evaluate(() => document.getElementById('consent-banner')?.remove());
+}
+
+test.describe('Admin panel', () => {
+
+  // Non-admin user (dev-nonadmin@faultend.local) is never promoted — always redirected.
+  test('non-admin is redirected away from /admin', async ({ page }) => {
+    await loginNonadmin(page);
+    await page.goto(`${APP_URL}/admin`);
+    // admin.js detects !isAdmin and calls window.location.href = '/'
+    await page.waitForURL(/app\.localhost:3000\/?$/, { timeout: 8000 });
+  });
+
+  // All remaining tests use dev@faultend.local, promoted by test-with-docker.js before
+  // Playwright runs via: UPDATE users SET is_admin = true WHERE email = 'dev@faultend.local'
+
+  test('admin user list loads and shows users', async ({ page }) => {
+    await login(page);
+    await page.goto(`${APP_URL}/admin`);
+    await page.waitForLoadState('networkidle');
+
+    await expect(page.locator('#userTableBody tr[data-user-id]')).not.toHaveCount(0, { timeout: 5000 });
+    await expect(page.locator('#userTableBody')).toContainText('dev@faultend.local');
+  });
+
+  test('filter narrows rows as you type and resets on clear', async ({ page }) => {
+    await login(page);
+    await page.goto(`${APP_URL}/admin`);
+    await page.waitForLoadState('networkidle');
+    await expect(page.locator('#userTableBody tr[data-user-id]').first()).toBeVisible({ timeout: 5000 });
+
+    const totalRows = await page.locator('#userTableBody tr[data-user-id]').count();
+
+    // Partial match on known email — at least one row visible
+    await page.fill('#searchInput', 'dev@faultend');
+    await expect(page.locator('#userTableBody tr[data-user-id]')).not.toHaveCount(0);
+
+    // No match — all rows hidden, empty message shown
+    await page.fill('#searchInput', 'zzznomatchxyz');
+    await expect(page.locator('#userTableBody tr[data-user-id]')).toHaveCount(0);
+    await expect(page.locator('#userTableBody')).toContainText('No users found.');
+
+    // Clear — all rows restored
+    await page.fill('#searchInput', '');
+    await expect(page.locator('#userTableBody tr[data-user-id]')).toHaveCount(totalRows);
+  });
+
+  test('clicking a user row opens the detail view', async ({ page }) => {
+    await login(page);
+    await page.goto(`${APP_URL}/admin`);
+    await page.waitForLoadState('networkidle');
+    await expect(page.locator('#userTableBody tr[data-user-id]').first()).toBeVisible({ timeout: 5000 });
+
+    await page.locator('#userTableBody tr[data-user-id]').first().click();
+
+    await expect(page.locator('#userDetailView')).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('#userListView')).not.toBeVisible();
+    await expect(page.locator('#detailEmail')).not.toBeEmpty();
+  });
+
+  test('admin can change user plan and badge updates', async ({ page }) => {
+    await login(page);
+    await page.goto(`${APP_URL}/admin`);
+    await page.waitForLoadState('networkidle');
+    await expect(page.locator('#userTableBody tr[data-user-id]').first()).toBeVisible({ timeout: 5000 });
+
+    await page.locator('#userTableBody tr[data-user-id]').first().click();
+    await expect(page.locator('#userDetailView')).toBeVisible({ timeout: 5000 });
+
+    // Set to pro — badge changes in the detail panel, Set Pro button becomes disabled
+    await page.locator('#setPro').click();
+    await expect(page.locator('#userDetailView .plan-current .badge-plan-pro')).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('#setPro')).toBeDisabled();
+
+    // Restore to free — badge changes in the detail panel, Set Free button becomes disabled
+    await page.locator('#setFree').click();
+    await expect(page.locator('#userDetailView .plan-current .badge-plan-free')).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('#setFree')).toBeDisabled();
+  });
+
+  test('back button returns to the user list', async ({ page }) => {
+    await login(page);
+    await page.goto(`${APP_URL}/admin`);
+    await page.waitForLoadState('networkidle');
+    await expect(page.locator('#userTableBody tr[data-user-id]').first()).toBeVisible({ timeout: 5000 });
+
+    await page.locator('#userTableBody tr[data-user-id]').first().click();
+    await expect(page.locator('#userDetailView')).toBeVisible({ timeout: 5000 });
+
+    await page.click('#backBtn');
+
+    await expect(page.locator('#userListView')).toBeVisible({ timeout: 3000 });
+    await expect(page.locator('#userDetailView')).not.toBeVisible();
+  });
+
+});

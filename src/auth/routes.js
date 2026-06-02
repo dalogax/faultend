@@ -85,6 +85,39 @@ if (process.env.MOCK_AUTH_ENABLED === 'true') {
       res.redirect(redirectTo);
     });
   });
+
+  // Grant platform-admin to the current session user.
+  // Test-only — available only when MOCK_AUTH_ENABLED=true.
+  router.get('/dev-grant-admin', async (req, res) => {
+    if (!req.session?.userId) {
+      return res.status(401).json({ error: 'Not logged in' });
+    }
+    try {
+      const pool = require('../db/pool');
+      await pool.query('UPDATE users SET is_admin = true WHERE id = $1', [req.session.userId]);
+      res.json({ ok: true });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // Separate non-admin test user — never promoted to admin, used to test auth-guard redirect.
+  router.get('/dev-login-nonadmin', async (req, res) => {
+    const { findUserByEmail, createUser, linkProvider } = require('../storage/users');
+    const email = 'dev-nonadmin@faultend.local';
+    let user = await findUserByEmail(email);
+
+    if (!user) {
+      user = await createUser({ email, name: 'Non-admin Dev', avatarUrl: null });
+      await linkProvider(user.id, 'mock', 'dev-nonadmin-456');
+    }
+
+    req.session.regenerate((err) => {
+      if (err) return res.redirect('/?error=session_error');
+      req.session.userId = user.id;
+      res.redirect(sanitizeRedirect(req.query.redirectTo));
+    });
+  });
 }
 
 router.get('/me', async (req, res) => {

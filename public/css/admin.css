@@ -69,10 +69,9 @@
   margin-bottom: 16px;
 }
 
-/* Layout overrides for the standard .input class */
-.admin-toolbar .input[type="search"] {
+/* Search input fills the toolbar */
+.admin-toolbar .input {
   flex: 1;
-  max-width: 320px;
 }
 
 .admin-stat {
@@ -81,6 +80,15 @@
   font-size: var(--ft-fs-11);
   color: var(--ft-fg-faint);
   letter-spacing: 0.02em;
+}
+
+/* Table container — matches the shared -container pattern from components.css */
+.admin-table-container {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--ft-border-strong);
+  background: var(--ft-surface);
+  margin-bottom: var(--ft-sp-4);
 }
 
 /* Data table — matches the shared table pattern from components.css */
@@ -118,47 +126,38 @@
   background: var(--ft-ink-2);
 }
 
-/* Plan badges — standard badge shape, no radius */
-.plan-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  height: 18px;
-  padding: 0 6px;
+/* Cell utility classes — mirror .num / .muted from components.css tables */
+.admin-table .num {
   font-family: var(--ft-mono);
-  font-size: var(--ft-fs-11);
-  font-weight: 400;
-  letter-spacing: 0.04em;
-  border: 1px solid transparent;
+  font-size: var(--ft-fs-12);
+  color: var(--ft-fg-strong);
 }
 
-.plan-free {
+.admin-table .muted {
+  font-family: var(--ft-mono);
+  font-size: var(--ft-fs-12);
+  color: var(--ft-fg-faint);
+}
+
+/* Plan badges — colour-only modifiers; must be combined with .badge from components.css */
+.badge-plan-free {
   background: var(--ft-surface-2);
   color: var(--ft-fg-muted);
   border-color: var(--ft-border);
 }
 
-.plan-pro {
+.badge-plan-pro {
   background: var(--ft-amber-bg);
   color: var(--ft-amber-ink);
   border-color: var(--ft-amber-line);
 }
 
-/* Platform admin indicator — uses amber (the signal colour) */
+/* Platform admin indicator — amber signal; colour-only modifier on top of .badge */
 .badge-platform-admin {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  height: 18px;
-  padding: 0 6px;
-  font-family: var(--ft-mono);
-  font-size: var(--ft-fs-11);
-  font-weight: 400;
-  letter-spacing: 0.04em;
-  margin-left: var(--ft-sp-2);
   background: var(--ft-amber-bg);
   color: var(--ft-amber-ink);
-  border: 1px solid var(--ft-amber-line);
+  border-color: var(--ft-amber-line);
+  margin-left: var(--ft-sp-2);
 }
 
 /* Pagination */
@@ -250,6 +249,19 @@
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
+}
+
+/* Monospace value inside a detail-dl */
+.detail-dl .dd-mono {
+  font-family: var(--ft-mono);
+  font-size: var(--ft-fs-12);
+}
+
+/* Footnote / disclaimer inside a detail card */
+.detail-note {
+  margin-top: var(--ft-sp-3);
+  font-size: var(--ft-fs-12);
+  color: var(--ft-fg-faint);
 }
 
 /* Empty / loading states */

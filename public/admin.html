@@ -53,34 +53,29 @@
         <div class="admin-toolbar">
           <input
             id="searchInput"
-            type="search"
+            type="text"
             class="input"
-            placeholder="Search by email or name…"
+            placeholder="Filter users…"
             autocomplete="off"
           >
-          <select id="planFilter" class="input">
-            <option value="">All plans</option>
-            <option value="free">Free</option>
-            <option value="pro">Pro</option>
-          </select>
         </div>
 
-        <table class="admin-table">
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Email</th>
-              <th>Plan</th>
-              <th>Servers</th>
-              <th>Joined</th>
-            </tr>
-          </thead>
-          <tbody id="userTableBody">
-            <tr><td colspan="5" class="admin-empty">Loading…</td></tr>
-          </tbody>
-        </table>
-
-        <div id="paginationRow" class="admin-pagination"></div>
+        <div class="admin-table-container">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Plan</th>
+                <th>Servers</th>
+                <th>Joined</th>
+              </tr>
+            </thead>
+            <tbody id="userTableBody">
+              <tr><td colspan="5" class="admin-empty">Loading…</td></tr>
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <!-- User detail view (hidden by default) -->
