@@ -1,6 +1,28 @@
 const { createProxyMiddleware, responseInterceptor } = require('http-proxy-middleware');
+const zlib = require('zlib');
+const { promisify } = require('util');
 const config = require('./config');
 const { logTransaction } = require('../storage/traffic');
+
+const gunzip = promisify(zlib.gunzip);
+const inflate = promisify(zlib.inflate);
+const brotliDecompress = promisify(zlib.brotliDecompress);
+
+/**
+ * Decompress a buffer according to its Content-Encoding.
+ * Returns the decompressed buffer, or the original on failure/unknown encoding.
+ */
+async function decompressBuffer(buffer, encoding) {
+  const enc = (encoding || '').toLowerCase().trim();
+  try {
+    if (enc === 'gzip' || enc === 'x-gzip') return await gunzip(buffer);
+    if (enc === 'deflate') return await inflate(buffer);
+    if (enc === 'br') return await brotliDecompress(buffer);
+  } catch (e) {
+    console.error(`[PROXY] Decompression failed (${enc}):`, e.message);
+  }
+  return buffer;
+}
 
 // Headers redacted in stored logs (proxy still forwards originals as-is).
 const REDACTED_HEADERS = new Set([
@@ -110,34 +132,41 @@ function createFaultendProxy(targetUrl) {
       let responseBodySize = 0;
       let logged = false;
       
-      function doLog() {
+      async function doLog() {
         if (logged) return;
         logged = true;
-        
-        const bodyBuffer = Buffer.concat(responseBody);
-        const bodyString = bodyBuffer.toString('utf8');
-        
-        let parsedBody = null;
+
+        const rawBuffer = Buffer.concat(responseBody);
         const contentType = proxyRes.headers['content-type'] || '';
         const contentEncoding = proxyRes.headers['content-encoding'] || '';
-        
+
+        let parsedBody = null;
         const maxBodySize = 10 * 1024 * 1024;
+
         if (responseBodySize > maxBodySize) {
           parsedBody = `<response too large: ${responseBodySize} bytes>`;
-        } else if (contentEncoding && contentEncoding !== 'identity') {
-          parsedBody = `<compressed data: ${responseBodySize} bytes (${contentEncoding})>`;
-        } else if (contentType.includes('application/json')) {
-          try {
-            parsedBody = JSON.parse(bodyString);
-          } catch (e) {
-            parsedBody = bodyString;
-          }
-        } else if (contentType.includes('text/')) {
-          parsedBody = bodyString;
         } else {
-          parsedBody = `<binary data: ${responseBodySize} bytes>`;
+          // Decompress if needed so we can inspect/store the real body
+          const bodyEncoding = (contentEncoding && contentEncoding !== 'identity') ? contentEncoding : null;
+          const bodyBuffer = bodyEncoding ? await decompressBuffer(rawBuffer, contentEncoding) : rawBuffer;
+          const bodyString = bodyBuffer.toString('utf8');
+
+          if (contentType.includes('application/json')) {
+            try {
+              parsedBody = JSON.parse(bodyString);
+            } catch (e) {
+              parsedBody = bodyString;
+            }
+          } else if (contentType.includes('text/')) {
+            parsedBody = bodyString;
+          } else if (bodyEncoding) {
+            // Could not interpret as text even after decompression (binary content)
+            parsedBody = `<binary data: ${bodyBuffer.length} bytes>`;
+          } else {
+            parsedBody = `<binary data: ${responseBodySize} bytes>`;
+          }
         }
-        
+
         const serverId = req.serverId || 'unknown';
         if (req.serverConfig?.recordingEnabled === false) return;
         logTransaction(serverId, {

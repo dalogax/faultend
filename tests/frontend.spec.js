@@ -1,6 +1,12 @@
 import { test, expect } from '@playwright/test';
+import http from 'http';
+import { brotliCompress, gzip, deflate } from 'zlib';
 
 const APP_URL = 'http://app.localhost:3000';
+// Port for the local mock server used by traffic / compression E2E tests.
+// The faultend Docker container reaches it via host.docker.internal (configured
+// in docker-compose.dev.yml via extra_hosts: host-gateway).
+const MOCK_SERVER_PORT = 3099;
 
 // ─── Shared helpers ──────────────────────────────────────────────────────────
 
@@ -70,6 +76,42 @@ async function createProxyRule(page, { priority = '100', pathRegex = '.*', targe
 test.describe.configure({ mode: 'serial' });
 
 test.describe('Faultend E2E', () => {
+
+  // ── Local mock server ─────────────────────────────────────────────────────
+  // Started once for the whole suite. Serves plain and compressed JSON so
+  // traffic / compression tests have zero external dependencies.
+  // Docker reaches it via host.docker.internal:MOCK_SERVER_PORT.
+  let mockServer = null;
+
+  test.beforeAll(async () => {
+    mockServer = await new Promise((resolve) => {
+      const server = http.createServer((req, res) => {
+        const payload = JSON.stringify({ message: 'hello', path: req.url });
+        const buf = Buffer.from(payload);
+
+        const respondCompressed = (encoding, compressFn) => {
+          compressFn(buf, (err, compressed) => {
+            if (err) { res.writeHead(500); res.end(); return; }
+            res.writeHead(200, { 'Content-Type': 'application/json', 'Content-Encoding': encoding });
+            res.end(compressed);
+          });
+        };
+
+        if (req.url.endsWith('/br'))      return respondCompressed('br',      brotliCompress);
+        if (req.url.endsWith('/gzip'))    return respondCompressed('gzip',    gzip);
+        if (req.url.endsWith('/deflate')) return respondCompressed('deflate', deflate);
+        // All other paths → plain JSON (used by the basic traffic test)
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(buf);
+      });
+      // Bind to all interfaces so Docker can reach us via host.docker.internal
+      server.listen(MOCK_SERVER_PORT, '0.0.0.0', () => resolve(server));
+    });
+  });
+
+  test.afterAll(async () => {
+    if (mockServer) await new Promise(resolve => mockServer.close(resolve));
+  });
 
   // ── Authentication ────────────────────────────────────────────────────────
 
@@ -179,8 +221,9 @@ test.describe('Faultend E2E', () => {
 
     await createServer(page, 'e2e-traffic-server');
 
-    // Create a proxy rule pointing at a real upstream
-    await createProxyRule(page, { target: 'https://jsonplaceholder.typicode.com' });
+    // Use the local mock server instead of an external service so the test
+    // works without internet access and is immune to third-party outages.
+    await createProxyRule(page, { target: `http://host.docker.internal:${MOCK_SERVER_PORT}` });
 
     // Hit the server subdomain to generate traffic
     await page.goto('http://e2e-traffic-server.localhost:3000/posts/1');
@@ -193,6 +236,42 @@ test.describe('Faultend E2E', () => {
     const trafficRows = page.locator('.traffic-table tbody tr');
     await expect(trafficRows).toHaveCount(1, { timeout: 10000 });
     await expect(trafficRows.first().locator('.path-cell')).toContainText('/posts/1');
+  });
+
+  test('brotli-compressed response body is displayed as JSON in traffic detail', async ({ page }) => {
+    await login(page);
+
+    await createServer(page, 'e2e-br-server');
+    await createProxyRule(page, { target: `http://host.docker.internal:${MOCK_SERVER_PORT}` });
+
+    // Hit the /br endpoint — mock server returns brotli-compressed JSON
+    await page.goto('http://e2e-br-server.localhost:3000/br');
+    await page.waitForTimeout(2000);
+
+    // Return to the server traffic view
+    await navigateToServer(page, 'e2e-br-server');
+
+    // Exactly one traffic row for /br should appear
+    const trafficRows = page.locator('.traffic-table tbody tr');
+    await expect(trafficRows).toHaveCount(1, { timeout: 10000 });
+    await expect(trafficRows.first().locator('.path-cell')).toContainText('/br');
+
+    // Open the detail panel
+    await trafficRows.first().click();
+    await expect(page.locator('#drawer.active')).toBeVisible({ timeout: 5000 });
+
+    // The Response › Body section should show real JSON, NOT the compressed placeholder
+    const responseBodyPre = page
+      .locator('.detail-section')
+      .filter({ has: page.locator('h3', { hasText: 'Response' }) })
+      .locator('.code-block')
+      .filter({ has: page.locator('h4', { hasText: 'Body' }) })
+      .locator('.json-pre');
+
+    await expect(responseBodyPre).toBeVisible({ timeout: 5000 });
+    await expect(responseBodyPre).toContainText('"message"');
+    await expect(responseBodyPre).toContainText('"hello"');
+    await expect(responseBodyPre).not.toContainText('compressed data');
   });
 
   // ── Config export ─────────────────────────────────────────────────────────

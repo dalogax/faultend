@@ -6,6 +6,7 @@ process.env.MOCK_AUTH_ENABLED = 'true';
 process.env.SESSION_SECRET = 'test-secret-key';
 
 const http = require('http');
+const zlib = require('zlib');
 const pool = require('../src/db/pool');
 
 const PORT = 3001;
@@ -395,6 +396,118 @@ async function runTests() {
 
     await pool.query('UPDATE users SET is_admin = false WHERE id = $1', [userId]);
   });
+
+  console.log('');
+  console.log('Section 8: Proxy Decompression');
+  console.log('-'.repeat(70));
+
+  // Spin up a local HTTP server that serves compressed JSON responses.
+  // Both the faultend test server (port 3001) and this mock run on the same
+  // host process, so http://localhost:3099 is reachable without any Docker
+  // networking concerns.
+  const MOCK_COMPRESS_PORT = 3099;
+  let mockCompressServer;
+
+  await new Promise((resolve) => {
+    mockCompressServer = http.createServer((req, res) => {
+      const payload = JSON.stringify({ message: 'decompressed', path: req.url });
+      const buf = Buffer.from(payload);
+
+      const respond = (encoding, compressFn) => {
+        compressFn(buf, (err, compressed) => {
+          if (err) { res.writeHead(500); res.end(); return; }
+          res.writeHead(200, {
+            'Content-Type': 'application/json',
+            'Content-Encoding': encoding,
+          });
+          res.end(compressed);
+        });
+      };
+
+      if (req.url === '/gzip')    return respond('gzip',    zlib.gzip);
+      if (req.url === '/br')      return respond('br',      zlib.brotliCompress);
+      if (req.url === '/deflate') return respond('deflate', zlib.deflate);
+      // Plain (no compression) — baseline
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(buf);
+    });
+    mockCompressServer.listen(MOCK_COMPRESS_PORT, '127.0.0.1', resolve);
+  });
+
+  // Create a dedicated faultend server + proxy rule pointing at the mock.
+  await request('POST', '/api/servers', { id: 'compress-test', name: 'Compression Test' }, {}, 'app');
+  await request('POST', '/api/servers/compress-test/rules', {
+    priority: 100,
+    method: '*',
+    pathRegex: '.*',
+    action: 'proxy',
+    target: `http://localhost:${MOCK_COMPRESS_PORT}`
+  }, {}, 'app');
+
+  // Poll the traffic API until an entry for `urlPath` appears (or timeout).
+  async function waitForTrafficEntry(serverId, urlPath, timeoutMs = 3000) {
+    const deadline = Date.now() + timeoutMs;
+    while (Date.now() < deadline) {
+      const res = await request('GET', `/api/servers/${serverId}/traffic`, null, {}, 'app');
+      const entry = (res.body.logs || []).find(
+        l => l.request && l.request.path === urlPath
+      );
+      if (entry) return entry;
+      await wait(150);
+    }
+    return null;
+  }
+
+  await test('gzip response body is decompressed and stored as JSON', async () => {
+    await request('GET', '/gzip', null, {}, 'compress-test');
+    const entry = await waitForTrafficEntry('compress-test', '/gzip');
+    assertTrue(entry !== null, 'Traffic entry should be created for /gzip request');
+    assertTrue(
+      typeof entry.response.body === 'object' && entry.response.body !== null,
+      `Body should be a parsed JSON object, got: ${JSON.stringify(entry.response.body)}`
+    );
+    assertEqual(entry.response.body.message, 'decompressed', 'Body should contain decompressed content');
+    assertTrue(
+      !String(entry.response.body).includes('<compressed data'),
+      'Body must not be a compressed-data placeholder'
+    );
+  });
+
+  await test('brotli response body is decompressed and stored as JSON', async () => {
+    await request('GET', '/br', null, {}, 'compress-test');
+    const entry = await waitForTrafficEntry('compress-test', '/br');
+    assertTrue(entry !== null, 'Traffic entry should be created for /br request');
+    assertTrue(
+      typeof entry.response.body === 'object' && entry.response.body !== null,
+      `Body should be a parsed JSON object, got: ${JSON.stringify(entry.response.body)}`
+    );
+    assertEqual(entry.response.body.message, 'decompressed', 'Body should contain decompressed content');
+  });
+
+  await test('deflate response body is decompressed and stored as JSON', async () => {
+    await request('GET', '/deflate', null, {}, 'compress-test');
+    const entry = await waitForTrafficEntry('compress-test', '/deflate');
+    assertTrue(entry !== null, 'Traffic entry should be created for /deflate request');
+    assertTrue(
+      typeof entry.response.body === 'object' && entry.response.body !== null,
+      `Body should be a parsed JSON object, got: ${JSON.stringify(entry.response.body)}`
+    );
+    assertEqual(entry.response.body.message, 'decompressed', 'Body should contain decompressed content');
+  });
+
+  await test('uncompressed response body is stored correctly (baseline)', async () => {
+    await request('GET', '/plain', null, {}, 'compress-test');
+    const entry = await waitForTrafficEntry('compress-test', '/plain');
+    assertTrue(entry !== null, 'Traffic entry should be created for plain request');
+    assertTrue(
+      typeof entry.response.body === 'object' && entry.response.body !== null,
+      `Body should be a parsed JSON object, got: ${JSON.stringify(entry.response.body)}`
+    );
+    assertEqual(entry.response.body.message, 'decompressed', 'Body should contain correct content');
+  });
+
+  // Tear down the mock compressed server
+  await new Promise(resolve => mockCompressServer.close(resolve));
 
   console.log('');
 
