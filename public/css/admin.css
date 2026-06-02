@@ -21,46 +21,6 @@
   box-sizing: border-box;
 }
 
-/* Page header */
-.admin-page-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 20px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid var(--ft-border-strong);
-}
-
-.admin-page-header h1 {
-  font-size: var(--ft-fs-16);
-  font-weight: 500;
-  color: var(--ft-fg-strong);
-  margin: 0;
-}
-
-.admin-page-title {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-/* Admin badge — uses amber signal tokens (never decorative colour) */
-.admin-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  height: 18px;
-  padding: 0 6px;
-  font-family: var(--ft-mono);
-  font-size: var(--ft-fs-11);
-  font-weight: 400;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  background: var(--ft-amber-bg);
-  color: var(--ft-amber-ink);
-  border: 1px solid var(--ft-amber-line);
-}
-
 /* Filters toolbar */
 .admin-toolbar {
   display: flex;
