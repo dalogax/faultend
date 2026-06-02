@@ -88,6 +88,16 @@ test.describe('Faultend E2E', () => {
     await expect(page.locator('#profileBtn')).toBeVisible();
   });
 
+  // ── No console errors ─────────────────────────────────────────────────────
+
+  test('app page loads with no console errors', async ({ page }) => {
+    const errors = [];
+    page.on('console', msg => { if (msg.type() === 'error') errors.push(msg.text()); });
+    page.on('pageerror', err => errors.push(err.message));
+    await login(page);
+    expect(errors, `Console errors on app page:\n${errors.join('\n')}`).toHaveLength(0);
+  });
+
   // ── Server management ─────────────────────────────────────────────────────
 
   test('create server and navigate to it', async ({ page }) => {
@@ -246,6 +256,16 @@ test.describe('Admin panel', () => {
 
     await expect(page.locator('#userTableBody tr[data-user-id]')).not.toHaveCount(0, { timeout: 5000 });
     await expect(page.locator('#userTableBody')).toContainText('dev@faultend.local');
+  });
+
+  test('admin page loads with no console errors', async ({ page }) => {
+    await login(page); // establish session first; errors from dev-login redirect are not our concern
+    const errors = [];
+    page.on('console', msg => { if (msg.type() === 'error') errors.push(msg.text()); });
+    page.on('pageerror', err => errors.push(err.message));
+    await page.goto(`${APP_URL}/admin`);
+    await page.waitForLoadState('networkidle');
+    expect(errors, `Console errors on admin page:\n${errors.join('\n')}`).toHaveLength(0);
   });
 
   test('filter narrows rows as you type and resets on clear', async ({ page }) => {
