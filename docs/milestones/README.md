@@ -27,7 +27,7 @@ Faultend uses a **rules-based routing system** where both mocking and proxying a
 - Complete data isolation (rules, traffic logs, configuration)
 - Multi-tenant architecture with separate databases/storage
 - API-driven instance management
-- Usage-based billing per instance
+- Usage tracking and quota management per instance
 
 ---
 

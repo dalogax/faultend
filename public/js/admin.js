@@ -206,7 +206,7 @@ function renderUserDetail(user) {
         <button class="btn-ghost btn-sm" id="setPro"  ${user.plan === 'pro'  ? 'disabled' : ''}>Set Pro</button>
         <button class="btn-ghost btn-sm" id="setFree" ${user.plan === 'free' ? 'disabled' : ''}>Set Free</button>
       </div>
-      <p class="detail-note">Plan is assigned manually — no Stripe integration yet.</p>
+      <p class="detail-note">Plan is assigned manually by platform admins.</p>
     </div>
 
     <div class="detail-card">

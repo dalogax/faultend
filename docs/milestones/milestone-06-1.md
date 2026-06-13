@@ -1149,7 +1149,7 @@ Phase 6.1 is complete when:
 2. **Authentication:** Protect admin API with API keys or OAuth
 3. **UI Updates:** Frontend to manage multiple customers from app subdomain
 4. **Rate Limiting:** Per-customer rate limits and quotas
-5. **Metrics:** Customer usage statistics and billing data
+5. **Metrics:** Customer usage statistics and quota data
 6. **Custom Domains:** Allow customers to use their own domains (CNAME)
 7. **WebSocket Support:** Proxy WebSocket connections per customer
 

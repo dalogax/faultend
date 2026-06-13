@@ -6,7 +6,8 @@ const {
   createServer,
   deleteServer,
   serverExists,
-  updateServerBehaviour
+  updateServerBehaviour,
+  checkServerQuota
 } = require('../storage/storage');
 
 router.use(express.json());
@@ -137,6 +138,11 @@ router.post('/servers', async (req, res) => {
     });
   }
   
+  const quota = await checkServerQuota(req.user.id);
+  if (!quota.allowed) {
+    return res.status(429).json({ error: 'quota_exceeded', resource: 'servers', limit: quota.limit, plan: quota.plan });
+  }
+
   const exists = await serverExists(id);
   if (exists) {
     return res.status(409).json({
