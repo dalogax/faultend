@@ -239,11 +239,68 @@
       font-family:var(--mono); font-size:11px; color:var(--fg-faint);
     }
 
+    /* Pricing */
+    .pricing { padding:88px 64px; border-bottom:1px solid var(--border-strong); }
+    .pricing-head { margin-bottom:48px; }
+    .pricing-head h2 { font-size:40px; line-height:1.1; letter-spacing:-0.02em; color:var(--fg-strong); margin-top:12px; }
+    .pricing-head p { font-size:14px; line-height:1.55; color:var(--fg-muted); margin-top:12px; max-width:560px; }
+    .pricing-grid {
+      display:grid; grid-template-columns:repeat(3,1fr);
+      border:1px solid var(--border-strong); gap:0;
+    }
+    .price-card {
+      padding:32px 28px; border-right:1px solid var(--border-strong);
+      background:var(--surface); display:flex; flex-direction:column; gap:0;
+    }
+    .price-card:last-child { border-right:none; }
+    .price-card--featured {
+      background:var(--ink-2); border-right:1px solid var(--border-strong);
+      position:relative;
+    }
+    .price-card-badge {
+      display:inline-flex; align-items:center;
+      height:18px; padding:0 6px; font-family:var(--mono); font-size:11px;
+      letter-spacing:0.04em; line-height:1;
+      background:var(--ink-12); color:var(--ink-0);
+      margin-bottom:16px; align-self:flex-start;
+    }
+    .price-card-tier {
+      font-size:13px; font-weight:500; letter-spacing:0.04em;
+      text-transform:uppercase; font-family:var(--mono);
+      color:var(--fg-faint); margin-bottom:10px;
+    }
+    .price-card-amount {
+      font-size:36px; line-height:1.05; letter-spacing:-0.025em;
+      color:var(--fg-strong); font-weight:400; margin-bottom:6px;
+    }
+    .price-card-tagline {
+      font-size:13px; line-height:1.5; color:var(--fg-muted); margin-bottom:28px;
+    }
+    .price-divider { height:1px; background:var(--border); margin-bottom:24px; }
+    .price-limits {
+      display:flex; flex-direction:column; gap:10px;
+      margin-bottom:28px; flex:1;
+    }
+    .price-limits li {
+      display:flex; align-items:baseline; gap:10px;
+      font-size:13px; line-height:1.45; color:var(--fg-muted);
+      list-style:none;
+    }
+    .price-limits li .pl-label { flex:1; }
+    .price-limits li .pl-val {
+      font-family:var(--mono); font-size:12px; color:var(--fg-strong);
+      white-space:nowrap;
+    }
+    .price-limits li .pl-check {
+      font-family:var(--mono); font-size:12px; color:var(--fg-strong);
+      white-space:nowrap;
+    }
+
     @media (max-width:960px) {
       .hero { padding:56px 28px 48px; }
       .hero-grid { grid-template-columns:1fr; gap:40px; }
       .hero h1 { font-size:44px; }
-      .why-head, .why-grid, .how, .cta, footer, .nav { padding-left:28px; padding-right:28px; }
+      .why-head, .why-grid, .how, .pricing, .cta, footer, .nav { padding-left:28px; padding-right:28px; }
       .why-head { flex-direction:column; align-items:flex-start; }
       .why-grid { margin-left:28px; margin-right:28px; grid-template-columns:1fr; }
       .cell-roadmap { grid-column:span 1; }
@@ -252,19 +309,24 @@
       .step { grid-template-columns:1fr; gap:12px; }
       .cta h2 { font-size:38px; }
       .nav-links { display:none; }
+      .pricing-grid { grid-template-columns:1fr; }
+      .price-card { border-right:none; border-bottom:1px solid var(--border-strong); }
+      .price-card:last-child { border-bottom:none; }
+      .price-card--featured { border-right:none; }
     }
     @media (max-width:640px) {
       .nav { height:48px; padding:0 14px; }
       .hero { padding:28px 18px 24px; }
       .hero h1 { font-size:34px; line-height:1.06; letter-spacing:-0.025em; }
       .hero p { font-size:14px; }
-      .why-head, .why-grid, .how, .cta, footer { padding-left:18px; padding-right:18px; }
+      .why-head, .why-grid, .how, .pricing, .cta, footer { padding-left:18px; padding-right:18px; }
       .why-grid { margin-left:18px; margin-right:18px; }
       .why-grid .cell { padding:20px 0; }
       .step { padding:24px 0; }
       .cta { padding:36px 18px 40px; }
       .cta h2 { font-size:32px; }
       .foot-grid { grid-template-columns:repeat(3, 1fr); gap:16px; }
+      .price-card { padding:24px 20px; }
     }
   </style>
 
@@ -282,6 +344,7 @@
     <div class="nav-links">
       <a href="#why">Why Faultend</a>
       <a href="#how">How it works</a>
+      <a href="#pricing">Pricing</a>
     </div>
     <div class="nav-divider"></div>
     <a class="btn btn--sm app-link">Try it now →</a>
@@ -460,6 +523,69 @@ GET    /notifications  HARD DEP   session screen hangs</div>
     </div>
   </section>
 
+  <!-- Pricing -->
+  <section class="pricing" id="pricing">
+    <div class="wrap">
+      <div class="pricing-head">
+        <div class="eyebrow">── Pricing</div>
+        <h2>Simple, honest pricing.</h2>
+        <p>Host it yourself for free, or use the managed cloud. No credit card required to start.</p>
+      </div>
+      <div class="pricing-grid">
+
+        <!-- Self-hosted OSS -->
+        <div class="price-card">
+          <div class="price-card-tier">Self-hosted OSS</div>
+          <div class="price-card-amount">Free</div>
+          <div class="price-card-tagline">Run on your own infrastructure. Full features, no limits, forever.</div>
+          <div class="price-divider"></div>
+          <ul class="price-limits">
+            <li><span class="pl-label">Hosting</span><span class="pl-val">Your infrastructure</span></li>
+            <li><span class="pl-label">Servers</span><span class="pl-val">Unlimited</span></li>
+            <li><span class="pl-label">Rules</span><span class="pl-val">Unlimited</span></li>
+            <li><span class="pl-label">Requests</span><span class="pl-val">Unlimited</span></li>
+            <li><span class="pl-label">All features</span><span class="pl-check">yes</span></li>
+          </ul>
+          <a href="https://github.com/dalogax/faultend" class="btn btn--secondary btn--sm" style="align-self:flex-start">View on GitHub</a>
+        </div>
+
+        <!-- Free cloud -->
+        <div class="price-card">
+          <div class="price-card-tier">Free</div>
+          <div class="price-card-amount">Free</div>
+          <div class="price-card-tagline">Managed on faultend.com. No setup required.</div>
+          <div class="price-divider"></div>
+          <ul class="price-limits">
+            <li><span class="pl-label">Hosting</span><span class="pl-val">faultend.com</span></li>
+            <li><span class="pl-label">Servers</span><span class="pl-val">5</span></li>
+            <li><span class="pl-label">Rules</span><span class="pl-val">100 total</span></li>
+            <li><span class="pl-label">Requests</span><span class="pl-val">1,000 / day</span></li>
+            <li><span class="pl-label">All features</span><span class="pl-check">yes</span></li>
+          </ul>
+          <a class="btn btn--secondary btn--sm app-link" style="align-self:flex-start">Sign up free</a>
+        </div>
+
+        <!-- Pro cloud -->
+        <div class="price-card price-card--featured">
+          <div class="price-card-badge">recommended</div>
+          <div class="price-card-tier">Pro</div>
+          <div class="price-card-amount">Contact us</div>
+          <div class="price-card-tagline">Higher limits for teams that need more. Promoted by invitation.</div>
+          <div class="price-divider"></div>
+          <ul class="price-limits">
+            <li><span class="pl-label">Hosting</span><span class="pl-val">faultend.com</span></li>
+            <li><span class="pl-label">Servers</span><span class="pl-val">50</span></li>
+            <li><span class="pl-label">Rules</span><span class="pl-val">1,000 total</span></li>
+            <li><span class="pl-label">Requests</span><span class="pl-val">10,000 / day</span></li>
+            <li><span class="pl-label">All features</span><span class="pl-check">yes</span></li>
+          </ul>
+          <a href="mailto:hello@faultend.com" class="btn btn--sm" style="align-self:flex-start">Contact us</a>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
   <!-- CTA -->
   <section class="cta">
     <svg class="cta-watermark" viewBox="0 0 1024 1024" preserveAspectRatio="xMidYMid meet" aria-hidden="true"><g transform="translate(0,1024) scale(0.1,-0.1)" fill="#fafafa" stroke="none"><path d="M4803 6933 c-98 -119 -314 -383 -481 -587 -374 -457 -349 -429 -364 -424 -7 3 -79 85 -160 183 -191 231 -222 263 -288 294 -81 38 -155 34 -460 -27 -219 -44 -591 -117 -1230 -241 -820 -159 -805 -156 -841 -197 -47 -54 -52 -81 -52 -265 1 -195 8 -231 54 -275 28 -27 36 -29 102 -28 40 0 160 17 267 38 107 20 290 55 405 76 116 22 296 56 400 75 105 20 298 56 430 81 132 24 310 58 395 75 229 46 268 36 385 -98 143 -162 185 -215 185 -232 0 -9 -412 -532 -915 -1161 -503 -629 -915 -1148 -915 -1152 0 -5 185 -7 412 -6 l412 3 77 95 c41 52 163 205 269 340 312 394 418 528 515 650 50 63 190 239 310 390 119 151 225 281 233 288 40 32 54 19 231 -218 95 -126 190 -244 212 -261 22 -17 62 -40 89 -50 87 -33 84 -33 830 82 179 27 370 57 425 65 55 8 154 24 220 34 66 11 228 35 360 55 132 19 371 55 530 80 160 24 393 60 519 79 238 37 278 36 257 -2 -5 -9 -95 -131 -200 -271 -105 -140 -189 -256 -187 -258 5 -5 142 53 381 162 105 48 237 109 295 135 523 237 1171 543 1211 571 38 27 52 61 38 92 -17 38 3 30 -519 217 -308 111 -837 298 -1205 426 -148 52 -280 99 -293 104 -52 23 -54 10 -7 -42 153 -167 280 -303 350 -376 86 -90 96 -107 68 -116 -23 -6 -209 -34 -688 -101 -214 -30 -640 -90 -945 -135 -1123 -163 -1050 -153 -1103 -141 -27 6 -65 23 -85 38 -69 50 -332 374 -332 408 0 19 278 368 729 915 180 217 661 818 661 824 0 3 -182 6 -404 6 l-405 0 -178 -217z"/></g></svg>
@@ -490,6 +616,7 @@ GET    /notifications  HARD DEP   session screen hangs</div>
         <div class="foot-col">
           <div class="h">Product</div>
           <a href="#why">Why Faultend</a>
+          <a href="#pricing">Pricing</a>
           <a class="app-link">Try it now</a>
         </div>
         <div class="foot-col">
