@@ -16,6 +16,9 @@ data/rules.json
 scripts/
 *.png
 *.jpg
+
+# Exception: docs screenshots served as static assets
+!public/img/docs/*.png
 .design-handoff/
 .design-handoff-v2/
 .tmp/

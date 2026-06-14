@@ -330,3 +330,5 @@ Only add dark-mode overrides when using hardcoded values that are unavoidable (e
 | `!important` on component overrides | Restructure selectors instead |
 | `btn btn-danger` combined | Use `.btn-danger` alone — it's self-contained |
 | Custom purple/green/blue badge colours | Use amber (signal), red (danger), or outline (neutral) |
+| Inline `<style>` blocks in HTML files | All CSS lives in `/public/css/` — landing page styles in `landing.css`, docs page styles in `docs.css`, app styles in `components.css` / `variables.css` |
+| Inline `style=""` attributes on HTML elements | Extract to a named class in the page's CSS file instead |
