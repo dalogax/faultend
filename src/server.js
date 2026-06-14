@@ -98,6 +98,11 @@ app.get('/metrics', async (req, res) => {
 });
 
 const staticMiddleware = express.static(path.join(__dirname, '../public'), { maxAge: 3600000 });
+const landingStaticMiddleware = express.static(path.join(__dirname, '../public/landing'), {
+  maxAge: 3600000,
+  extensions: ['html'],
+  index: 'index.html'
+});
 
 // Legal pages — served from both landing and app subdomains
 const LEGAL_PAGES = { '/privacy': 'privacy.html', '/terms': 'terms.html', '/dpa': 'dpa.html' };
@@ -119,13 +124,12 @@ app.use((req, res, next) => {
   }
 
   if (routeType === 'landing') {
-    if (req.path === '/' || req.path === '/index.html') {
-      return res.sendFile(path.join(__dirname, '../public/landing.html'));
-    }
-    return res.status(404).json({
-      error: 'Not Found',
-      message: 'Landing page only. Use app.* for UI or [server].* for fault servers.',
-      availableRoutes: ['/health', '/privacy', '/terms', '/dpa']
+    return landingStaticMiddleware(req, res, () => {
+      res.status(404).json({
+        error: 'Not Found',
+        message: 'Page not found on the landing domain.',
+        availableRoutes: ['/', '/docs', '/privacy', '/terms', '/dpa']
+      });
     });
   }
 
