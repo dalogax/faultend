@@ -101,6 +101,8 @@
     .logo span { font-size:14px; font-weight:500; letter-spacing:-0.02em; }
     .nav-links { display:flex; gap:28px; font-size:13px; color:var(--fg-muted); }
     .nav-links a:hover { color:var(--fg-strong); }
+    .nav-gh { font-size:13px; color:var(--fg-muted); text-decoration:none; }
+    .nav-gh:hover { color:var(--fg-strong); }
     .nav-divider { width:1px; height:18px; background:var(--border); }
 
     /* Hero */
@@ -418,6 +420,8 @@
       <a href="#usage">Usage</a>
     </div>
     <div class="nav-divider"></div>
+    <a href="https://github.com/dalogax/faultend" class="nav-gh">GitHub</a>
+    <div class="nav-divider"></div>
     <a class="btn btn--sm app-link">Try it now →</a>
   </nav>
 
@@ -685,7 +689,7 @@ docker compose up -d</div>
         <div class="price-card price-card--featured">
           <div class="price-card-tier">Pro</div>
           <div class="price-card-amount">Authorized</div>
-          <div class="price-card-tagline">Granted by the platform admin. Higher limits for users who need more headroom.</div>
+          <div class="price-card-tagline">Granted by the platform admin. Higher limits for teams that need more.</div>
           <div class="price-divider"></div>
           <ul class="price-limits">
             <li><span class="pl-label">Hosting</span><span class="pl-val">faultend.com</span></li>
