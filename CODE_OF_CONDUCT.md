@@ -19,7 +19,7 @@ Unacceptable behavior:
 
 ## Enforcement
 
-Project maintainers are responsible for clarifying and enforcing these standards. Instances of unacceptable behavior may be reported to **hello@faultend.com**. All complaints will be reviewed and investigated promptly and fairly.
+Project maintainers are responsible for clarifying and enforcing these standards. Instances of unacceptable behavior may be reported to **dalogax@gmail.com**. All complaints will be reviewed and investigated promptly and fairly.
 
 ## Attribution
 
