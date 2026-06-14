@@ -1,0 +1,1226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Faultend Docs · Usage & self-hosting guide</title>
+  <link rel="icon" type="image/x-icon" href="/img/favicon.ico">
+  <link rel="icon" type="image/png" sizes="16x16" href="/img/favicon-16x16.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/img/favicon-32x32.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/img/apple-touch-icon.png">
+  <link rel="manifest" href="/site.webmanifest">
+  <link rel="stylesheet" href="/fonts/fonts.css">
+  <style>
+    :root {
+      --ink-0:#ffffff; --ink-1:#fafafa; --ink-2:#f4f4f3; --ink-3:#ebebe9;
+      --ink-4:#dedcd8; --ink-5:#c4c2bd; --ink-7:#8a8884; --ink-9:#5a5854;
+      --ink-10:#3a3936; --ink-11:#1c1c1a; --ink-12:#0a0a09;
+      --amber-bg:#fff4d1; --amber-line:#e5c168; --amber-ink:#6b4d00; --amber:#e5a100;
+      --red:#c32d2d; --green:#1a7a42;
+      --bg:var(--ink-1); --surface:var(--ink-0); --surface-2:var(--ink-2);
+      --hairline:var(--ink-3); --border:var(--ink-4); --border-strong:var(--ink-12);
+      --fg:var(--ink-11); --fg-strong:var(--ink-12); --fg-muted:var(--ink-9); --fg-faint:var(--ink-7);
+      --font:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
+      --mono:'JetBrains Mono','SF Mono',Menlo,Consolas,monospace;
+      --sidebar-w:248px;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    html, body { background:var(--bg); }
+    body {
+      font-family:var(--font); font-weight:400; color:var(--fg);
+      font-size:14px; line-height:1.5; letter-spacing:-0.005em;
+      -webkit-font-smoothing:antialiased;
+    }
+    a { color:inherit; text-decoration:none; }
+    ::selection { background:var(--ink-12); color:var(--ink-0); }
+    h1,h2,h3,h4 { font-weight:400; }
+
+    /* Buttons */
+    .btn {
+      display:inline-flex; align-items:center; justify-content:center; gap:8px;
+      height:40px; padding:0 18px; font-family:var(--font); font-size:14px; font-weight:500;
+      border:2px solid var(--ink-12); background:var(--ink-10); color:var(--ink-0);
+      cursor:pointer; transition:background-color 120ms ease;
+    }
+    .btn:hover { background:var(--ink-9); }
+    .btn--sm { height:30px; padding:0 12px; font-size:13px; }
+    .btn--secondary { background:var(--ink-0); color:var(--ink-12); }
+    .btn--secondary:hover { background:var(--ink-2); }
+
+    .eyebrow {
+      font-family:var(--mono); font-size:11px; letter-spacing:0.16em;
+      text-transform:uppercase; color:var(--fg-faint);
+    }
+
+    /* Nav */
+    .nav {
+      display:flex; align-items:center; gap:32px; height:56px; padding:0 32px;
+      border-bottom:1px solid var(--border-strong); background:var(--surface);
+      position:sticky; top:0; z-index:100;
+    }
+    .logo { display:flex; align-items:center; gap:8px; }
+    .logo svg { width:22px; height:22px; }
+    .logo span { font-size:14px; font-weight:500; letter-spacing:-0.02em; }
+    .nav-links { display:flex; gap:28px; font-size:13px; color:var(--fg-muted); }
+    .nav-links a:hover { color:var(--fg-strong); }
+    .nav-gh { font-size:13px; color:var(--fg-muted); text-decoration:none; }
+    .nav-gh:hover { color:var(--fg-strong); }
+    .nav-divider { width:1px; height:18px; background:var(--border); }
+    .nav .docs-badge {
+      font-family:var(--mono); font-size:10px; letter-spacing:0.08em;
+      text-transform:uppercase; background:var(--ink-12); color:var(--ink-0);
+      padding:2px 6px;
+    }
+
+    /* Docs hero */
+    .docs-hero {
+      padding:56px 64px 48px; border-bottom:1px solid var(--border-strong);
+      background:var(--surface);
+    }
+    .docs-hero h1 {
+      font-size:48px; line-height:1.05; letter-spacing:-0.025em;
+      color:var(--fg-strong); margin-top:10px;
+    }
+    .docs-hero p {
+      font-size:16px; color:var(--fg-muted); margin-top:12px; line-height:1.55;
+    }
+    .docs-hero-tabs {
+      display:flex; gap:0; margin-top:32px; border-bottom:2px solid var(--border-strong);
+    }
+    .docs-hero-tab {
+      padding:10px 20px; font-size:13px; font-weight:500; cursor:pointer;
+      border-bottom:2px solid transparent; margin-bottom:-2px; color:var(--fg-muted);
+    }
+    .docs-hero-tab.active, .docs-hero-tab:hover { color:var(--fg-strong); }
+    .docs-hero-tab.active { border-bottom-color:var(--ink-12); }
+
+    /* Docs layout */
+    .docs-layout {
+      display:grid;
+      grid-template-columns:var(--sidebar-w) 1fr;
+      min-height:calc(100vh - 56px);
+      max-width:1320px; margin:0 auto;
+    }
+
+    /* Sidebar */
+    .docs-sidebar {
+      border-right:1px solid var(--border);
+      background:var(--surface);
+      position:sticky; top:56px;
+      height:calc(100vh - 56px);
+      overflow-y:auto;
+    }
+    .docs-sidebar-inner { padding:28px 0 48px; }
+    .docs-nav-group { margin-bottom:4px; }
+    .docs-nav-section {
+      font-family:var(--mono); font-size:10px; letter-spacing:0.14em;
+      text-transform:uppercase; color:var(--fg-faint);
+      padding:20px 24px 8px;
+    }
+    .docs-nav-section:first-child { padding-top:4px; }
+    .docs-nav-link {
+      display:block; padding:6px 24px; font-size:13px; color:var(--fg-muted);
+      transition:color 80ms ease; border-left:2px solid transparent;
+    }
+    .docs-nav-link:hover { color:var(--fg-strong); }
+    .docs-nav-link.active { color:var(--fg-strong); border-left-color:var(--ink-12); }
+    .docs-nav-sub {
+      display:block; padding:5px 24px 5px 36px; font-size:12px; color:var(--fg-faint);
+    }
+    .docs-nav-sub:hover { color:var(--fg-muted); }
+
+    /* Content */
+    .docs-content { padding:0 72px 96px 64px; min-width:0; }
+    .docs-section {
+      padding-top:64px; border-bottom:1px solid var(--hairline); padding-bottom:64px;
+    }
+    .docs-section:last-child { border-bottom:none; }
+    .docs-section-label {
+      display:inline-flex; align-items:center; gap:12px;
+      font-family:var(--mono); font-size:11px; letter-spacing:0.14em;
+      text-transform:uppercase; color:var(--fg-faint); margin-bottom:8px;
+    }
+    .docs-section-label::before {
+      content:''; display:block; width:24px; height:1px; background:var(--fg-faint);
+    }
+    .docs-section h2 {
+      font-size:32px; letter-spacing:-0.02em; color:var(--fg-strong); line-height:1.1;
+    }
+    .docs-section > p, .docs-prose p {
+      font-size:14px; line-height:1.65; color:var(--fg-muted); margin-top:14px; max-width:640px;
+    }
+
+    /* Article heading */
+    .docs-h { margin-top:48px; padding-top:48px; border-top:1px solid var(--hairline); }
+    .docs-h:first-of-type { margin-top:32px; padding-top:0; border-top:none; }
+    .docs-h h3 {
+      font-size:21px; font-weight:500; letter-spacing:-0.015em; color:var(--fg-strong);
+    }
+    .docs-h p { font-size:14px; line-height:1.65; color:var(--fg-muted); margin-top:10px; max-width:640px; }
+
+    /* Steps */
+    .docs-steps { margin-top:28px; display:flex; flex-direction:column; gap:0; }
+    .docs-step {
+      display:grid; grid-template-columns:48px 1fr; gap:20px;
+      padding:24px 0; border-top:1px solid var(--hairline);
+    }
+    .docs-step:first-child { border-top:none; padding-top:0; }
+    .docs-step-n {
+      font-family:var(--mono); font-size:32px; line-height:1; color:var(--border);
+      letter-spacing:-0.04em; user-select:none; padding-top:2px;
+    }
+    .docs-step-body { display:flex; flex-direction:column; gap:10px; }
+    .docs-step h4 { font-size:16px; font-weight:500; color:var(--fg-strong); }
+    .docs-step p { font-size:14px; line-height:1.6; color:var(--fg-muted); max-width:600px; }
+
+    /* Code blocks */
+    .code {
+      background:var(--surface-2); border:1px solid var(--border);
+      padding:14px 16px; font-family:var(--mono); font-size:12.5px;
+      color:var(--fg-strong); white-space:pre; overflow-x:auto; line-height:1.6;
+      margin-top:12px;
+    }
+    .code .c { color:var(--fg-faint); }
+    .code .k { color:var(--ink-10); font-weight:500; }
+    .code .s { color:var(--green); }
+    .inline-code {
+      font-family:var(--mono); font-size:12px; background:var(--surface-2);
+      border:1px solid var(--border); padding:1px 5px; color:var(--fg-strong);
+    }
+
+    /* Callouts */
+    .callout {
+      border:1px solid var(--border); padding:14px 16px;
+      display:flex; gap:12px; align-items:flex-start; margin-top:16px;
+    }
+    .callout--tip { border-left:3px solid var(--amber); background:var(--amber-bg); }
+    .callout--warn { border-left:3px solid var(--red); background:#fdf0f0; }
+    .callout--info { border-left:3px solid var(--ink-9); background:var(--surface-2); }
+    .callout-icon { font-family:var(--mono); font-size:11px; font-weight:500; color:var(--fg-faint); padding-top:1px; white-space:nowrap; }
+    .callout--tip .callout-icon { color:var(--amber-ink); }
+    .callout--warn .callout-icon { color:var(--red); }
+    .callout p { font-size:13px; line-height:1.55; color:var(--fg); margin:0; max-width:none; }
+    .callout p strong { font-weight:500; color:var(--fg-strong); }
+
+    /* Screenshot figure */
+    .docs-fig { margin-top:20px; }
+    .docs-fig img {
+      width:100%; display:block; border:1px solid var(--border);
+      background:var(--ink-2); min-height:80px;
+    }
+    .docs-fig figcaption {
+      font-size:12px; color:var(--fg-faint); font-family:var(--mono);
+      margin-top:6px; line-height:1.4;
+    }
+
+    /* Table */
+    .docs-table { width:100%; border-collapse:collapse; margin-top:16px; font-size:13px; }
+    .docs-table th {
+      text-align:left; font-weight:400; font-size:11px; letter-spacing:0.08em;
+      text-transform:uppercase; color:var(--fg-faint); padding:8px 12px;
+      border-bottom:1px solid var(--border); background:var(--surface-2);
+    }
+    .docs-table td { padding:9px 12px; border-bottom:1px solid var(--hairline); vertical-align:top; }
+    .docs-table tr:last-child td { border-bottom:none; }
+    .docs-table td:first-child { font-family:var(--mono); font-size:12px; color:var(--fg-strong); white-space:nowrap; }
+    .docs-table td.req { color:var(--red); font-family:var(--mono); font-size:11px; }
+    .docs-table td.opt { color:var(--fg-faint); font-family:var(--mono); font-size:11px; }
+
+    /* Rule example chip */
+    .rule-row { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-top:10px; }
+    .rule-pill {
+      display:inline-flex; align-items:center; height:24px; padding:0 10px;
+      font-family:var(--mono); font-size:11.5px; border:1px solid var(--border);
+      background:var(--surface); color:var(--fg-strong); gap:8px;
+    }
+    .rule-pill .label { font-size:10px; color:var(--fg-faint); letter-spacing:0.06em; text-transform:uppercase; }
+    .badge-action {
+      display:inline-flex; align-items:center; height:20px; padding:0 7px;
+      font-family:var(--mono); font-size:10px;
+    }
+    .badge-proxy { background:#d0e8f5; color:#1a3a5a; }
+    .badge-mock { background:#dcdff5; color:#1f2659; }
+
+    /* Footer */
+    footer {
+      padding:40px 64px 28px; background:var(--surface);
+      border-top:1px solid var(--border); display:flex; flex-direction:column; gap:32px;
+    }
+    .foot-grid { display:grid; grid-template-columns:1.4fr repeat(3,1fr); gap:32px; }
+    .foot-brand { display:flex; flex-direction:column; gap:14px; }
+    .foot-brand p { font-size:12px; line-height:1.55; color:var(--fg-muted); max-width:280px; }
+    .foot-col { display:flex; flex-direction:column; gap:10px; }
+    .foot-col .h {
+      font-family:var(--mono); font-size:10px; letter-spacing:0.14em;
+      text-transform:uppercase; color:var(--fg-faint);
+    }
+    .foot-col a { font-size:13px; color:var(--fg-muted); }
+    .foot-col a:hover { color:var(--fg-strong); }
+    .foot-bar {
+      border-top:1px solid var(--hairline); padding-top:16px;
+      display:flex; justify-content:space-between;
+      font-family:var(--mono); font-size:11px; color:var(--fg-faint);
+    }
+
+    /* Responsive */
+    @media (max-width: 900px) {
+      .docs-layout { grid-template-columns:1fr; }
+      .docs-sidebar { position:static; height:auto; border-right:none; border-bottom:1px solid var(--border); }
+      .docs-sidebar-inner { padding:16px 0; display:flex; flex-wrap:wrap; gap:0; }
+      .docs-nav-section { padding:12px 16px 4px; width:100%; }
+      .docs-nav-link { padding:5px 16px; }
+      .docs-content { padding:0 28px 64px; }
+      .docs-hero { padding:40px 28px 32px; }
+      .docs-hero h1 { font-size:32px; }
+      .foot-grid { grid-template-columns:1fr 1fr; gap:20px 16px; }
+      .foot-brand { grid-column:span 2; }
+      footer { padding:32px 28px 20px; }
+      .nav-links, .nav-gh, .nav-divider { display:none; }
+      .nav { padding:0 16px; }
+    }
+    @media (max-width: 640px) {
+      .docs-hero { padding:32px 20px 24px; }
+      .docs-content { padding:0 20px 48px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Nav -->
+  <nav class="nav">
+    <a href="/" class="logo">
+      <svg viewBox="0 0 1024 1024" preserveAspectRatio="xMidYMid meet" aria-hidden="true"><g transform="translate(0,1024) scale(0.1,-0.1)" fill="#0a0a09" stroke="none"><path d="M4803 6933 c-98 -119 -314 -383 -481 -587 -374 -457 -349 -429 -364 -424 -7 3 -79 85 -160 183 -191 231 -222 263 -288 294 -81 38 -155 34 -460 -27 -219 -44 -591 -117 -1230 -241 -820 -159 -805 -156 -841 -197 -47 -54 -52 -81 -52 -265 1 -195 8 -231 54 -275 28 -27 36 -29 102 -28 40 0 160 17 267 38 107 20 290 55 405 76 116 22 296 56 400 75 105 20 298 56 430 81 132 24 310 58 395 75 229 46 268 36 385 -98 143 -162 185 -215 185 -232 0 -9 -412 -532 -915 -1161 -503 -629 -915 -1148 -915 -1152 0 -5 185 -7 412 -6 l412 3 77 95 c41 52 163 205 269 340 312 394 418 528 515 650 50 63 190 239 310 390 119 151 225 281 233 288 40 32 54 19 231 -218 95 -126 190 -244 212 -261 22 -17 62 -40 89 -50 87 -33 84 -33 830 82 179 27 370 57 425 65 55 8 154 24 220 34 66 11 228 35 360 55 132 19 371 55 530 80 160 24 393 60 519 79 238 37 278 36 257 -2 -5 -9 -95 -131 -200 -271 -105 -140 -189 -256 -187 -258 5 -5 142 53 381 162 105 48 237 109 295 135 523 237 1171 543 1211 571 38 27 52 61 38 92 -17 38 3 30 -519 217 -308 111 -837 298 -1205 426 -148 52 -280 99 -293 104 -52 23 -54 10 -7 -42 153 -167 280 -303 350 -376 86 -90 96 -107 68 -116 -23 -6 -209 -34 -688 -101 -214 -30 -640 -90 -945 -135 -1123 -163 -1050 -153 -1103 -141 -27 6 -65 23 -85 38 -69 50 -332 374 -332 408 0 19 278 368 729 915 180 217 661 818 661 824 0 3 -182 6 -404 6 l-405 0 -178 -217z"/></g></svg>
+      <span>faultend</span>
+    </a>
+    <span class="docs-badge">Docs</span>
+    <div style="flex:1"></div>
+    <div class="nav-links">
+      <a href="/">Home</a>
+      <a href="/#why">Why Faultend</a>
+      <a href="/#deploy">Get started</a>
+    </div>
+    <div class="nav-divider"></div>
+    <a href="https://github.com/dalogax/faultend" class="nav-gh">GitHub</a>
+    <div class="nav-divider"></div>
+    <a href="https://app.faultend.com" class="btn btn--sm">Try it now →</a>
+  </nav>
+
+  <!-- Hero -->
+  <div class="docs-hero">
+    <div class="eyebrow">── documentation</div>
+    <h1>Faultend Docs</h1>
+    <p>How to test your app's resilience using Faultend, and how to run your own instance.</p>
+  </div>
+
+  <!-- Docs layout -->
+  <div class="docs-layout">
+
+    <!-- Sidebar -->
+    <aside class="docs-sidebar">
+      <div class="docs-sidebar-inner">
+
+        <div class="docs-nav-section">Using Faultend</div>
+        <a href="#getting-started" class="docs-nav-link active">Getting started</a>
+        <a href="#create-server" class="docs-nav-link">Create a fault server</a>
+        <a href="#proxy-rule" class="docs-nav-link">Set up routing</a>
+        <a href="#inspect-traffic" class="docs-nav-link">Inspect traffic</a>
+        <a href="#mock-failures" class="docs-nav-link">Mock failures</a>
+        <a href="#inject-latency" class="docs-nav-link">Inject latency</a>
+        <a href="#one-click" class="docs-nav-link">One-click mocking</a>
+        <a href="#conditional" class="docs-nav-link">Conditional rules</a>
+        <a href="#export-import" class="docs-nav-link">Export &amp; import</a>
+        <a href="#collaboration" class="docs-nav-link">Collaboration</a>
+
+        <div class="docs-nav-section">Self-hosting</div>
+        <a href="#self-host-overview" class="docs-nav-link">Overview</a>
+        <a href="#prerequisites" class="docs-nav-link">Prerequisites</a>
+        <a href="#installation" class="docs-nav-link">Installation</a>
+        <a href="#env-reference" class="docs-nav-link">Environment variables</a>
+        <a href="#traefik" class="docs-nav-link">Traefik &amp; DNS</a>
+        <a href="#oauth" class="docs-nav-link">OAuth setup</a>
+        <a href="#first-login" class="docs-nav-link">First login &amp; admin</a>
+        <a href="#production" class="docs-nav-link">Production tips</a>
+
+      </div>
+    </aside>
+
+    <!-- Content -->
+    <main class="docs-content">
+
+      <!-- ── USING FAULTEND ───────────────────────────────────────── -->
+
+      <section class="docs-section" id="getting-started">
+        <div class="docs-section-label">Using Faultend</div>
+        <h2>Getting started</h2>
+        <p>Faultend sits between your app and your real backend. You point your app at Faultend, create rules that describe what to do with incoming traffic, and watch everything stream through a live traffic viewer. No code changes needed — just swap the API base URL.</p>
+
+        <div class="callout callout--info">
+          <span class="callout-icon">cloud</span>
+          <p>The quickest way to start is <a href="https://app.faultend.com" style="color:var(--fg-strong);text-decoration:underline">app.faultend.com</a> — sign in with Google or GitHub and have a proxy URL ready in under a minute. If you want to run your own instance, jump to the <a href="#self-host-overview" style="color:var(--fg-strong);text-decoration:underline">Self-hosting</a> section.</p>
+        </div>
+
+        <div class="docs-steps">
+          <div class="docs-step">
+            <div class="docs-step-n">01</div>
+            <div class="docs-step-body">
+              <h4>Sign in</h4>
+              <p>Go to <a href="https://app.faultend.com" style="color:var(--fg-strong)">app.faultend.com</a> and sign in with Google or GitHub. Your account is created automatically on first login.</p>
+            </div>
+          </div>
+          <div class="docs-step">
+            <div class="docs-step-n">02</div>
+            <div class="docs-step-body">
+              <h4>Create a fault server</h4>
+              <p>Click <strong>New server</strong>, enter a short ID (e.g. <span class="inline-code">my-api</span>), and confirm. Your proxy URL is instantly available at <span class="inline-code">https://my-api.faultend.com</span>.</p>
+            </div>
+          </div>
+          <div class="docs-step">
+            <div class="docs-step-n">03</div>
+            <div class="docs-step-body">
+              <h4>Add a proxy rule</h4>
+              <p>Create a rule that matches all paths (<span class="inline-code">.*</span>) and proxies to your real API. This makes Faultend a transparent pass-through by default.</p>
+            </div>
+          </div>
+          <div class="docs-step">
+            <div class="docs-step-n">04</div>
+            <div class="docs-step-body">
+              <h4>Point your app at Faultend</h4>
+              <p>Change your app's API base URL from <span class="inline-code">https://api.yourapp.com</span> to <span class="inline-code">https://my-api.faultend.com</span>. Traffic flows through Faultend — your app doesn't need to know.</p>
+            </div>
+          </div>
+          <div class="docs-step">
+            <div class="docs-step-n">05</div>
+            <div class="docs-step-body">
+              <h4>Inject failures and observe</h4>
+              <p>Add mock rules to simulate 503s, timeouts, or corrupted responses. Watch your app's behaviour change in real time as requests come through the traffic viewer.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="docs-section" id="create-server">
+        <div class="docs-h">
+          <h3>Create a fault server</h3>
+          <p>A fault server is an isolated proxy instance. Each one gets a unique subdomain and its own rules and traffic log. You can have multiple servers — one per project, environment, or test scenario.</p>
+        </div>
+
+        <figure class="docs-fig" style="margin-top:24px">
+          <img src="https://github.com/dalogax/faultend/releases/download/pr-screenshots/docs-server-list.png"
+               alt="Faultend dashboard showing a list of fault servers with their proxy URLs" loading="lazy">
+          <figcaption>The server list. Each server has its own proxy URL shown inline — click to copy.</figcaption>
+        </figure>
+
+        <div style="margin-top:24px">
+          <p style="color:var(--fg-muted);font-size:14px;line-height:1.65;max-width:640px">Click <strong>New server</strong> in the top-right of the dashboard. The only required field is the server ID — this becomes part of your proxy URL. IDs must be lowercase alphanumeric with hyphens allowed (e.g. <span class="inline-code">mobile-api</span>, <span class="inline-code">checkout-service</span>).</p>
+        </div>
+
+        <figure class="docs-fig">
+          <img src="https://github.com/dalogax/faultend/releases/download/pr-screenshots/docs-create-server.png"
+               alt="Create server dialog with an ID field" loading="lazy">
+          <figcaption>The create server dialog. Enter a short, descriptive ID for your proxy.</figcaption>
+        </figure>
+
+        <div class="callout callout--tip" style="margin-top:20px">
+          <span class="callout-icon">tip</span>
+          <p>Use IDs that match your service names — <span class="inline-code">payments-api</span>, <span class="inline-code">auth-service</span>. It makes URLs easy to remember and share with teammates.</p>
+        </div>
+      </section>
+
+      <section class="docs-section" id="proxy-rule">
+        <div class="docs-h">
+          <h3>Set up routing with proxy rules</h3>
+          <p>Faultend doesn't have a global backend URL. Every request is matched against your rules in priority order. This means you can route different paths to different services, or mock just a subset of endpoints.</p>
+        </div>
+
+        <p style="color:var(--fg-muted);font-size:14px;line-height:1.65;max-width:640px;margin-top:16px">A proxy rule needs three things: a path pattern (regex), a priority, and a target URL. Start by creating a catch-all rule that forwards everything to your real API:</p>
+
+        <div class="rule-row">
+          <span class="rule-pill">
+            <span class="badge-action badge-proxy">proxy</span>
+            <span class="label">pattern</span><span>.*</span>
+            <span class="label">priority</span><span>100</span>
+            <span class="label">target</span><span>https://api.yourapp.com</span>
+          </span>
+        </div>
+
+        <figure class="docs-fig" style="margin-top:20px">
+          <img src="https://github.com/dalogax/faultend/releases/download/pr-screenshots/docs-rule-proxy.png"
+               alt="Rule editor form showing a proxy rule with path pattern .* and a target URL" loading="lazy">
+          <figcaption>The rule editor. Choose <strong>Proxy</strong> as the action, enter the target URL, and set a priority.</figcaption>
+        </figure>
+
+        <div class="docs-h">
+          <h3>How priority works</h3>
+          <p>Rules are evaluated from highest priority to lowest. The first rule that matches the incoming request wins. This means specific rules should have higher priority than catch-all rules.</p>
+        </div>
+
+        <div class="code">
+<span class="c"># Example rule stack — evaluated top to bottom</span>
+
+Priority 200 — <span class="k">MOCK</span>  /api/users/.*  → 503 Service Unavailable   <span class="c"># specific failure</span>
+Priority 150 — <span class="k">PROXY</span> /api/payments  → https://payments.yourapp.com  <span class="c"># payment service</span>
+Priority 100 — <span class="k">PROXY</span> .*             → https://api.yourapp.com       <span class="c"># everything else</span>
+        </div>
+
+        <figure class="docs-fig">
+          <img src="https://github.com/dalogax/faultend/releases/download/pr-screenshots/docs-rules-list.png"
+               alt="Rules list showing three rules ordered by priority with toggle switches" loading="lazy">
+          <figcaption>Rules list ordered by priority. Each rule can be toggled on or off without deleting it.</figcaption>
+        </figure>
+
+        <div class="callout callout--warn" style="margin-top:16px">
+          <span class="callout-icon">note</span>
+          <p><strong>Unmatched requests return 502.</strong> If no rule matches, Faultend responds with <span class="inline-code">502 Bad Gateway</span>. You always need at least one catch-all proxy rule to pass traffic through normally.</p>
+        </div>
+      </section>
+
+      <section class="docs-section" id="inspect-traffic">
+        <div class="docs-h">
+          <h3>Inspect live traffic</h3>
+          <p>Every request that flows through a fault server is logged and shown in the traffic viewer. You can see method, path, status code, latency, and the full request and response headers and body.</p>
+        </div>
+
+        <figure class="docs-fig" style="margin-top:20px">
+          <img src="https://github.com/dalogax/faultend/releases/download/pr-screenshots/docs-traffic-live.png"
+               alt="Traffic viewer showing a live stream of HTTP requests with method badges, paths, status codes, and latency bars" loading="lazy">
+          <figcaption>The traffic viewer streams requests as they arrive. Coloured method and status badges let you spot anomalies at a glance.</figcaption>
+        </figure>
+
+        <p style="color:var(--fg-muted);font-size:14px;line-height:1.65;max-width:640px;margin-top:16px">Click any row to open the detail panel. It shows the full URL, all request and response headers, the request body, and the response body. Use <strong>Copy as cURL</strong> to replay the exact request from your terminal.</p>
+
+        <figure class="docs-fig">
+          <img src="https://github.com/dalogax/faultend/releases/download/pr-screenshots/docs-traffic-detail.png"
+               alt="Traffic detail panel showing full request headers, response body, and copy as cURL button" loading="lazy">
+          <figcaption>Detail panel for a selected request. Headers, bodies, timing, and the matched rule are all shown.</figcaption>
+        </figure>
+
+        <div class="callout callout--tip">
+          <span class="callout-icon">tip</span>
+          <p>Traffic is retained for <strong>7 days</strong> and capped at 1,000 entries per server. Use the filter bar to search by method, path, or status code.</p>
+        </div>
+      </section>
+
+      <section class="docs-section" id="mock-failures">
+        <div class="docs-h">
+          <h3>Mock failures</h3>
+          <p>A mock rule intercepts matching requests and returns a response you define — without touching your real backend. This is how you simulate downtime, broken APIs, or edge-case error responses.</p>
+        </div>
+
+        <p style="color:var(--fg-muted);font-size:14px;line-height:1.65;max-width:640px;margin-top:16px">Common scenarios you can test:</p>
+
+        <div style="margin-top:16px;display:flex;flex-direction:column;gap:12px">
+
+          <div style="border:1px solid var(--border);padding:16px 18px">
+            <div style="font-size:13px;font-weight:500;color:var(--fg-strong);margin-bottom:6px">503 Service Unavailable — backend is down</div>
+            <div class="code" style="margin-top:0">Pattern: .*             Priority: 200
+Action:  Mock
+Status:  503
+Body:    <span class="s">{"error": "service_unavailable"}</span></div>
+          </div>
+
+          <div style="border:1px solid var(--border);padding:16px 18px">
+            <div style="font-size:13px;font-weight:500;color:var(--fg-strong);margin-bottom:6px">401 Unauthorized — expired token</div>
+            <div class="code" style="margin-top:0">Pattern: /api/.*        Priority: 200
+Action:  Mock
+Status:  401
+Body:    <span class="s">{"error": "token_expired", "message": "Please re-authenticate"}</span></div>
+          </div>
+
+          <div style="border:1px solid var(--border);padding:16px 18px">
+            <div style="font-size:13px;font-weight:500;color:var(--fg-strong);margin-bottom:6px">500 Internal Server Error — specific endpoint</div>
+            <div class="code" style="margin-top:0">Pattern: /api/checkout  Priority: 200
+Action:  Mock
+Status:  500
+Body:    <span class="s">{"error": "internal_error"}</span></div>
+          </div>
+
+        </div>
+
+        <figure class="docs-fig" style="margin-top:20px">
+          <img src="https://github.com/dalogax/faultend/releases/download/pr-screenshots/docs-rule-mock-503.png"
+               alt="Rule editor configured as a mock rule with status 503 and a JSON error body" loading="lazy">
+          <figcaption>A mock rule returning 503. Set the status code, JSON body, and optional latency in the same form.</figcaption>
+        </figure>
+
+        <div class="callout callout--tip" style="margin-top:16px">
+          <span class="callout-icon">tip</span>
+          <p>Enable and disable rules with the toggle switch in the rules list — no need to delete and recreate them between test runs.</p>
+        </div>
+      </section>
+
+      <section class="docs-section" id="inject-latency">
+        <div class="docs-h">
+          <h3>Inject latency</h3>
+          <p>Any rule — proxy or mock — can add artificial delay before the response is sent. Use this to simulate slow networks, overloaded backends, or timeout scenarios.</p>
+        </div>
+
+        <div style="margin-top:16px;display:flex;flex-direction:column;gap:8px">
+          <div style="border:1px solid var(--border);padding:14px 16px;display:grid;grid-template-columns:120px 1fr;gap:12px;align-items:center">
+            <div style="font-family:var(--mono);font-size:11px;color:var(--fg-faint);text-transform:uppercase;letter-spacing:0.08em">Fixed delay</div>
+            <div style="font-size:13px;color:var(--fg-muted)">Always adds exactly N milliseconds. Good for simulating a consistently slow API.</div>
+          </div>
+          <div style="border:1px solid var(--border);padding:14px 16px;display:grid;grid-template-columns:120px 1fr;gap:12px;align-items:center">
+            <div style="font-family:var(--mono);font-size:11px;color:var(--fg-faint);text-transform:uppercase;letter-spacing:0.08em">Random range</div>
+            <div style="font-size:13px;color:var(--fg-muted)">Adds a random delay between a min and max. Good for simulating jittery, unpredictable network conditions.</div>
+          </div>
+        </div>
+
+        <div class="code" style="margin-top:16px">
+<span class="c"># Simulate a slow upstream — 800ms to 2000ms random delay</span>
+Pattern:   .*
+Action:    Proxy → https://api.yourapp.com
+Latency:   <span class="k">random</span> 800ms – 2000ms
+        </div>
+
+        <div class="callout callout--tip" style="margin-top:16px">
+          <span class="callout-icon">tip</span>
+          <p>Combine latency with a mock 200 response to simulate a very slow but technically successful API. This tests whether your app handles slow responses gracefully (spinners, timeouts, cancellation).</p>
+        </div>
+      </section>
+
+      <section class="docs-section" id="one-click">
+        <div class="docs-h">
+          <h3>One-click mocking from traffic</h3>
+          <p>Instead of writing a rule from scratch, you can click any logged request and turn it into a mock rule. Faultend pre-fills the path, method, and response body from the actual traffic — you just tweak what you need.</p>
+        </div>
+
+        <figure class="docs-fig" style="margin-top:20px">
+          <img src="https://github.com/dalogax/faultend/releases/download/pr-screenshots/docs-one-click-mock.png"
+               alt="Traffic detail panel showing a Create rule button that opens the rule editor pre-filled from the selected request" loading="lazy">
+          <figcaption>Open any request, click <strong>Create rule</strong>, and the rule editor opens pre-filled. Change the status code and body to inject your failure.</figcaption>
+        </figure>
+
+        <p style="color:var(--fg-muted);font-size:14px;line-height:1.65;max-width:640px;margin-top:16px">This workflow is especially useful during exploratory testing — use your app normally, spot an interesting request in the traffic log, and immediately mock it without having to remember the exact path or response format.</p>
+      </section>
+
+      <section class="docs-section" id="conditional">
+        <div class="docs-h">
+          <h3>Conditional matching</h3>
+          <p>Beyond path and method, rules can match on request headers, query parameters, body fields, and cookies. This lets you target specific users, sessions, or request variants without affecting all traffic.</p>
+        </div>
+
+        <div style="margin-top:16px;display:flex;flex-direction:column;gap:8px">
+          <div style="border:1px solid var(--border);padding:14px 16px">
+            <div style="font-size:12px;font-weight:500;color:var(--fg-strong);margin-bottom:6px">Match by header — simulate auth failure for a specific API key</div>
+            <div class="code" style="margin-top:0">Header: <span class="s">X-Api-Key</span> = <span class="s">test-key-123</span>  → mock 401</div>
+          </div>
+          <div style="border:1px solid var(--border);padding:14px 16px">
+            <div style="font-size:12px;font-weight:500;color:var(--fg-strong);margin-bottom:6px">Match by query param — break a specific search query</div>
+            <div class="code" style="margin-top:0">Query param: <span class="s">q</span> contains <span class="s">crash</span>  → mock 500</div>
+          </div>
+          <div style="border:1px solid var(--border);padding:14px 16px">
+            <div style="font-size:12px;font-weight:500;color:var(--fg-strong);margin-bottom:6px">Match by body field — target a specific user ID in a POST request</div>
+            <div class="code" style="margin-top:0">Body field: <span class="s">userId</span> = <span class="s">42</span>  → mock 503 with latency</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="docs-section" id="export-import">
+        <div class="docs-h">
+          <h3>Export &amp; import rule configurations</h3>
+          <p>Save your entire rule set as a JSON file and share it with your team or load it into another server. This is how you replicate a test scenario across environments or version-control your fault injection configs.</p>
+        </div>
+
+        <div class="code" style="margin-top:16px">
+<span class="c"># Exported JSON format (from Settings → Export config)</span>
+{
+  <span class="s">"version"</span>: <span class="s">"1"</span>,
+  <span class="s">"rules"</span>: [
+    {
+      <span class="s">"name"</span>: <span class="s">"Default proxy"</span>,
+      <span class="s">"pattern"</span>: <span class="s">".*"</span>,
+      <span class="s">"action"</span>: <span class="s">"proxy"</span>,
+      <span class="s">"target"</span>: <span class="s">"https://api.yourapp.com"</span>,
+      <span class="s">"priority"</span>: 100,
+      <span class="s">"enabled"</span>: true
+    },
+    {
+      <span class="s">"name"</span>: <span class="s">"Simulate checkout outage"</span>,
+      <span class="s">"pattern"</span>: <span class="s">"/api/checkout"</span>,
+      <span class="s">"action"</span>: <span class="s">"mock"</span>,
+      <span class="s">"status"</span>: 503,
+      <span class="s">"body"</span>: <span class="s">"{\"error\":\"service_unavailable\"}"</span>,
+      <span class="s">"priority"</span>: 200,
+      <span class="s">"enabled"</span>: false
+    }
+  ]
+}
+        </div>
+
+        <p style="color:var(--fg-muted);font-size:14px;line-height:1.65;max-width:640px;margin-top:16px">Find export and import in the server's <strong>Settings</strong> drawer (gear icon). Import supports two modes: <span class="inline-code">merge</span> (add imported rules to existing ones) and <span class="inline-code">replace</span> (clear existing rules first).</p>
+      </section>
+
+      <section class="docs-section" id="collaboration">
+        <div class="docs-h">
+          <h3>Collaboration</h3>
+          <p>Fault servers can be shared with teammates. Open the Settings drawer and generate an invite link. Anyone with the link can join as a collaborator.</p>
+        </div>
+
+        <table class="docs-table" style="margin-top:20px">
+          <thead>
+            <tr>
+              <th>Role</th>
+              <th>What they can do</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Owner</td>
+              <td>Full control — manage rules, traffic, settings, collaborators, and delete the server</td>
+            </tr>
+            <tr>
+              <td>Admin</td>
+              <td>Manage rules and traffic, generate invite links, promote collaborators. Cannot delete the server or transfer ownership</td>
+            </tr>
+            <tr>
+              <td>Collaborator</td>
+              <td>View traffic and rules, toggle rules on/off. Cannot edit rules or manage members</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <!-- ── SELF-HOSTING ─────────────────────────────────────────── -->
+
+      <section class="docs-section" id="self-host-overview">
+        <div class="docs-section-label">Self-hosting</div>
+        <h2>Run your own instance</h2>
+        <p>Faultend is open source under the MIT licence. You can run a fully private instance on your own infrastructure with no usage limits, no accounts, and no dependency on faultend.com.</p>
+
+        <div style="margin-top:28px;display:grid;grid-template-columns:1fr 1fr;gap:1px;border:1px solid var(--border)">
+          <div style="padding:20px 22px;background:var(--surface)">
+            <div style="font-family:var(--mono);font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--fg-faint);margin-bottom:8px">You need</div>
+            <div style="display:flex;flex-direction:column;gap:6px;font-size:13px;color:var(--fg-muted)">
+              <span>→ A Linux VPS (1 vCPU / 512 MB RAM is fine)</span>
+              <span>→ Docker + Docker Compose</span>
+              <span>→ A domain with wildcard DNS support</span>
+              <span>→ Traefik v3 (or any reverse proxy)</span>
+            </div>
+          </div>
+          <div style="padding:20px 22px;background:var(--surface);border-left:1px solid var(--border)">
+            <div style="font-family:var(--mono);font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--fg-faint);margin-bottom:8px">You get</div>
+            <div style="display:flex;flex-direction:column;gap:6px;font-size:13px;color:var(--fg-muted)">
+              <span>→ Unlimited servers and rules</span>
+              <span>→ Full data sovereignty</span>
+              <span>→ No external dependencies</span>
+              <span>→ Optional OAuth (or dev-login for internal tools)</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="callout callout--info" style="margin-top:20px">
+          <span class="callout-icon">repo</span>
+          <p>Source code is at <a href="https://github.com/dalogax/faultend" style="color:var(--fg-strong);text-decoration:underline">github.com/dalogax/faultend</a>. The <a href="https://github.com/dalogax/faultend/blob/main/docker-compose.yml" style="color:var(--fg-strong);text-decoration:underline">docker-compose.yml</a> and <a href="https://github.com/dalogax/faultend/blob/main/Dockerfile" style="color:var(--fg-strong);text-decoration:underline">Dockerfile</a> are included in the repo root.</p>
+        </div>
+      </section>
+
+      <section class="docs-section" id="prerequisites">
+        <div class="docs-h">
+          <h3>Prerequisites</h3>
+        </div>
+
+        <div style="margin-top:16px;display:flex;flex-direction:column;gap:0;border:1px solid var(--border)">
+          <div style="display:grid;grid-template-columns:160px 1fr;border-bottom:1px solid var(--hairline)">
+            <div style="padding:12px 14px;font-family:var(--mono);font-size:12px;color:var(--fg-strong);border-right:1px solid var(--hairline);background:var(--surface-2)">Docker ≥ 24</div>
+            <div style="padding:12px 14px;font-size:13px;color:var(--fg-muted)">For running the app container and PostgreSQL</div>
+          </div>
+          <div style="display:grid;grid-template-columns:160px 1fr;border-bottom:1px solid var(--hairline)">
+            <div style="padding:12px 14px;font-family:var(--mono);font-size:12px;color:var(--fg-strong);border-right:1px solid var(--hairline);background:var(--surface-2)">Traefik v3</div>
+            <div style="padding:12px 14px;font-size:13px;color:var(--fg-muted)">Reverse proxy for HTTPS termination and subdomain routing. Can be replaced with nginx/Caddy if you configure wildcard routing yourself</div>
+          </div>
+          <div style="display:grid;grid-template-columns:160px 1fr;border-bottom:1px solid var(--hairline)">
+            <div style="padding:12px 14px;font-family:var(--mono);font-size:12px;color:var(--fg-strong);border-right:1px solid var(--hairline);background:var(--surface-2)">Wildcard DNS</div>
+            <div style="padding:12px 14px;font-size:13px;color:var(--fg-muted)">Both <span class="inline-code">yourdomain.com</span> and <span class="inline-code">*.yourdomain.com</span> must resolve to your server's IP address</div>
+          </div>
+          <div style="display:grid;grid-template-columns:160px 1fr">
+            <div style="padding:12px 14px;font-family:var(--mono);font-size:12px;color:var(--fg-strong);border-right:1px solid var(--hairline);background:var(--surface-2)">PostgreSQL 16</div>
+            <div style="padding:12px 14px;font-size:13px;color:var(--fg-muted)">The schema is applied automatically at startup — no manual migration step needed</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="docs-section" id="installation">
+        <div class="docs-h">
+          <h3>Installation</h3>
+        </div>
+
+        <div class="docs-steps" style="margin-top:20px">
+
+          <div class="docs-step">
+            <div class="docs-step-n">01</div>
+            <div class="docs-step-body">
+              <h4>Clone the repository</h4>
+              <div class="code">git clone https://github.com/dalogax/faultend.git
+cd faultend</div>
+            </div>
+          </div>
+
+          <div class="docs-step">
+            <div class="docs-step-n">02</div>
+            <div class="docs-step-body">
+              <h4>Configure environment variables</h4>
+              <p>Copy the example file and edit it. The minimum required variables are shown below. See the <a href="#env-reference" style="color:var(--fg-strong);text-decoration:underline">Environment variables</a> reference for all options.</p>
+              <div class="code">cp .env.example .env
+<span class="c"># edit .env with your values</span></div>
+              <div class="code">
+<span class="c"># Minimum required .env</span>
+DATABASE_URL=postgresql://faultend:faultend@postgres:5432/faultend
+SESSION_SECRET=<span class="s">change-this-to-a-64-char-random-string</span>
+ROOT_DOMAIN=<span class="s">yourdomain.com</span>
+PORT=3000
+NODE_ENV=production
+SAMPLE_DATA=false</div>
+              <p style="margin-top:10px">Generate a secure session secret with:</p>
+              <div class="code">openssl rand -hex 32</div>
+            </div>
+          </div>
+
+          <div class="docs-step">
+            <div class="docs-step-n">03</div>
+            <div class="docs-step-body">
+              <h4>Update docker-compose.yml with your domain</h4>
+              <p>Edit <a href="https://github.com/dalogax/faultend/blob/main/docker-compose.yml" style="color:var(--fg-strong);text-decoration:underline">docker-compose.yml</a> and replace <span class="inline-code">faultend.com</span> with your domain in the Traefik labels:</p>
+              <div class="code">
+<span class="c"># Replace these two lines with your domain:</span>
+- <span class="s">"traefik.http.routers.faultend-http.rule=Host(`yourdomain.com`) || HostRegexp(`^[a-z0-9-]+\\.yourdomain\\.com$`)"</span>
+- <span class="s">"traefik.http.routers.faultend-https.rule=Host(`yourdomain.com`) || HostRegexp(`^[a-z0-9-]+\\.yourdomain\\.com$`)"</span>
+
+<span class="c"># Update the TLS domain:</span>
+- <span class="s">"traefik.http.routers.faultend-https.tls.domains[0].main=yourdomain.com"</span>
+- <span class="s">"traefik.http.routers.faultend-https.tls.domains[0].sans=*.yourdomain.com"</span></div>
+            </div>
+          </div>
+
+          <div class="docs-step">
+            <div class="docs-step-n">04</div>
+            <div class="docs-step-body">
+              <h4>Start the stack</h4>
+              <p>If you are using Traefik via Docker, make sure the <span class="inline-code">coolify</span> network exists (or rename it to whatever your Traefik network is called).</p>
+              <div class="code">
+<span class="c"># Create the external Traefik network if it doesn't exist</span>
+docker network create coolify
+
+<span class="c"># Start Faultend (and PostgreSQL if you add it to compose)</span>
+docker compose up -d</div>
+              <p style="margin-top:10px">The app is now reachable through Traefik at <span class="inline-code">https://app.yourdomain.com</span>. The database schema is applied automatically on first startup.</p>
+            </div>
+          </div>
+
+          <div class="docs-step">
+            <div class="docs-step-n">05</div>
+            <div class="docs-step-body">
+              <h4>Verify health</h4>
+              <div class="code">curl -s https://app.yourdomain.com/health
+<span class="c"># → {"status":"ok"}</span></div>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="callout callout--tip" style="margin-top:8px">
+          <span class="callout-icon">tip</span>
+          <p>PostgreSQL is not included in the default <span class="inline-code">docker-compose.yml</span> because Coolify manages it separately. For a standalone deployment, add a <span class="inline-code">postgres</span> service to your compose file and set <span class="inline-code">DATABASE_URL</span> accordingly.</p>
+        </div>
+
+        <div class="code" style="margin-top:12px">
+<span class="c"># Example: standalone PostgreSQL service to add to docker-compose.yml</span>
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: faultend
+      POSTGRES_PASSWORD: <span class="s">change-this-password</span>
+      POSTGRES_DB: faultend
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:</div>
+      </section>
+
+      <section class="docs-section" id="env-reference">
+        <div class="docs-h">
+          <h3>Environment variables</h3>
+          <p>All configuration is done via environment variables. Copy <a href="https://github.com/dalogax/faultend/blob/main/.env.example" style="color:var(--fg-strong);text-decoration:underline">.env.example</a> and fill in the values for your deployment.</p>
+        </div>
+
+        <table class="docs-table" style="margin-top:20px">
+          <thead>
+            <tr>
+              <th>Variable</th>
+              <th>Required</th>
+              <th>Default</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>DATABASE_URL</td>
+              <td class="req">required</td>
+              <td>—</td>
+              <td>PostgreSQL connection string. Format: <span class="inline-code">postgresql://user:pass@host:5432/dbname</span></td>
+            </tr>
+            <tr>
+              <td>SESSION_SECRET</td>
+              <td class="req">required</td>
+              <td>—</td>
+              <td>Random string used to sign session cookies. Generate with <span class="inline-code">openssl rand -hex 32</span>. Must be kept secret.</td>
+            </tr>
+            <tr>
+              <td>ROOT_DOMAIN</td>
+              <td class="req">required</td>
+              <td>—</td>
+              <td>Your apex domain (e.g. <span class="inline-code">yourdomain.com</span> or <span class="inline-code">localhost</span> for local dev). Used to build subdomain URLs.</td>
+            </tr>
+            <tr>
+              <td>PORT</td>
+              <td class="opt">optional</td>
+              <td>3000</td>
+              <td>HTTP port the app listens on inside the container.</td>
+            </tr>
+            <tr>
+              <td>NODE_ENV</td>
+              <td class="opt">optional</td>
+              <td>development</td>
+              <td>Set to <span class="inline-code">production</span> to enable trust-proxy (required when behind Traefik/nginx).</td>
+            </tr>
+            <tr>
+              <td>SAMPLE_DATA</td>
+              <td class="opt">optional</td>
+              <td>false</td>
+              <td>Set to <span class="inline-code">true</span> to seed three example servers on startup. Useful for demos. Set to <span class="inline-code">false</span> in production.</td>
+            </tr>
+            <tr>
+              <td>MOCK_AUTH_ENABLED</td>
+              <td class="opt">optional</td>
+              <td>false</td>
+              <td>Set to <span class="inline-code">true</span> to enable the <span class="inline-code">/api/auth/dev-login</span> endpoint that logs in without OAuth. <strong>Never enable in production.</strong></td>
+            </tr>
+            <tr>
+              <td>GOOGLE_CLIENT_ID</td>
+              <td class="opt">optional</td>
+              <td>—</td>
+              <td>Google OAuth 2.0 client ID. Required to enable Google login. See <a href="#oauth" style="color:var(--fg-strong);text-decoration:underline">OAuth setup</a>.</td>
+            </tr>
+            <tr>
+              <td>GOOGLE_CLIENT_SECRET</td>
+              <td class="opt">optional</td>
+              <td>—</td>
+              <td>Google OAuth 2.0 client secret.</td>
+            </tr>
+            <tr>
+              <td>GITHUB_CLIENT_ID</td>
+              <td class="opt">optional</td>
+              <td>—</td>
+              <td>GitHub OAuth App client ID. Required to enable GitHub login. See <a href="#oauth" style="color:var(--fg-strong);text-decoration:underline">OAuth setup</a>.</td>
+            </tr>
+            <tr>
+              <td>GITHUB_CLIENT_SECRET</td>
+              <td class="opt">optional</td>
+              <td>—</td>
+              <td>GitHub OAuth App client secret.</td>
+            </tr>
+            <tr>
+              <td>INITIAL_ADMIN_EMAIL</td>
+              <td class="opt">optional</td>
+              <td>—</td>
+              <td>Email address of the first platform admin. On startup, if a user with this email exists in the database, they are granted <span class="inline-code">is_admin=true</span> automatically.</td>
+            </tr>
+            <tr>
+              <td>TRAFFIC_RETENTION_DAYS</td>
+              <td class="opt">optional</td>
+              <td>7</td>
+              <td>Number of days to keep traffic logs before they are automatically deleted. A cleanup job runs every 24 hours.</td>
+            </tr>
+            <tr>
+              <td>METRICS_ENABLED</td>
+              <td class="opt">optional</td>
+              <td>false</td>
+              <td>Set to <span class="inline-code">true</span> to expose a Prometheus-compatible <span class="inline-code">/metrics</span> endpoint on the app subdomain.</td>
+            </tr>
+            <tr>
+              <td>METRICS_TOKEN</td>
+              <td class="opt">optional</td>
+              <td>—</td>
+              <td>Bearer token to protect the <span class="inline-code">/metrics</span> endpoint. Recommended in production if metrics are enabled.</td>
+            </tr>
+            <tr>
+              <td>POSTHOG_PUBLIC_KEY</td>
+              <td class="opt">optional</td>
+              <td>—</td>
+              <td>PostHog project API key for analytics on the landing page. Leave blank to disable analytics entirely.</td>
+            </tr>
+            <tr>
+              <td>POSTHOG_HOST</td>
+              <td class="opt">optional</td>
+              <td>https://eu.i.posthog.com</td>
+              <td>PostHog ingestion endpoint. Change to the US region or your self-hosted PostHog URL if needed.</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="docs-section" id="traefik">
+        <div class="docs-h">
+          <h3>Traefik &amp; DNS setup</h3>
+        </div>
+
+        <p style="color:var(--fg-muted);font-size:14px;line-height:1.65;max-width:640px;margin-top:12px">Faultend uses subdomain routing — <span class="inline-code">app.yourdomain.com</span> for the UI and <span class="inline-code">[server-id].yourdomain.com</span> for each proxy. Both must resolve to the same server, and Traefik must route all subdomains to the Faultend container.</p>
+
+        <div class="docs-h">
+          <h3>DNS records</h3>
+        </div>
+
+        <div class="code" style="margin-top:12px">
+<span class="c"># Two DNS records required (at your DNS provider)</span>
+Type  Name              Value
+A     yourdomain.com    YOUR_SERVER_IP
+A     *.yourdomain.com  YOUR_SERVER_IP</div>
+
+        <div class="callout callout--warn" style="margin-top:16px">
+          <span class="callout-icon">note</span>
+          <p>Wildcard TLS certificates (for <span class="inline-code">*.yourdomain.com</span>) require a DNS-01 ACME challenge. Traefik supports this natively for most DNS providers — configure the <span class="inline-code">certresolver</span> in Traefik's static configuration with your DNS provider's API token.</p>
+        </div>
+
+        <div class="docs-h">
+          <h3>Traefik architecture</h3>
+        </div>
+
+        <div class="code" style="margin-top:12px">
+Internet → DNS → Server IP:443 → Traefik → Faultend container:3000
+                                         ↓
+                           Routes all *.yourdomain.com → Faultend
+                           Faultend reads the Host header to determine
+                           whether the request is for app.* (UI/API)
+                           or [server-id].* (proxy)</div>
+
+        <p style="color:var(--fg-muted);font-size:14px;line-height:1.65;max-width:640px;margin-top:16px">The included <a href="https://github.com/dalogax/faultend/blob/main/docker-compose.yml" style="color:var(--fg-strong);text-decoration:underline">docker-compose.yml</a> contains all the Traefik labels you need. Update the domain references and the Traefik network name if yours differs from <span class="inline-code">coolify</span>.</p>
+
+        <div class="callout callout--tip" style="margin-top:16px">
+          <span class="callout-icon">tip</span>
+          <p>If you use <a href="https://coolify.io" style="color:var(--fg-strong);text-decoration:underline">Coolify</a> to manage your server, you can import the repo directly — Coolify will use the <span class="inline-code">docker-compose.yml</span> and Traefik is already set up for you.</p>
+        </div>
+      </section>
+
+      <section class="docs-section" id="oauth">
+        <div class="docs-h">
+          <h3>OAuth setup</h3>
+          <p>Faultend supports Google and GitHub OAuth for user login. Both are optional — if neither is configured and <span class="inline-code">MOCK_AUTH_ENABLED=true</span>, you can use the dev-login endpoint. For a public-facing instance, configure at least one OAuth provider.</p>
+        </div>
+
+        <div class="docs-h">
+          <h3>Google OAuth</h3>
+        </div>
+        <div class="docs-steps" style="margin-top:12px">
+          <div class="docs-step">
+            <div class="docs-step-n">01</div>
+            <div class="docs-step-body">
+              <h4>Create a project in Google Cloud Console</h4>
+              <p>Go to <a href="https://console.cloud.google.com/" style="color:var(--fg-strong);text-decoration:underline">console.cloud.google.com</a>, create a project, and enable the <strong>Google+ API</strong> (or People API).</p>
+            </div>
+          </div>
+          <div class="docs-step">
+            <div class="docs-step-n">02</div>
+            <div class="docs-step-body">
+              <h4>Create OAuth credentials</h4>
+              <p>Under <strong>APIs &amp; Services → Credentials</strong>, create an OAuth 2.0 Client ID. Set the application type to <strong>Web application</strong>.</p>
+            </div>
+          </div>
+          <div class="docs-step">
+            <div class="docs-step-n">03</div>
+            <div class="docs-step-body">
+              <h4>Add the redirect URI</h4>
+              <div class="code">https://app.yourdomain.com/api/auth/google/callback</div>
+            </div>
+          </div>
+          <div class="docs-step">
+            <div class="docs-step-n">04</div>
+            <div class="docs-step-body">
+              <h4>Add credentials to .env</h4>
+              <div class="code">GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=your-client-secret</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="docs-h">
+          <h3>GitHub OAuth</h3>
+        </div>
+        <div class="docs-steps" style="margin-top:12px">
+          <div class="docs-step">
+            <div class="docs-step-n">01</div>
+            <div class="docs-step-body">
+              <h4>Create a GitHub OAuth App</h4>
+              <p>Go to <a href="https://github.com/settings/developers" style="color:var(--fg-strong);text-decoration:underline">github.com/settings/developers</a> → <strong>OAuth Apps</strong> → <strong>New OAuth App</strong>.</p>
+            </div>
+          </div>
+          <div class="docs-step">
+            <div class="docs-step-n">02</div>
+            <div class="docs-step-body">
+              <h4>Set the callback URL</h4>
+              <div class="code">https://app.yourdomain.com/api/auth/github/callback</div>
+            </div>
+          </div>
+          <div class="docs-step">
+            <div class="docs-step-n">03</div>
+            <div class="docs-step-body">
+              <h4>Add credentials to .env</h4>
+              <div class="code">GITHUB_CLIENT_ID=your-github-client-id
+GITHUB_CLIENT_SECRET=your-github-client-secret</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="docs-section" id="first-login">
+        <div class="docs-h">
+          <h3>First login &amp; platform admin</h3>
+        </div>
+
+        <p style="color:var(--fg-muted);font-size:14px;line-height:1.65;max-width:640px;margin-top:12px">After deployment, navigate to <span class="inline-code">https://app.yourdomain.com</span> and sign in with your configured OAuth provider. Your account is created automatically.</p>
+
+        <p style="color:var(--fg-muted);font-size:14px;line-height:1.65;max-width:640px;margin-top:10px">To make yourself the platform admin (required to promote users to Pro), set <span class="inline-code">INITIAL_ADMIN_EMAIL</span> to your email address before starting the server. On the next startup, Faultend will grant admin access to that account automatically.</p>
+
+        <div class="code" style="margin-top:12px">INITIAL_ADMIN_EMAIL=your@email.com</div>
+
+        <p style="color:var(--fg-muted);font-size:14px;line-height:1.65;max-width:640px;margin-top:16px">Platform admins can access <span class="inline-code">https://app.yourdomain.com/admin</span> to manage users, view usage, and promote accounts to Pro.</p>
+
+        <div class="callout callout--tip" style="margin-top:16px">
+          <span class="callout-icon">dev only</span>
+          <p>For local development or internal tools where you don't want to set up OAuth, set <span class="inline-code">MOCK_AUTH_ENABLED=true</span> and visit <span class="inline-code">http://app.yourdomain.com/api/auth/dev-login</span> to log in as a test user. <strong>Never enable in production.</strong></p>
+        </div>
+      </section>
+
+      <section class="docs-section" id="production">
+        <div class="docs-h">
+          <h3>Production tips</h3>
+        </div>
+
+        <div style="margin-top:16px;display:flex;flex-direction:column;gap:12px">
+
+          <div style="border:1px solid var(--border);padding:16px 18px">
+            <div style="font-size:13px;font-weight:500;color:var(--fg-strong);margin-bottom:6px">Secure the session secret</div>
+            <div style="font-size:13px;color:var(--fg-muted);line-height:1.55">Never commit <span class="inline-code">SESSION_SECRET</span> to the repo. Use environment variables in your deployment platform (Coolify, Render, Fly.io). Generate with <span class="inline-code">openssl rand -hex 32</span>.</div>
+          </div>
+
+          <div style="border:1px solid var(--border);padding:16px 18px">
+            <div style="font-size:13px;font-weight:500;color:var(--fg-strong);margin-bottom:6px">Set NODE_ENV=production</div>
+            <div style="font-size:13px;color:var(--fg-muted);line-height:1.55">This enables Express's <span class="inline-code">trust proxy</span> setting, which is required for correct IP detection and secure session cookies behind Traefik.</div>
+          </div>
+
+          <div style="border:1px solid var(--border);padding:16px 18px">
+            <div style="font-size:13px;font-weight:500;color:var(--fg-strong);margin-bottom:6px">Disable SAMPLE_DATA</div>
+            <div style="font-size:13px;color:var(--fg-muted);line-height:1.55">Set <span class="inline-code">SAMPLE_DATA=false</span>. The sample servers are only useful for exploring the UI locally.</div>
+          </div>
+
+          <div style="border:1px solid var(--border);padding:16px 18px">
+            <div style="font-size:13px;font-weight:500;color:var(--fg-strong);margin-bottom:6px">Back up PostgreSQL</div>
+            <div style="font-size:13px;color:var(--fg-muted);line-height:1.55">All data (users, servers, rules, traffic) lives in PostgreSQL. Set up automated backups. A daily <span class="inline-code">pg_dump</span> piped to a storage bucket is sufficient for most deployments.</div>
+          </div>
+
+          <div style="border:1px solid var(--border);padding:16px 18px">
+            <div style="font-size:13px;font-weight:500;color:var(--fg-strong);margin-bottom:6px">Monitor the health endpoint</div>
+            <div style="font-size:13px;color:var(--fg-muted);line-height:1.55">The app exposes <span class="inline-code">GET /health</span> returning <span class="inline-code">{"status":"ok"}</span>. Plug this into your uptime monitor or Traefik's health check configuration.</div>
+          </div>
+
+          <div style="border:1px solid var(--border);padding:16px 18px">
+            <div style="font-size:13px;font-weight:500;color:var(--fg-strong);margin-bottom:6px">Adjust traffic retention</div>
+            <div style="font-size:13px;color:var(--fg-muted);line-height:1.55">The default is 7 days. Increase or decrease <span class="inline-code">TRAFFIC_RETENTION_DAYS</span> based on your storage capacity and compliance requirements. Be aware that traffic logs may contain request/response bodies.</div>
+          </div>
+
+        </div>
+
+        <div class="docs-h">
+          <h3>Updating to a new version</h3>
+        </div>
+
+        <div class="code" style="margin-top:12px">
+<span class="c"># Pull the latest code</span>
+git pull origin main
+
+<span class="c"># Rebuild and restart the container</span>
+docker compose build --no-cache
+docker compose up -d
+
+<span class="c"># Verify health</span>
+curl -s https://app.yourdomain.com/health</div>
+
+        <p style="color:var(--fg-muted);font-size:14px;line-height:1.65;max-width:640px;margin-top:12px">The database schema is applied idempotently on every startup — new columns are added with <span class="inline-code">IF NOT EXISTS</span> guards, so updates never drop existing data. You can review the schema at <a href="https://github.com/dalogax/faultend/blob/main/db/schema.sql" style="color:var(--fg-strong);text-decoration:underline">db/schema.sql</a>.</p>
+
+      </section>
+
+    </main>
+  </div>
+
+  <!-- Footer -->
+  <footer>
+    <div style="max-width:1320px;margin:0 auto;width:100%">
+      <div class="foot-grid">
+        <div class="foot-brand">
+          <a href="/" class="logo">
+            <svg viewBox="0 0 1024 1024" aria-hidden="true" style="width:18px;height:18px"><g transform="translate(0,1024) scale(0.1,-0.1)" fill="#0a0a09" stroke="none"><path d="M4803 6933 c-98 -119 -314 -383 -481 -587 -374 -457 -349 -429 -364 -424 -7 3 -79 85 -160 183 -191 231 -222 263 -288 294 -81 38 -155 34 -460 -27 -219 -44 -591 -117 -1230 -241 -820 -159 -805 -156 -841 -197 -47 -54 -52 -81 -52 -265 1 -195 8 -231 54 -275 28 -27 36 -29 102 -28 40 0 160 17 267 38 107 20 290 55 405 76 116 22 296 56 400 75 105 20 298 56 430 81 132 24 310 58 395 75 229 46 268 36 385 -98 143 -162 185 -215 185 -232 0 -9 -412 -532 -915 -1161 -503 -629 -915 -1148 -915 -1152 0 -5 185 -7 412 -6 l412 3 77 95 c41 52 163 205 269 340 312 394 418 528 515 650 50 63 190 239 310 390 119 151 225 281 233 288 40 32 54 19 231 -218 95 -126 190 -244 212 -261 22 -17 62 -40 89 -50 87 -33 84 -33 830 82 179 27 370 57 425 65 55 8 154 24 220 34 66 11 228 35 360 55 132 19 371 55 530 80 160 24 393 60 519 79 238 37 278 36 257 -2 -5 -9 -95 -131 -200 -271 -105 -140 -189 -256 -187 -258 5 -5 142 53 381 162 105 48 237 109 295 135 523 237 1171 543 1211 571 38 27 52 61 38 92 -17 38 3 30 -519 217 -308 111 -837 298 -1205 426 -148 52 -280 99 -293 104 -52 23 -54 10 -7 -42 153 -167 280 -303 350 -376 86 -90 96 -107 68 -116 -23 -6 -209 -34 -688 -101 -214 -30 -640 -90 -945 -135 -1123 -163 -1050 -153 -1103 -141 -27 6 -65 23 -85 38 -69 50 -332 374 -332 408 0 19 278 368 729 915 180 217 661 818 661 824 0 3 -182 6 -404 6 l-405 0 -178 -217z"/></g></svg>
+            <span>faultend</span>
+          </a>
+          <p>A proxy for testing how your app behaves when the network — or the backend behind it — misbehaves.</p>
+          <div style="font-family:var(--mono);font-size:11px;color:var(--fg-faint)">© <span class="copy-year"></span> faultend</div>
+        </div>
+        <div class="foot-col">
+          <div class="h">Product</div>
+          <a href="/">Home</a>
+          <a href="/#why">Why Faultend</a>
+          <a href="/#deploy">Get started</a>
+          <a href="/docs">Docs</a>
+        </div>
+        <div class="foot-col">
+          <div class="h">Resources</div>
+          <a href="https://github.com/dalogax/faultend">GitHub</a>
+          <a href="https://github.com/dalogax/faultend/blob/main/CONTRIBUTING.md">Contributing</a>
+          <a href="https://github.com/dalogax/faultend/issues">Issues</a>
+        </div>
+        <div class="foot-col">
+          <div class="h">Legal</div>
+          <a href="/privacy">Privacy Policy</a>
+          <a href="/terms">Terms of Service</a>
+          <a href="/dpa">DPA</a>
+          <a href="mailto:dalogax@gmail.com">Contact</a>
+        </div>
+      </div>
+      <div class="foot-bar">
+        <span>Built for developers who care about resilience.</span>
+        <span>© <span class="copy-year"></span> faultend.com · <a href="/privacy" style="color:inherit;text-decoration:none">Privacy</a> · <a href="/terms" style="color:inherit;text-decoration:none">Terms</a></span>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // Copyright year
+    document.querySelectorAll('.copy-year').forEach(el => el.textContent = new Date().getFullYear());
+
+    // Sidebar active link on scroll
+    const sections = document.querySelectorAll('.docs-section[id], [id]');
+    const navLinks = document.querySelectorAll('.docs-nav-link');
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          navLinks.forEach(l => l.classList.remove('active'));
+          const link = document.querySelector(`.docs-nav-link[href="#${entry.target.id}"]`);
+          if (link) link.classList.add('active');
+        }
+      });
+    }, { rootMargin: '-20% 0% -70% 0%' });
+    document.querySelectorAll('[id]').forEach(el => observer.observe(el));
+
+    // Smooth scroll for sidebar links
+    navLinks.forEach(link => {
+      link.addEventListener('click', e => {
+        const target = document.querySelector(link.getAttribute('href'));
+        if (target) {
+          e.preventDefault();
+          target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      });
+    });
+  </script>
+</body>
+</html>
