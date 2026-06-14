@@ -239,6 +239,58 @@
       font-family:var(--mono); font-size:11px; color:var(--fg-faint);
     }
 
+    /* Deploy — two ways to use it */
+    .deploy { padding:88px 64px; border-bottom:1px solid var(--border-strong); }
+    .deploy-head { margin-bottom:48px; }
+    .deploy-head h2 { font-size:40px; line-height:1.1; letter-spacing:-0.02em; color:var(--fg-strong); margin-top:12px; }
+    .deploy-head p { font-size:14px; line-height:1.6; color:var(--fg-muted); margin-top:12px; max-width:560px; }
+    .deploy-grid {
+      display:grid; grid-template-columns:1fr 1fr;
+      border:1px solid var(--border-strong);
+    }
+    .deploy-card {
+      padding:40px 40px 36px; background:var(--surface);
+      display:flex; flex-direction:column;
+    }
+    .deploy-card + .deploy-card { border-left:1px solid var(--border-strong); }
+    .deploy-card--oss { background:var(--ink-12); }
+    .deploy-card-label {
+      font-family:var(--mono); font-size:11px; letter-spacing:0.16em;
+      text-transform:uppercase; color:var(--fg-faint); margin-bottom:20px;
+    }
+    .deploy-card--oss .deploy-card-label { color:rgba(255,255,255,0.35); }
+    .deploy-card h3 {
+      font-size:28px; font-weight:400; letter-spacing:-0.02em;
+      color:var(--fg-strong); margin-bottom:14px;
+    }
+    .deploy-card--oss h3 { color:var(--ink-0); }
+    .deploy-card > p { font-size:14px; line-height:1.6; color:var(--fg-muted); margin-bottom:28px; }
+    .deploy-card--oss > p { color:rgba(255,255,255,0.6); }
+    .deploy-code {
+      background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12);
+      padding:14px 16px; font-family:var(--mono); font-size:12px;
+      color:rgba(255,255,255,0.8); white-space:pre; margin-bottom:28px;
+      overflow-x:auto; line-height:1.7;
+    }
+    .deploy-list {
+      list-style:none; display:flex; flex-direction:column;
+      gap:10px; margin-bottom:32px; flex:1;
+    }
+    .deploy-list li {
+      display:flex; align-items:baseline; gap:10px;
+      font-size:13px; color:var(--fg-muted);
+    }
+    .deploy-list li::before {
+      content:'—'; font-family:var(--mono); font-size:11px;
+      color:var(--fg-faint); flex-shrink:0;
+    }
+    .deploy-card--oss .deploy-list li { color:rgba(255,255,255,0.65); }
+    .deploy-card--oss .deploy-list li::before { color:rgba(255,255,255,0.25); }
+    .deploy-card--oss .btn--secondary {
+      background:transparent; border-color:rgba(255,255,255,0.3); color:var(--ink-0);
+    }
+    .deploy-card--oss .btn--secondary:hover { background:rgba(255,255,255,0.07); }
+
     /* Pricing */
     .pricing { padding:88px 64px; border-bottom:1px solid var(--border-strong); }
     .pricing-head { margin-bottom:48px; }
@@ -300,7 +352,7 @@
       .hero { padding:56px 28px 48px; }
       .hero-grid { grid-template-columns:1fr; gap:40px; }
       .hero h1 { font-size:44px; }
-      .why-head, .why-grid, .how, .pricing, .cta, footer, .nav { padding-left:28px; padding-right:28px; }
+      .why-head, .why-grid, .how, .deploy, .pricing, .cta, footer, .nav { padding-left:28px; padding-right:28px; }
       .why-head { flex-direction:column; align-items:flex-start; }
       .why-grid { margin-left:28px; margin-right:28px; grid-template-columns:1fr; }
       .cell-roadmap { grid-column:span 1; }
@@ -309,6 +361,8 @@
       .step { grid-template-columns:1fr; gap:12px; }
       .cta h2 { font-size:38px; }
       .nav-links { display:none; }
+      .deploy-grid { grid-template-columns:1fr; }
+      .deploy-card + .deploy-card { border-left:none; border-top:1px solid var(--border-strong); }
       .pricing-grid { grid-template-columns:1fr; }
       .price-card { border-right:none; border-bottom:1px solid var(--border-strong); }
       .price-card:last-child { border-bottom:none; }
@@ -319,13 +373,14 @@
       .hero { padding:28px 18px 24px; }
       .hero h1 { font-size:34px; line-height:1.06; letter-spacing:-0.025em; }
       .hero p { font-size:14px; }
-      .why-head, .why-grid, .how, .pricing, .cta, footer { padding-left:18px; padding-right:18px; }
+      .why-head, .why-grid, .how, .deploy, .pricing, .cta, footer { padding-left:18px; padding-right:18px; }
       .why-grid { margin-left:18px; margin-right:18px; }
       .why-grid .cell { padding:20px 0; }
       .step { padding:24px 0; }
       .cta { padding:36px 18px 40px; }
       .cta h2 { font-size:32px; }
       .foot-grid { grid-template-columns:repeat(3, 1fr); gap:16px; }
+      .deploy-card { padding:28px 20px 24px; }
       .price-card { padding:24px 20px; }
     }
   </style>
@@ -344,6 +399,7 @@
     <div class="nav-links">
       <a href="#why">Why Faultend</a>
       <a href="#how">How it works</a>
+      <a href="#deploy">Get started</a>
       <a href="#pricing">Pricing</a>
     </div>
     <div class="nav-divider"></div>
@@ -523,6 +579,51 @@ GET    /notifications  HARD DEP   session screen hangs</div>
     </div>
   </section>
 
+  <!-- Deploy — two ways to use it -->
+  <section class="deploy" id="deploy">
+    <div class="wrap">
+      <div class="deploy-head">
+        <div class="eyebrow">── Two ways to use it</div>
+        <h2>Hosted or self-hosted.</h2>
+        <p>Use the managed cloud with zero setup, or run the full open-source codebase on your own infrastructure — same features, your choice.</p>
+      </div>
+      <div class="deploy-grid">
+
+        <!-- Cloud -->
+        <div class="deploy-card">
+          <div class="deploy-card-label">faultend.com · managed</div>
+          <h3>Sign up and go.</h3>
+          <p>No server, no config. Sign in with Google or GitHub and have a proxy URL in under a minute. Free tier available, Pro for teams that need more.</p>
+          <ul class="deploy-list">
+            <li>Free to start — no credit card required</li>
+            <li>5 servers and 100 rules on Free</li>
+            <li>50 servers and 1,000 rules on Pro</li>
+            <li>Automatic updates, zero maintenance</li>
+          </ul>
+          <a class="btn app-link" style="align-self:flex-start">Try it now →</a>
+        </div>
+
+        <!-- Self-hosted OSS -->
+        <div class="deploy-card deploy-card--oss">
+          <div class="deploy-card-label">open source · MIT</div>
+          <h3>Host it yourself.</h3>
+          <p>Deploy to any server with Docker. Full features, no quotas, no account required. The complete codebase is MIT licensed and publicly available.</p>
+          <div class="deploy-code">git clone https://github.com/dalogax/faultend
+cd faultend &amp;&amp; cp .env.example .env
+docker compose up -d</div>
+          <ul class="deploy-list">
+            <li>Unlimited servers, rules, and requests</li>
+            <li>No sign-up or account required</li>
+            <li>Full control over your data and config</li>
+            <li>Free forever under the MIT license</li>
+          </ul>
+          <a href="https://github.com/dalogax/faultend" class="btn btn--secondary" style="align-self:flex-start">View on GitHub →</a>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
   <!-- Pricing -->
   <section class="pricing" id="pricing">
     <div class="wrap">
@@ -616,12 +717,14 @@ GET    /notifications  HARD DEP   session screen hangs</div>
         <div class="foot-col">
           <div class="h">Product</div>
           <a href="#why">Why Faultend</a>
+          <a href="#deploy">Get started</a>
           <a href="#pricing">Pricing</a>
           <a class="app-link">Try it now</a>
         </div>
         <div class="foot-col">
           <div class="h">Resources</div>
           <a href="#how">How it works</a>
+          <a href="https://github.com/dalogax/faultend">GitHub</a>
         </div>
         <div class="foot-col">
           <div class="h">Legal</div>
