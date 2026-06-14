@@ -70,11 +70,15 @@ Tests must pass before opening a pull request. See [docs/testing.md](docs/testin
 
 ## Branching and pull requests
 
-- Branch from `main`: `git checkout -b feature/my-feature`
-- Keep commits focused and atomic
-- Use conventional commit prefixes: `feat:`, `fix:`, `docs:`, `refactor:`, `test:`
-- Open a PR against `main` on GitHub
-- Include a summary of what changed and why; add screenshots if the UI changed
+Faultend uses the standard GitHub fork-and-PR workflow:
+
+1. **Fork** the repository on GitHub (click *Fork* on the repo page)
+2. **Clone** your fork locally: `git clone https://github.com/your-username/faultend`
+3. **Create a branch** in your fork: `git checkout -b feature/my-feature`
+4. Make your changes, commit, and push to your fork
+5. **Open a pull request** from your fork's branch against `main` on `dalogax/faultend`
+
+Keep commits focused and atomic. Use conventional commit prefixes: `feat:`, `fix:`, `docs:`, `refactor:`, `test:`. Include a summary of what changed and why in the PR body, and add screenshots if the UI changed.
 
 ## Code style
 
