@@ -178,7 +178,7 @@
       background:var(--surface-2); border:1px solid var(--border);
       padding:14px 16px; font-family:var(--mono); font-size:12.5px;
       color:var(--fg-strong); white-space:pre; overflow-x:auto; line-height:1.6;
-      margin-top:12px;
+      margin-top:12px; letter-spacing:normal;
     }
     .code .c { color:var(--fg-faint); }
     .code .k { color:var(--ink-10); font-weight:500; }
@@ -186,6 +186,7 @@
     .inline-code {
       font-family:var(--mono); font-size:12px; background:var(--surface-2);
       border:1px solid var(--border); padding:1px 5px; color:var(--fg-strong);
+      letter-spacing:normal;
     }
 
     /* Callouts */
@@ -222,9 +223,9 @@
     }
     .docs-table td { padding:9px 12px; border-bottom:1px solid var(--hairline); vertical-align:top; }
     .docs-table tr:last-child td { border-bottom:none; }
-    .docs-table td:first-child { font-family:var(--mono); font-size:12px; color:var(--fg-strong); white-space:nowrap; }
-    .docs-table td.req { color:var(--red); font-family:var(--mono); font-size:11px; }
-    .docs-table td.opt { color:var(--fg-faint); font-family:var(--mono); font-size:11px; }
+    .docs-table td:first-child { font-family:var(--mono); font-size:12px; color:var(--fg-strong); white-space:nowrap; letter-spacing:normal; }
+    .docs-table td.req { color:var(--red); font-family:var(--mono); font-size:11px; letter-spacing:normal; }
+    .docs-table td.opt { color:var(--fg-faint); font-family:var(--mono); font-size:11px; letter-spacing:normal; }
 
     /* Rule example chip */
     .rule-row { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-top:10px; }
@@ -405,7 +406,7 @@
         </div>
 
         <figure class="docs-fig" style="margin-top:24px">
-          <img src="https://github.com/dalogax/faultend/releases/download/pr-screenshots/docs-server-list.png"
+          <img src="https://github.com/dalogax/faultend/releases/download/docs-assets/docs-server-list.png"
                alt="Faultend dashboard showing a list of fault servers with their proxy URLs" loading="lazy">
           <figcaption>The server list. Each server has its own proxy URL shown inline — click to copy.</figcaption>
         </figure>
@@ -415,7 +416,7 @@
         </div>
 
         <figure class="docs-fig">
-          <img src="https://github.com/dalogax/faultend/releases/download/pr-screenshots/docs-create-server.png"
+          <img src="https://github.com/dalogax/faultend/releases/download/docs-assets/docs-create-server.png"
                alt="Create server dialog with an ID field" loading="lazy">
           <figcaption>The create server dialog. Enter a short, descriptive ID for your proxy.</figcaption>
         </figure>
@@ -444,7 +445,7 @@
         </div>
 
         <figure class="docs-fig" style="margin-top:20px">
-          <img src="https://github.com/dalogax/faultend/releases/download/pr-screenshots/docs-rule-proxy.png"
+          <img src="https://github.com/dalogax/faultend/releases/download/docs-assets/docs-rule-proxy.png"
                alt="Rule editor form showing a proxy rule with path pattern .* and a target URL" loading="lazy">
           <figcaption>The rule editor. Choose <strong>Proxy</strong> as the action, enter the target URL, and set a priority.</figcaption>
         </figure>
@@ -463,7 +464,7 @@ Priority 100 — <span class="k">PROXY</span> .*             → https://api.you
         </div>
 
         <figure class="docs-fig">
-          <img src="https://github.com/dalogax/faultend/releases/download/pr-screenshots/docs-rules-list.png"
+          <img src="https://github.com/dalogax/faultend/releases/download/docs-assets/docs-rules-list.png"
                alt="Rules list showing three rules ordered by priority with toggle switches" loading="lazy">
           <figcaption>Rules list ordered by priority. Each rule can be toggled on or off without deleting it.</figcaption>
         </figure>
@@ -481,7 +482,7 @@ Priority 100 — <span class="k">PROXY</span> .*             → https://api.you
         </div>
 
         <figure class="docs-fig" style="margin-top:20px">
-          <img src="https://github.com/dalogax/faultend/releases/download/pr-screenshots/docs-traffic-live.png"
+          <img src="https://github.com/dalogax/faultend/releases/download/docs-assets/docs-traffic-live.png"
                alt="Traffic viewer showing a live stream of HTTP requests with method badges, paths, status codes, and latency bars" loading="lazy">
           <figcaption>The traffic viewer streams requests as they arrive. Coloured method and status badges let you spot anomalies at a glance.</figcaption>
         </figure>
@@ -489,7 +490,7 @@ Priority 100 — <span class="k">PROXY</span> .*             → https://api.you
         <p style="color:var(--fg-muted);font-size:14px;line-height:1.65;max-width:640px;margin-top:16px">Click any row to open the detail panel. It shows the full URL, all request and response headers, the request body, and the response body. Use <strong>Copy as cURL</strong> to replay the exact request from your terminal.</p>
 
         <figure class="docs-fig">
-          <img src="https://github.com/dalogax/faultend/releases/download/pr-screenshots/docs-traffic-detail.png"
+          <img src="https://github.com/dalogax/faultend/releases/download/docs-assets/docs-traffic-detail.png"
                alt="Traffic detail panel showing full request headers, response body, and copy as cURL button" loading="lazy">
           <figcaption>Detail panel for a selected request. Headers, bodies, timing, and the matched rule are all shown.</figcaption>
         </figure>
@@ -537,7 +538,7 @@ Body:    <span class="s">{"error": "internal_error"}</span></div>
         </div>
 
         <figure class="docs-fig" style="margin-top:20px">
-          <img src="https://github.com/dalogax/faultend/releases/download/pr-screenshots/docs-rule-mock-503.png"
+          <img src="https://github.com/dalogax/faultend/releases/download/docs-assets/docs-rule-mock-503.png"
                alt="Rule editor configured as a mock rule with status 503 and a JSON error body" loading="lazy">
           <figcaption>A mock rule returning 503. Set the status code, JSON body, and optional latency in the same form.</figcaption>
         </figure>
@@ -585,7 +586,7 @@ Latency:   <span class="k">random</span> 800ms – 2000ms
         </div>
 
         <figure class="docs-fig" style="margin-top:20px">
-          <img src="https://github.com/dalogax/faultend/releases/download/pr-screenshots/docs-one-click-mock.png"
+          <img src="https://github.com/dalogax/faultend/releases/download/docs-assets/docs-one-click-mock.png"
                alt="Traffic detail panel showing a Create rule button that opens the rule editor pre-filled from the selected request" loading="lazy">
           <figcaption>Open any request, click <strong>Create rule</strong>, and the rule editor opens pre-filled. Change the status code and body to inject your failure.</figcaption>
         </figure>
@@ -721,19 +722,19 @@ Latency:   <span class="k">random</span> 800ms – 2000ms
 
         <div style="margin-top:16px;display:flex;flex-direction:column;gap:0;border:1px solid var(--border)">
           <div style="display:grid;grid-template-columns:160px 1fr;border-bottom:1px solid var(--hairline)">
-            <div style="padding:12px 14px;font-family:var(--mono);font-size:12px;color:var(--fg-strong);border-right:1px solid var(--hairline);background:var(--surface-2)">Docker ≥ 24</div>
+            <div style="padding:12px 14px;font-family:var(--mono);font-size:12px;color:var(--fg-strong);border-right:1px solid var(--hairline);background:var(--surface-2);letter-spacing:normal">Docker ≥ 24</div>
             <div style="padding:12px 14px;font-size:13px;color:var(--fg-muted)">For running the app container and PostgreSQL</div>
           </div>
           <div style="display:grid;grid-template-columns:160px 1fr;border-bottom:1px solid var(--hairline)">
-            <div style="padding:12px 14px;font-family:var(--mono);font-size:12px;color:var(--fg-strong);border-right:1px solid var(--hairline);background:var(--surface-2)">Traefik v3</div>
+            <div style="padding:12px 14px;font-family:var(--mono);font-size:12px;color:var(--fg-strong);border-right:1px solid var(--hairline);background:var(--surface-2);letter-spacing:normal">Traefik v3</div>
             <div style="padding:12px 14px;font-size:13px;color:var(--fg-muted)">Reverse proxy for HTTPS termination and subdomain routing. Can be replaced with nginx/Caddy if you configure wildcard routing yourself</div>
           </div>
           <div style="display:grid;grid-template-columns:160px 1fr;border-bottom:1px solid var(--hairline)">
-            <div style="padding:12px 14px;font-family:var(--mono);font-size:12px;color:var(--fg-strong);border-right:1px solid var(--hairline);background:var(--surface-2)">Wildcard DNS</div>
+            <div style="padding:12px 14px;font-family:var(--mono);font-size:12px;color:var(--fg-strong);border-right:1px solid var(--hairline);background:var(--surface-2);letter-spacing:normal">Wildcard DNS</div>
             <div style="padding:12px 14px;font-size:13px;color:var(--fg-muted)">Both <span class="inline-code">yourdomain.com</span> and <span class="inline-code">*.yourdomain.com</span> must resolve to your server's IP address</div>
           </div>
           <div style="display:grid;grid-template-columns:160px 1fr">
-            <div style="padding:12px 14px;font-family:var(--mono);font-size:12px;color:var(--fg-strong);border-right:1px solid var(--hairline);background:var(--surface-2)">PostgreSQL 16</div>
+            <div style="padding:12px 14px;font-family:var(--mono);font-size:12px;color:var(--fg-strong);border-right:1px solid var(--hairline);background:var(--surface-2);letter-spacing:normal">PostgreSQL 16</div>
             <div style="padding:12px 14px;font-size:13px;color:var(--fg-muted)">The schema is applied automatically at startup — no manual migration step needed</div>
           </div>
         </div>
