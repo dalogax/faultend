@@ -305,10 +305,23 @@
       background:var(--surface); display:flex; flex-direction:column; gap:0;
     }
     .price-card:last-child { border-right:none; }
-    .price-card--featured {
-      background:var(--ink-2); border-right:1px solid var(--border-strong);
-      position:relative;
+    .price-card--mid {
+      background:var(--ink-2);
     }
+    .price-card--featured {
+      background:var(--ink-12); border-right:1px solid var(--border-strong);
+    }
+    .price-card--featured .price-card-tier { color:rgba(255,255,255,0.35); }
+    .price-card--featured .price-card-amount { color:var(--ink-0); }
+    .price-card--featured .price-card-tagline { color:rgba(255,255,255,0.55); }
+    .price-card--featured .price-divider { background:rgba(255,255,255,0.12); }
+    .price-card--featured .price-limits li { color:rgba(255,255,255,0.6); }
+    .price-card--featured .price-limits li .pl-val,
+    .price-card--featured .price-limits li .pl-check { color:var(--ink-0); }
+    .price-card--featured .btn {
+      background:transparent; border-color:rgba(255,255,255,0.3); color:var(--ink-0);
+    }
+    .price-card--featured .btn:hover { background:rgba(255,255,255,0.08); }
     .price-card-badge {
       display:inline-flex; align-items:center;
       height:18px; padding:0 6px; font-family:var(--mono); font-size:11px;
@@ -651,7 +664,7 @@ docker compose up -d</div>
         </div>
 
         <!-- Free cloud -->
-        <div class="price-card">
+        <div class="price-card price-card--mid">
           <div class="price-card-tier">Free</div>
           <div class="price-card-amount">Free</div>
           <div class="price-card-tagline">Managed on faultend.com. No setup required.</div>
