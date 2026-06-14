@@ -248,7 +248,7 @@ Screenshots are **evidence that the UI change works** — take one per meaningfu
 const { chromium } = require('playwright');
 (async () => {
   const browser = await chromium.launch({
-    executablePath: '/home/dalogax/.cache/ms-playwright/chromium-1224/chrome-linux/chrome',
+    executablePath: '/path/to/your/.cache/ms-playwright/chromium-XXXX/chrome-linux/chrome',
     headless: true
   });
   const page = await browser.newPage();
