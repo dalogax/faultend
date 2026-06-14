@@ -11,6 +11,7 @@ const {
   importRules,
   exportRules
 } = require('../rules/rulesEngine');
+const { getServer, checkRuleQuota } = require('../storage/storage');
 
 router.use(express.json());
 
@@ -50,15 +51,21 @@ router.get('/:id', async (req, res) => {
 
 router.post('/', async (req, res) => {
   const serverId = req.serverId;
-  
+
   if (!serverId) {
     return res.status(400).json({
       error: 'Bad Request',
       message: 'Server ID required'
     });
   }
-  
+
   try {
+    const server = await getServer(serverId);
+    const quota = await checkRuleQuota(server.owner_id);
+    if (!quota.allowed) {
+      return res.status(429).json({ error: 'quota_exceeded', resource: 'rules', limit: quota.limit, plan: quota.plan });
+    }
+
     const rule = await addRule(serverId, req.body);
     console.log(`[API] [${serverId}] Created rule: ${rule.name} (${rule.action}, priority: ${rule.priority})`);
     res.status(201).json(rule);

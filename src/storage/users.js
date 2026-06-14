@@ -376,6 +376,36 @@ function getPlanLimits(plan) {
   return FREE_TIER_LIMITS;
 }
 
+async function checkServerQuota(userId) {
+  const [userResult, countResult] = await Promise.all([
+    pool.query('SELECT plan FROM users WHERE id = $1', [userId]),
+    pool.query('SELECT COUNT(*) FROM servers WHERE owner_id = $1', [userId]),
+  ]);
+  const plan = userResult.rows[0]?.plan || 'free';
+  const count = parseInt(countResult.rows[0].count) || 0;
+  const limit = FREE_TIER_LIMITS.servers;
+  return { allowed: plan !== 'free' || count < limit, count, limit, plan };
+}
+
+async function checkRuleQuota(userId) {
+  const [userResult, ownedResult] = await Promise.all([
+    pool.query('SELECT plan FROM users WHERE id = $1', [userId]),
+    pool.query('SELECT id FROM servers WHERE owner_id = $1', [userId]),
+  ]);
+  const plan = userResult.rows[0]?.plan || 'free';
+  const ownedServerIds = ownedResult.rows.map(r => r.id);
+  let count = 0;
+  if (ownedServerIds.length > 0) {
+    const result = await pool.query(
+      'SELECT COUNT(*) FROM rules WHERE server_id = ANY($1::bigint[])',
+      [ownedServerIds]
+    );
+    count = parseInt(result.rows[0].count) || 0;
+  }
+  const limit = FREE_TIER_LIMITS.rules;
+  return { allowed: plan !== 'free' || count < limit, count, limit, plan };
+}
+
 async function getUserQuota(userId) {
   // Get user plan and owned server IDs in parallel
   const [userResult, ownedResult] = await Promise.all([
@@ -544,6 +574,8 @@ module.exports = {
   removeAdmin,
   transferOwnership,
   deleteUser,
+  checkServerQuota,
+  checkRuleQuota,
   getUserQuota,
   getAdminUserList,
   getAdminUserDetail,
